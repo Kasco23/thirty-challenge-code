@@ -16,7 +16,11 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Lint and Build
-        run: |
-          npm run lint || echo "Lint failed"
-          npm run build || echo "Build failed"
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
