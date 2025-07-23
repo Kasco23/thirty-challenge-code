@@ -49,7 +49,7 @@ function VideoTable() {
       </div>
       {/* Guests row */}
       <div className="flex flex-row justify-center gap-10 mt-2 w-full max-w-lg">
-        {guests.map((id, i) => (
+        {guests.map((id) => (
           <DailyVideo key={id} id={id} badge={getBadge(id)} />
         ))}
       </div>
@@ -70,7 +70,8 @@ function DailyVideo({ id, badge, large = false }: { id: string | null, badge: st
       videoRef.current.srcObject = new MediaStream([track]);
       videoRef.current.play();
     }
-  }, [id, daily]);
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [id, daily]);
 
   return (
     <div className={`flex flex-col items-center ${large ? "mb-2" : ""}`}>
