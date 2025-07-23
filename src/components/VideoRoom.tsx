@@ -8,7 +8,8 @@ const VideoRoom = () => {
   const callFrameRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let callFrame: any;
+    import type { DailyCall } from '@daily-codaily-js';
+    let callFrame: DailyCall | null = null;
 
     import("@daily-co/daily-js").then(({createFrame}) => {
       callFrame = createFrame(callFrameRef.current!, {
