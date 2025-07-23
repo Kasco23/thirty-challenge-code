@@ -1,5 +1,6 @@
 // src/components/VideoRoom.tsx
-import React, { useEffect, useRef } from "react";
+import React from "react";
+import { useEffect, useMemo, useState } from "react";
 
 // Replace this with your actual Daily room URL
 const ROOM_URL = "https://thirty.daily.co/Test";
