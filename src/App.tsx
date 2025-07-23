@@ -1,38 +1,21 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
-import "./App.css";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
+import Landing from "./pages/Landing";
+import Join from "./pages/Join";
+import QuizRoom from "./pages/QuizRoom";
 
 function App() {
-  const [count, setCount] = useState(0);
-
+  const location = useLocation();
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      {/* 🔽 This is the main heading, now with Tailwind styles */}
-      <h1 className="text-4xl font-bold text-blue-600">
-        Vite + React + Tailwind 🎉
-      </h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <div className="dark min-h-screen bg-gradient-to-tr from-black via-[#10102a] to-accent2">
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route path="/" element={<Landing />} />
+          <Route path="/join" element={<Join />} />
+          <Route path="/room/:roomId" element={<QuizRoom />} />
+        </Routes>
+      </AnimatePresence>
+    </div>
   );
 }
-
 export default App;
