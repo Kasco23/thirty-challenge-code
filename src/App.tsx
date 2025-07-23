@@ -3,6 +3,7 @@ import { AnimatePresence } from "framer-motion";
 import Landing from "./pages/Landing";
 import Join from "./pages/Join";
 import QuizRoom from "./pages/QuizRoom";
+import Lobby from "./pages/Lobby";
 
 function App() {
   const location = useLocation();
@@ -13,6 +14,7 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/join" element={<Join />} />
           <Route path="/room/:roomId" element={<QuizRoom />} />
+          <Route path="/lobby" element={<Lobby />} />
         </Routes>
       </AnimatePresence>
     </div>
