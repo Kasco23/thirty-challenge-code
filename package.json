@@ -9,7 +9,6 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "jest --coverage"
-  }
   },
   "dependencies": {
     "@daily-co/daily-react": "^0.23.1",
