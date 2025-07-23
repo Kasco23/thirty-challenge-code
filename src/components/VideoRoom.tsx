@@ -2,7 +2,7 @@
 import React, { useEffect, useRef } from "react";
 
 // Replace this with your actual Daily room URL
-const ROOM_URL = "https://thirty.daily.co/your-room-name";
+const ROOM_URL = "https://thirty.daily.co/Test";
 
 const VideoRoom: React.FC = () => {
   const callFrameRef = useRef<HTMLDivElement>(null);
