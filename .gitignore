@@ -1,0 +1,16 @@
+# Vite
+#node_modules/
+lock.json
+dist
+coverage/
+node_modules/
+dist/
+.nvrc
+.index.html
+instance/
+public/
+*.vscode
+build/
+user/
+.temp
+
