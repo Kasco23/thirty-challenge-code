@@ -1,24 +1,27 @@
 openapi: 3.1.0
 info:
   title: Project Resource Inventory
-  description: Simulated resource overview of tools, languages, APIs, and services used in the project.
   version: 1.0.0
+  description: Lists tools, languages, services, and integrations used in the project for GPT to understand the environment.
+
 tags:
   - name: Project Inventory
-    description: Operations for listing tools, languages, and services in a project
+    description: View project tools, languages, APIs, and integrations.
+
 servers:
   - url: https://ai.tyshub.xyz
-    description: Inventory response for GPT tool integration
+    description: Render-deployed tools server
+
 paths:
   /project-resources:
     get:
-      operationId: getProjectResources
-      summary: Get all resources and tools used in the project
       tags:
         - Project Inventory
+      operationId: getProjectResources
+      summary: Returns tech stack and resources used in the codebase
       responses:
         '200':
-          description: Summary of external and internal project dependencies
+          description: Tech stack summary
           content:
             application/json:
               schema:

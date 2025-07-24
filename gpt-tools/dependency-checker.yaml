@@ -1,57 +1,34 @@
 openapi: 3.1.0
 info:
   title: Dependency Checker
-  description: Simulated tool that checks file dependencies and importers in a project.
+  description: Analyzes file relationships (imports and importedBy) in the GitHub project to prevent broken references during edits.
   version: 1.0.0
+
 tags:
-  - name: Dependency Tools
-    description: Operations that inspect project file relationships
+  - name: Dependency Graph
+    description: View dependencies and reverse imports for a given file.
+
 servers:
   - url: https://ai.tyshub.xyz
-    description: Server for testing GPT integration
-paths:
-  /file-importers:
-    get:
-      operationId: getFileImporters
-      summary: Get all files that import the given file
-      tags:
-        - Dependency Tools
-      parameters:
-        - name: path
-          in: query
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: List of importing files
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  file:
-                    type: string
-                  importers:
-                    type: array
-                    items:
-                      type: string
+    description: Hosted server on Render
 
-  /file-dependencies:
+paths:
+  /dependencies:
     get:
-      operationId: getFileDependencies
-      summary: Get files that the given file depends on
       tags:
-        - Dependency Tools
+        - Dependency Graph
+      operationId: getFileDependencies
+      summary: Get both dependencies and files that import the given file
       parameters:
         - name: path
           in: query
           required: true
+          description: Relative path to the file (e.g. src/pages/Quiz.tsx)
           schema:
             type: string
       responses:
         '200':
-          description: List of files this file depends on
+          description: File dependency and usage information
           content:
             application/json:
               schema:
@@ -60,6 +37,10 @@ paths:
                   file:
                     type: string
                   dependencies:
+                    type: array
+                    items:
+                      type: string
+                  importedBy:
                     type: array
                     items:
                       type: string
