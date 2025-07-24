@@ -19,8 +19,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies using npm ci
-        run: npm ci
+      - - name: Install dependencies
+          run: npm install
         working-directory: thirty-challenge
 
       - name: TypeScript type check
