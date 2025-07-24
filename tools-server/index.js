@@ -7,15 +7,15 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 
-// Serve .yaml files statically from gpt-tools/
-const yamlDirectory = path.join(__dirname, '../gpt-tools');
-app.use(express.static(yamlDirectory));
+// ✅ Serve YAML files from gpt-tools/
+const yamlPath = path.join(__dirname, '../gpt-tools');
+app.use(express.static(yamlPath));
 
-// Optional: Health check
+// Optional health check
 app.get('/', (req, res) => {
-  res.send('GPT Tools API Server is running ✅');
+  res.send('✅ GPT Tools Server is running');
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
+  console.log(`✅ Server running on port ${PORT}`);
 });
