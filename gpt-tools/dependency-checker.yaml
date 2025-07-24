@@ -1,0 +1,58 @@
+openapi: 3.1.0
+info:
+  title: Dependency Checker
+  description: Simulated tool that checks file dependencies and importers in a project.
+  version: 1.0.0
+servers:
+  - url: https://mocki.io/v1
+    description: Mocked server for testing GPT integration
+paths:
+  /e43cbf2b-0d59-4be0-bb87-b263c08a66cd:
+    get:
+      operationId: getFileImporters
+      summary: Get all files that import the given file
+      parameters:
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of importing files
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  file:
+                    type: string
+                  importers:
+                    type: array
+                    items:
+                      type: string
+
+  /87954d0a-61a5-4f3e-8935-cd6e8a5de75c:
+    get:
+      operationId: getFileDependencies
+      summary: Get files that the given file depends on
+      parameters:
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of files this file depends on
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  file:
+                    type: string
+                  dependencies:
+                    type: array
+                    items:
+                      type: string
