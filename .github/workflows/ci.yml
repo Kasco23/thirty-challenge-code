@@ -19,15 +19,20 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+        working-directory: thirty-challenge
 
       - name: TypeScript type check
         run: npx tsc --noEmit
+        working-directory: thirty-challenge
 
       - name: Lint
         run: npm run lint
+        working-directory: thirty-challenge
 
       - name: Build
         run: npm run build
+        working-directory: thirty-challenge
 
       - name: Run tests with coverage
         run: npm test
+        working-directory: thirty-challenge
