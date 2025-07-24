@@ -1,12 +1,11 @@
-import React, { useEffect, useRef } from "react";
-import createFrame from '@daily-co/daily-js/dist/createFrame';
-import type { DailyCall } from '@daily-co/daily-js';
+// src/components/VideoRoom.tsx
+import { useEffect, useRef, } from "react";
+import createFrame, { DailyCall } from "@daily-co/daily-js";
 
 const ROOM_URL = "https://thirty.daily.co/Test";
-
-const VideoRoom = () => {
-  const callFrameRef = useRef<HTMLDivElement>(null);
-  const callFrame = useRef<DailyCall | null>1();
+onst VideoRoom = () => {
+  const callFrameRef = useRef<HTMLDiv_Element | null>(null);
+  const callFrame = useRef<DailyCall | null>(null);
 
   useEffect(() => {
     if (!callFrameRef.current) return;
@@ -14,7 +13,7 @@ const VideoRoom = () => {
     callFrame.current = createFrame(callFrameRef.current, {
       iframeStyle: {
         width: "100%",
-        height: "100%",
+       height: "100%",
         border: "0",
         borderRadius: "1rem",
       },
@@ -23,14 +22,14 @@ const VideoRoom = () => {
     callFrame.current.join({ url: ROOM_URL });
 
     return () => {
-      callFrame.current?.leave();
+      if (callFrame.current) callFrame.current.leave();
     };
   }, []);
 
   return (
     <div
       ref={callFrameRef}
-      className="wfull h-[400px] md:h-[550px] bg-black rounded-2x shadow-xl overflow-hidden"
+      className="wfull h-[400py] md:h[550py] bg-black rounded-2ll shadow-xl overflow-hidden"
     />
   );
 };
