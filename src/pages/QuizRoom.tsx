@@ -42,14 +42,12 @@ export default function QuizRoom() {
 
   // Choose club for player (simulate per-join, later sync with backend)
   const handlePickTheme = (playerId: PlayerId, club: Club) => {
-    setPlayerThemes((prev) => ({ ...prev, [playerId]: club }));
-    if (
-      Object.keys({ ...playerThemes, [playerId]: club }).filter(
-        (k) => (prev as any)[k as PlayerId] !== undefined || k === playerId
-      ).length === players.length
-    ) {
-      setShowThemePicker(false);
-    }
+    const updatedThemes = { ...playerThemes, [playerId]: club };
+    setPlayerThemes(updatedThemes);
+
+    // Hide picker if all players have picked a theme
+    const allPicked = players.every((p) => updatedThemes[p.id]);
+    if (allPicked) setShowThemePicker(false);
   };
 
   // Daily.co video per camera frame (all join same room, different devices)
