@@ -1,0 +1,41 @@
+openapi: 3.1.0
+info:
+  title: Project Resource Inventory
+  description: Simulated resource overview of tools, languages, APIs, and services used in the project.
+  version: 1.0.0
+servers:
+  - url: https://mocki.io/v1/cff35e99-c0bc-49ec-9a34-dfc915915951 
+    description: Mocked inventory response for GPT tool integration
+paths:
+  /aceeb66c-06f5-457f-b85b-18f0b3fc66e0:
+    get:
+      operationId: getProjectResources
+      summary: Get all resources and tools used in the project
+      responses:
+        '200':
+          description: Summary of external and internal project dependencies
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  services:
+                    type: array
+                    items:
+                      type: string
+                  tools:
+                    type: array
+                    items:
+                      type: string
+                  languages:
+                    type: array
+                    items:
+                      type: string
+                  scripts:
+                    type: array
+                    items:
+                      type: string
+                  integrations:
+                    type: array
+                    items:
+                      type: string
