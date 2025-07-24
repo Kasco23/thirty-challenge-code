@@ -64,4 +64,8 @@ app.get('/dependencies', async (req, res) => {
     // Clean up temp files
     await fs.remove(tempDir);
   }
+})
+app.listen(PORT, () => {
+  console.log(`✅ Server listening on port ${PORT}`);
 });
+
