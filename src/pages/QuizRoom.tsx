@@ -1,9 +1,9 @@
-// src/pages/QuizRoom.tsx
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-// import DailyIframe from '@daily-co/daily-js'; // Uncomment when using Daily.co
 import { CLUB_THEMES } from '../themes/clubs';
+
+// Daily.co iframe embed (quick and easy, no SDK needed for test)
+const DAILY_ROOM_URL = 'https://thirty.daily.co/Test';
 
 // --- Context for Team/Theme selection ---
 const ThemeContext = React.createContext({
@@ -22,9 +22,9 @@ export default function QuizRoom() {
   const [showThemePicker, setShowThemePicker] = useState(true);
 
   // Sample quiz/segment state (replace with real logic)
-  const [segment, setSegment] = useState({ name: 'وش تعرف', code: 'WSHA', question: 1, total: 10 });
-  const [scores, setScores] = useState({ playerA: 0, playerB: 0 });
-  const [strikes, setStrikes] = useState({ playerA: 0, playerB: 0 });
+  const [segment] = useState({ name: 'وش تعرف', code: 'WSHA', question: 1, total: 10 });
+  const [scores] = useState({ playerA: 0, playerB: 0 });
+  const [strikes] = useState({ playerA: 0, playerB: 0 });
 
   // Choose club for player (simulate per-join, later sync with backend)
   const handlePickTheme = (playerId, club) => {
@@ -35,16 +35,19 @@ export default function QuizRoom() {
     }
   };
 
-  // Placeholder for Daily.co video (integrate real video when ready)
+  // Daily.co video per camera frame (all join same room, different devices)
   const CameraFrame = ({ user }) => (
     <div className="relative flex flex-col items-center p-2">
-      {/* Show club logo and name if picked */}
       {playerThemes[user] && (
         <img src={CLUB_THEMES[playerThemes[user]].logo} alt={playerThemes[user]} className="h-12 mb-2" />
       )}
-      <div className={`rounded-2xl shadow-md bg-gray-200 dark:bg-gray-700 w-full aspect-video flex items-center justify-center ${playerThemes[user] ? CLUB_THEMES[playerThemes[user]].primary : ''}`}>
-        {/* TODO: Replace with Daily.co video stream */}
-        <span className="text-2xl">{players.find(p => p.id === user)?.name}</span>
+      <div className={`rounded-2xl shadow-md w-full aspect-video overflow-hidden flex items-center justify-center ${playerThemes[user] ? CLUB_THEMES[playerThemes[user]].primary : ''}`}>
+        <iframe
+          src={DAILY_ROOM_URL + `?user=${user}`}
+          title={`Daily Video for ${user}`}
+          allow="camera; microphone; fullscreen; speaker; display-capture"
+          className="w-full h-full border-0 rounded-2xl"
+        ></iframe>
       </div>
     </div>
   );
@@ -89,7 +92,6 @@ export default function QuizRoom() {
   const QuestionPanel = () => (
     <motion.div className="rounded-xl p-6 shadow-lg bg-white dark:bg-neutral-800 text-center my-4">
       <div className="text-lg font-bold mb-2">هنا يظهر السؤال بالعربية</div>
-      {/* TODO: Render answers/inputs based on segment */}
       <div className="flex gap-2 justify-center mt-4">
         <span className="bg-green-100 text-green-800 rounded px-3 py-1">إجابة 1</span>
         <span className="bg-blue-100 text-blue-800 rounded px-3 py-1">إجابة 2</span>
@@ -158,19 +160,3 @@ export default function QuizRoom() {
     </ThemeContext.Provider>
   );
 }
-
-// --- Liverpool & Real Madrid color mapping: src/themes/clubs.ts ---
-export const CLUB_THEMES = {
-  liverpool: {
-    primary: 'bg-[#c8102e]',
-    accent: 'bg-[#00b2a9]',
-    text: 'text-white',
-    logo: '/assets/liverpool.png',
-  },
-  madrid: {
-    primary: 'bg-[#ffffff]',
-    accent: 'bg-[#febd2f]',
-    text: 'text-black',
-    logo: '/assets/realmadrid.png',
-  }
-};
