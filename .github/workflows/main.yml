@@ -21,7 +21,7 @@ jobs:
 
       - - name: Install dependencies
           run: npm install
-        working-directory: thirty-challenge
+          working-directory: thirty-challenge
 
       - name: TypeScript type check
         run: npx tsc --noEmit
