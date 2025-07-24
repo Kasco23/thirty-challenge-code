@@ -3,14 +3,19 @@ info:
   title: Dependency Checker
   description: Simulated tool that checks file dependencies and importers in a project.
   version: 1.0.0
+tags:
+  - name: Dependency Tools
+    description: Operations that inspect project file relationships
 servers:
-  - url: https://mocki.io/v1
-    description: Mocked server for testing GPT integration
+  - url: https://ai.tyshub.xyz
+    description: Server for testing GPT integration
 paths:
-  /e43cbf2b-0d59-4be0-bb87-b263c08a66cd:
+  /file-importers:
     get:
       operationId: getFileImporters
       summary: Get all files that import the given file
+      tags:
+        - Dependency Tools
       parameters:
         - name: path
           in: query
@@ -32,10 +37,12 @@ paths:
                     items:
                       type: string
 
-  /87954d0a-61a5-4f3e-8935-cd6e8a5de75c:
+  /file-dependencies:
     get:
       operationId: getFileDependencies
       summary: Get files that the given file depends on
+      tags:
+        - Dependency Tools
       parameters:
         - name: path
           in: query

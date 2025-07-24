@@ -3,14 +3,19 @@ info:
   title: Project Resource Inventory
   description: Simulated resource overview of tools, languages, APIs, and services used in the project.
   version: 1.0.0
+tags:
+  - name: Project Inventory
+    description: Operations for listing tools, languages, and services in a project
 servers:
-  - url: https://mocki.io/v1/cff35e99-c0bc-49ec-9a34-dfc915915951 
-    description: Mocked inventory response for GPT tool integration
+  - url: https://ai.tyshub.xyz
+    description: Inventory response for GPT tool integration
 paths:
-  /aceeb66c-06f5-457f-b85b-18f0b3fc66e0:
+  /project-resources:
     get:
       operationId: getProjectResources
       summary: Get all resources and tools used in the project
+      tags:
+        - Project Inventory
       responses:
         '200':
           description: Summary of external and internal project dependencies
