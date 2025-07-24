@@ -21,12 +21,16 @@ jobs:
 
       - name: Install dependencies using npm ci
         run: npm ci
+        working-directory: thirty-challenge
 
       - name: TypeScript type check
         run: npx tsc --noEmit
+        working-directory: thirty-challenge
 
       - name: Run ESLint
         run: npm run lint
+        working-directory: thirty-challenge
 
       - name: Run Tests
         run: npm test
+        working-directory: thirty-challenge
