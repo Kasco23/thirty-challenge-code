@@ -2,46 +2,63 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CLUB_THEMES } from '../themes/clubs';
 
-// Daily.co iframe embed (quick and easy, no SDK needed for test)
 const DAILY_ROOM_URL = 'https://thirty.daily.co/Test';
 
-// --- Context for Team/Theme selection ---
-const ThemeContext = React.createContext({
-  playerThemes: {},
-  setPlayerTheme: (player: string, club: string) => {},
+type PlayerId = 'host' | 'playerA' | 'playerB';
+type Club = 'liverpool' | 'madrid';
+
+type Player = {
+  id: PlayerId;
+  name: string;
+};
+
+type ThemeContextType = {
+  playerThemes: Record<PlayerId, Club | undefined>;
+  setPlayerTheme: (player: PlayerId, club: Club) => void;
+};
+
+const ThemeContext = React.createContext<ThemeContextType>({
+  playerThemes: { host: undefined, playerA: undefined, playerB: undefined },
+  setPlayerTheme: () => {},
 });
 
 export default function QuizRoom() {
-  // Demo state (replace with actual player/room data later)
-  const [players] = useState([
+  const [players] = useState<Player[]>([
     { id: 'host', name: 'المقدم' },
     { id: 'playerA', name: 'لاعب أ' },
     { id: 'playerB', name: 'لاعب ب' }
   ]);
-  const [playerThemes, setPlayerThemes] = useState({});
+  const [playerThemes, setPlayerThemes] = useState<Record<PlayerId, Club | undefined>>({
+    host: undefined,
+    playerA: undefined,
+    playerB: undefined
+  });
   const [showThemePicker, setShowThemePicker] = useState(true);
 
   // Sample quiz/segment state (replace with real logic)
   const [segment] = useState({ name: 'وش تعرف', code: 'WSHA', question: 1, total: 10 });
-  const [scores] = useState({ playerA: 0, playerB: 0 });
-  const [strikes] = useState({ playerA: 0, playerB: 0 });
+  const [scores] = useState<Record<PlayerId, number>>({ host: 0, playerA: 0, playerB: 0 });
+  const [strikes] = useState<Record<PlayerId, number>>({ host: 0, playerA: 0, playerB: 0 });
 
   // Choose club for player (simulate per-join, later sync with backend)
-  const handlePickTheme = (playerId, club) => {
+  const handlePickTheme = (playerId: PlayerId, club: Club) => {
     setPlayerThemes((prev) => ({ ...prev, [playerId]: club }));
-    // Once all picked, hide picker
-    if (Object.keys({ ...playerThemes, [playerId]: club }).length === players.length) {
+    if (
+      Object.keys({ ...playerThemes, [playerId]: club }).filter(
+        (k) => (prev as any)[k as PlayerId] !== undefined || k === playerId
+      ).length === players.length
+    ) {
       setShowThemePicker(false);
     }
   };
 
   // Daily.co video per camera frame (all join same room, different devices)
-  const CameraFrame = ({ user }) => (
+  const CameraFrame = ({ user }: { user: PlayerId }) => (
     <div className="relative flex flex-col items-center p-2">
       {playerThemes[user] && (
-        <img src={CLUB_THEMES[playerThemes[user]].logo} alt={playerThemes[user]} className="h-12 mb-2" />
+        <img src={CLUB_THEMES[playerThemes[user] as Club].logo} alt={playerThemes[user]} className="h-12 mb-2" />
       )}
-      <div className={`rounded-2xl shadow-md w-full aspect-video overflow-hidden flex items-center justify-center ${playerThemes[user] ? CLUB_THEMES[playerThemes[user]].primary : ''}`}>
+      <div className={`rounded-2xl shadow-md w-full aspect-video overflow-hidden flex items-center justify-center ${playerThemes[user] ? CLUB_THEMES[playerThemes[user] as Club].primary : ''}`}>
         <iframe
           src={DAILY_ROOM_URL + `?user=${user}`}
           title={`Daily Video for ${user}`}
@@ -70,8 +87,8 @@ export default function QuizRoom() {
   // Scoreboard (club themes, strikes)
   const Scoreboard = () => (
     <div className="grid grid-cols-3 gap-4 text-center mt-2 mb-4">
-      {players.map((p, i) => (
-        <div key={p.id} className={`rounded-xl p-2 ${playerThemes[p.id] ? CLUB_THEMES[playerThemes[p.id]].primary : 'bg-gray-100'} shadow-md`}>
+      {players.map((p) => (
+        <div key={p.id} className={`rounded-xl p-2 ${playerThemes[p.id] ? CLUB_THEMES[playerThemes[p.id] as Club].primary : 'bg-gray-100'} shadow-md`}>
           <div className="font-bold text-lg">{p.name}</div>
           <div className="mt-1 text-md">
             {scores[p.id] ?? 0} <span className="text-xs text-gray-500">نقاط</span>
@@ -113,7 +130,7 @@ export default function QuizRoom() {
     <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
       <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col gap-4 min-w-[300px]">
         <h3 className="font-bold text-xl text-center mb-2">اختر فريقك</h3>
-        {players.map(p => (
+        {players.map((p) => (
           <div key={p.id} className="flex gap-2 items-center justify-between">
             <span>{p.name}</span>
             <div className="flex gap-2">
@@ -142,7 +159,6 @@ export default function QuizRoom() {
     </div>
   );
 
-  // ---- Main Page Layout ----
   return (
     <ThemeContext.Provider value={{ playerThemes, setPlayerTheme: handlePickTheme }}>
       <main dir="rtl" className="relative min-h-screen bg-gray-50 dark:bg-neutral-900 px-2 md:px-8">
