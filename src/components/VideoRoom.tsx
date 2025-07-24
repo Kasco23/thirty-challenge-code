@@ -4,7 +4,7 @@ import daily from "@daily-co/daily-js";
 const ROOM_URL = "https://thirty.daily.co/Test";
 
 const VideoRoom = () => {
-  const frameRef = useRef<HTMLDivPelement>(null);
+  const frameRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const frame = daily.createFrame({
