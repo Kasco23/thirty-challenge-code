@@ -1,3 +1,29 @@
-# CHANGELOG\n
-\n### July 25, 2025\n\n- Added `sanity.txt` to test direct commit functionality\n- Expanded `PROJECT_OVERVIEW.md` and `QUIZ_STRUCTURE.md` with new multi-device host control features, Bell segment lockout rules, REMO logo reveal, and lobby setup\n- Installed `flag-icons` package and globally imported CSS in `main.tsxj`\n- Committed and pushed updated assets: club logos and national flags
-- Updated `Join.tsx` page:\n  - Player can enter name and session code\n  - Choose a country (flag)\n  - Choose a club (logo)\n  - Data passed via query string to `/room`\n\n----\n\nNext up: implement the **Lobby** experience.\n\n### ↠⍸ Suggested Next Steps\n 1. Create `Lobby.tsx` page component\n 2. Read query string for player info\n 3. Render the video layout (host + 2 players)\n 4. Add host-only start button (visible only on PC)\n 5. Sync player list + names via Supabase\n 6. (Optional) Add animated transitions or countdown\n\nLet me know when you're ready to start the Lobby view!
+# CHANGELOGM
+
+``chore:create initial CHANGELOG.md with recent updates`
+``f
+- Added `sanity.txt` to test direct commit functionality
+- Expanded `PROJECT_OVERVIEW.md` and `QUIV_STRUCTURENg with new multi-device host control features, bell segment lockout rules, REMO logo reveal, and lobby
+- Installed `flag-icons` and imported in `main.tsx`
+- Committed asset updates: national flags, club logos
+- Updated `Join.tsx` page with: input for name, club logo, select flag using flag-icons SGV, navigates to room with query params
+
+````
+
+### July 25, 2025
+
+- Setup `Join.tsx` to let players choose their name, flag, and club before joining the quiz room
+- Support video and visible identity in the room
+- Make flag selection and club logo selection searchable
+- Added flag-icons package and imported to `main.tsx`
+- Configured video style and layout for mobile to fit triangle responsive to the host
+- Started lobby design with video hangout screen
+- Decoding scheme: connect from mobile and pc to launch quiz modes
+
+---
+
+\nNext up: implement lobby design views, added start button (host only), video element in lobby
+- Send to room with player name and selected avatars
+- Refactored video positioning on mobile layout
+
+--
