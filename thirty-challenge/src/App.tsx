@@ -4,6 +4,7 @@ import Landing from "./pages/Landing";
 import Join from "./pages/Join";
 import QuizRoom from "./pages/QuizRoom";
 import Lobby from "./pages/Lobby";
+import Room from "./pages/Room";
 
 function App() {
   const location = useLocation();
@@ -15,9 +16,11 @@ function App() {
           <Route path="/join" element={<Join />} />
           <Route path="/room/:roomId" element={<QuizRoom />} />
           <Route path="/lobby" element={<Lobby />} />
+          <Route path="/room" element={<Room />} />
         </Routes>
       </AnimatePresence>
     </div>
   );
 }
+
 export default App;
