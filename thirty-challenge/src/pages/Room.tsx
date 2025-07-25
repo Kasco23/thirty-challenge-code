@@ -6,5 +6,18 @@ export default function Room() {
   const flag = query.get('flag');
   const club = query.get('club');
 
-  return (\n    <div className=\"p-4 space-y-4\">\n      <h1 className=\"text-xl font-bold\">Room Session</h1>\n      <p>Name: {name}</p>\n      <div class=\"flex items-center gap-4 bg-gray-200 p-2 rounded\">\n        <span className={`fi fi-{flag}`}></span>\n        <img src={`estanove/logos/${club}.svg`} alt={club} className=\"h-10\" />\n      </div>\n    </div>\n  );
+  return (
+    <div className="p-4 space-y-4">
+      <h1 className="text-xl font-bold">Room Session</h1>
+      <p>Name: {name}</p>
+      <div className="flex items-center gap-4 bg-gray-200 p-2 rounded">
+        <span className={`fi fi-${flag}`}></span>
+        <img
+          src={`/src/assets/logos/${club}.svg`}
+          alt={club || 'club'}
+          className="h-10"
+        />
+      </div>
+    </div>
+  );
 }
