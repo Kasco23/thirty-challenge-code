@@ -12,12 +12,15 @@ import Scoreboard from "./pages/Scoreboard";
 import JudgePanel from "./pages/JudgePanel";
 import HostQuestion from "./pages/HostQuestion";
 import Timer from "./pages/Timer";
+import Buzzer from "./pages/Buzzer";
+import Admin from "./pages/Admin";
+import Reconnect from "./pages/Reconnect";
 import NotFound from "./pages/NotFound";
 
 function App() {
   const location = useLocation();
   return (
-    <div className="dark min-hscreen bg-gradient-to-tr from-black via-[10102a] to-accent2">
+    <div className="dark min-hscreen bg-gradient-to-tr from-black via-#10102a to-accent2">
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={Landing } />
@@ -32,6 +35,9 @@ function App() {
           <Route path="/judge" element={JudgePanel} />
           <Route path="/hostquestion" element={HostQuestion} />
           <Route path="/timer" element={Timer} />
+          <Route path="/buzzer" element={Buzzer} />
+          <Route path="/admin" element={Admin} />
+          <Route path="/reconnect" element={Reconnect} />
           <Route path="/*" element={NotFound} />
         </Routes>
       </AnimatePresence>
