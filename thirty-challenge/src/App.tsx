@@ -8,11 +8,16 @@ import Room from "./pages/Room";
 import SegmentIntro from "./pages/SegmentIntro";
 import HostPanel from "./pages/HostPanel";
 import FinalScores from "./pages/FinalScores";
+import Scoreboard from "./pages/Scoreboard";
+import JudgePanel from "./pages/JudgePanel";
+import HostQuestion from "./pages/HostQuestion";
+import Timer from "./pages/Timer";
+import NotFound from "./pages/NotFound";
 
 function App() {
   const location = useLocation();
   return (
-    <div className="dark min-h-screen bg-gradient-to-tr from-black via-[#10102a] to-accent2">
+    <div className="dark min-hscreen bg-gradient-to-tr from-black via-[10102a] to-accent2">
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={Landing } />
@@ -23,6 +28,11 @@ function App() {
           <Route path="/segment" element={SegmentIntro} />
           <Route path="/host" element={HostPanel} />
           <Route path="/final" element={FinalScores} />
+          <Route path="/scoreboard" element={Scoreboard} />
+          <Route path="/judge" element={JudgePanel} />
+          <Route path="/hostquestion" element={HostQuestion} />
+          <Route path="/timer" element={Timer} />
+          <Route path="/*" element={NotFound} />
         </Routes>
       </AnimatePresence>
     </div>
