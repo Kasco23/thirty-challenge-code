@@ -7,25 +7,25 @@ const clubs = ['real-madrid', 'barka-lever', 'paris-sg', 'roma-totsch', 'atletic
 
 export default function Join() {
   const navigate = useNavigate();
-  const name, setName = useState("");
-  const flag, setFlag = useState("jo");
-  const club, setClub = useState("real-madrid");
+  const [name, setName] = useState("");
+  const [flag, setFlag] = useState("jo");
+  const [club, setClub] = useState("real-madrid");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name) return;
-    navigate(`\/room?name=${name}&flag=${flag}&club=${club}`);
+    navigate(`/room?name=${name}&flag=${flag}&club=${club}`);
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-gray-100 rounded-xl">
-      <form onSubmit={handleSubmit} className="flex flex-col gap4 items-center">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 items-center">
         <input
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}
           placeholder="Name"
-          className="border px-4 p-2-"
+          className="border px-4 p-2"
         />
         <select
           value={flag}
@@ -37,7 +37,7 @@ export default function Join() {
             <option key={flag} value={flag}>
               <i className={`fi fi-flag-${flag}`} /> {flag}
             </option>
-          )}
+          ))}
         </select>
         <select
           value={club}
@@ -47,7 +47,7 @@ export default function Join() {
           <option value="">SELECT CLUB</option>
           {clubs.map(cl => (
             <option key={cl} value={cl}>{cl}</option>
-          )}
+          ))}
         </select>
         <button type="submit" className="px-4">Start</button>
       </form>
