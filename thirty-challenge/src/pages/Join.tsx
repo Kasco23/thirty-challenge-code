@@ -69,13 +69,13 @@ export default function Join() {
           ))}
         </select>
         <select
-          value={club }
-          onChange={(ev) => setClub(event.target.value)}
+          value={club}
+          onChange={(ev) => setClub(ev.target.value)}
           className="rounded-lg px-6 py-3 bg-glass text-white border border-accent2"
         >
           {clubs.map((c) => (
             <option key={c} value={c}>
-              {c.replace(/-/g, " ")}
+              {c.match(/[a-z]+/g)?.join(" ").toUpperCase() ?? c}
             </option>
           ))}
         </select>
