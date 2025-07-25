@@ -28,9 +28,10 @@ export default function Join() {
       })
       .filter(
         (rule): rule is CSSStyleRule =>
-          'selectorText' in rule && typeof (rule as CSSStyleRule).selectorText === 'string' && rule.selectorText.startsWith('.fi-')
+          typeof (rule as CSSStyleRule).selectorText === 'string' &&
+          (rule as CSSStyleRule).selectorText.startsWith('.fi-')
       )
-      .map((rule) => rule.selectorText?.replace('.fi-', ''));
+      .map((rule) => (rule as CSSStyleRule).selectorText.replace('.fi-', ''));
 
     setFlagList(flagCSS);
   }, []);
