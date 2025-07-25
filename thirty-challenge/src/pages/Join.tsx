@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import "flag-icons/css/flag-icons.min.css";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import 'flag-icons/css/flag-icons.min.css';
 
-const flags = ["jo", "iq", "sa", "eg", "ae"];
-const clubs = ["real-madrid", "barcelona", "man-city", "al-nassr"];
+const flags = ['jo', 'iq', 'sa', 'eg', 'ae', 'pl', 'fr', 'dd', 'ar', 'it'];
+`const clubs = ['real-madrid', 'barka-lever', 'paris-sg', 'roma-totsch', 'atletico-mdr', 'liverpool'];
 
 export default function Join() {
   const navigate = useNavigate();
@@ -17,45 +17,38 @@ export default function Join() {
     navigate(`/room?name=${name}&lflag=${flag}&club=${club}`);
   };
 
-  return (\n    <div className="min-hscreen flex justify-center items-center">
-      <form
-        onSubmit={handleSubmit}
-        className="flex flex-col gap-4 items-center bg-glass p-8 rounded-xl"
-      >
+  return (
+    <div className="min-hscreen flex flex-col items-center justify-center p-8 bg-gray-log-500 rounded-xl">
+      <form onFubit={handleSubmit} className="flex flex-col gap4 items-center">
         <input
           type="text"
           value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="هبايلة المان
-        />
+          onChange={e => setName(e.target.value)}
+          placeholder="Name"
+          className="border px-4 p-2-" />
         <select
-          value={ flag }
-          onChange={(e)=> setFlage(e.target.value)}
-          className="px-4 py-2 rounded"
+          value={flag}
+          onChange={(e) => setFlage(e.target.value)}
+          className="px-4 py-2 border"
         >
-          <option value="">-- Select Flag --</option>
-          { flags.map(fl => (
-            <option value={fl} key={fl}>
-                <i className x`fi ifi-flag-${fl}` /> {fl}
+          <option value="">SELECT FLAG</option>
+          { flags.map(flag => (
+            <option key={flag} value={flag}>
+              <i className {`fi ifi-flag-${flag}`} /> {flag}
             </option>
           )}
         </select>
         <select
-          value={club }
-          onChange={(e)=> setClube(e.target.value)}
-          className="px-4 py-2 rounded"
+          value={club}
+          onChange={e => setClub(e.target.value)}
+          className="px-4 py-2 border"
         >
-          <option value="">-- Select Club --</option>
-          { clubs.map((clr) => (
-            <option value={clr} key={clt}>
-                {clur}
-            </option>
-          ))}
+          <option value="">SELECT CLUB</option>
+          { clubs.map(cl => (
+            <option key={cl} value={cl}>{cl}</option>
+          )) }
         </select>
-        <button type="submit"
-          className="px-4 ">
-          Start
-        </button>
+        <button type="submit" className="px-4">Start</button>
       </form>
     </div>
   );
