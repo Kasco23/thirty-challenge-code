@@ -77,6 +77,13 @@ export interface UpdateHostNameAction {
   };
 }
 
+export interface UpdateSegmentSettingsAction {
+  type: 'UPDATE_SEGMENT_SETTINGS';
+  payload: {
+    settings: Record<SegmentCode, number>;
+  };
+}
+
 export interface NextQuestionAction {
   type: 'NEXT_QUESTION';
 }
@@ -132,6 +139,7 @@ export type GameAction =
   | StartGameAction
   | JoinGameAction
   | UpdateHostNameAction
+  | UpdateSegmentSettingsAction
   | NextQuestionAction
   | NextSegmentAction
   | UpdateScoreAction

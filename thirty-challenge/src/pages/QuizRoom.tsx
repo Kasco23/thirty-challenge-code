@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useGame } from '../context/GameContext';
+import { useGame } from '../hooks/useGame';
 import { getQuestionsForSegment } from '../data/questions';
 import Buzzer from '../components/Buzzer';
 import Scoreboard from '../components/Scoreboard';

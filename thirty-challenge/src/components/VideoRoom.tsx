@@ -1,49 +1,83 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
-// Daily.co integration
+// Dynamic import for Daily.co
 let DailyIframe: typeof import('@daily-co/daily-js').default | null = null;
 
-// Daily.co types
 interface DailyCallFrame {
-  iframe(): HTMLIFrameElement;
-  join(options: { url: string; userName: string }): Promise<void>;
-  on(event: string, callback: (data: { error?: { msg: string } }) => void): DailyCallFrame;
+  join(options: { url: string; token?: string }): Promise<void>;
+  leave(): Promise<void>;
   destroy(): void;
+  iframe(): HTMLIFrameElement;
+  on(event: string, handler: (event?: unknown) => void): void;
+  off(event: string, handler: (event?: unknown) => void): void;
 }
 
 interface DailyFrameOptions {
-  iframeStyle: {
-    width: string;
-    height: string;
-    border: string;
-    borderRadius: string;
-  };
   showLeaveButton: boolean;
   showFullscreenButton: boolean;
   showLocalVideo: boolean;
   showParticipantsBar: boolean;
 }
 
-// Dynamically import Daily.co only if API key is available
-const initializeDaily = async () => {
-  if (import.meta.env.VITE_DAILY_API_KEY && import.meta.env.VITE_DAILY_API_KEY !== 'your_daily_api_key_here') {
-    try {
-      const Daily = await import('@daily-co/daily-js');
-      DailyIframe = Daily.default;
-      return true;
-    } catch (error) {
-      console.warn('Failed to load Daily.co:', error);
-      return false;
+// Initialize Daily.co SDK
+const initializeDaily = async (): Promise<boolean> => {
+  try {
+    if (!DailyIframe) {
+      const DailyJs = await import('@daily-co/daily-js');
+      DailyIframe = DailyJs.default;
     }
+    return true;
+  } catch (error) {
+    console.error('Failed to load Daily.co SDK:', error);
+    return false;
   }
-  return false;
+};
+
+// API functions for room and token management
+const createRoom = async (roomName: string): Promise<{ roomName: string; url: string } | null> => {
+  try {
+    const response = await fetch('/.netlify/functions/create-daily-room', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomName })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to create room: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error creating room:', error);
+    return null;
+  }
+};
+
+const createToken = async (room: string, user: string, isHost: boolean): Promise<string | null> => {
+  try {
+    const response = await fetch('/.netlify/functions/create-daily-token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ room, user, isHost })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to create token: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data.token;
+  } catch (error) {
+    console.error('Error creating token:', error);
+    return null;
+  }
 };
 
 interface VideoRoomProps {
   roomName?: string;
   userName?: string;
-  isHost?: boolean; // New prop to determine if this is the host's video
+  isHost?: boolean;
 }
 
 export default function VideoRoom({ roomName = 'quiz-room', userName = 'User', isHost = false }: VideoRoomProps) {
@@ -51,89 +85,111 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User', i
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showInstructions, setShowInstructions] = useState(false);
-  const [dailyAvailable, setDailyAvailable] = useState(false);
+  const [roomUrl, setRoomUrl] = useState<string | null>(null);
+  
   const callFrameRef = useRef<HTMLDivElement>(null);
   const callFrame = useRef<DailyCallFrame | null>(null);
   const isInitialized = useRef(false);
 
-  // Initialize Daily.co
   useEffect(() => {
-    // Prevent multiple initializations
     if (isInitialized.current) return;
     isInitialized.current = true;
 
     const setup = async () => {
       setIsLoading(true);
       setError(null);
-      
-      const available = await initializeDaily();
-      setDailyAvailable(available);
-      
-      if (available && DailyIframe && !callFrame.current) {
-        try {
-          // Create Daily call frame
+
+      // Initialize Daily.co SDK
+      const dailyAvailable = await initializeDaily();
+      if (!dailyAvailable) {
+        setError('Daily.co SDK not available');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Create room first
+        const roomData = await createRoom(roomName);
+        if (!roomData) {
+          setError('Failed to create video room');
+          setIsLoading(false);
+          return;
+        }
+
+        setRoomUrl(roomData.url);
+
+        // Create token for user
+        const token = await createToken(roomName, userName, isHost);
+        if (!token) {
+          setError('Failed to create access token');
+          setIsLoading(false);
+          return;
+        }
+
+        // If this is a host PC (control only), don't initialize video
+        if (isHost && !userName.includes('mobile')) {
+          setIsLoading(false);
+          return;
+        }
+
+        // Initialize Daily.co frame
+        if (DailyIframe && !callFrame.current) {
           const frameOptions: DailyFrameOptions = {
-            iframeStyle: {
-              width: '100%',
-              height: '100%',
-              border: '0',
-              borderRadius: '8px',
-            },
-            showLeaveButton: false,
+            showLeaveButton: true,
             showFullscreenButton: false,
             showLocalVideo: true,
-            showParticipantsBar: false,
+            showParticipantsBar: true
           };
-          
+
           callFrame.current = DailyIframe.createFrame(frameOptions) as DailyCallFrame;
 
-          // Attach to DOM
+          // Event listeners
+          const handleJoined = () => {
+            console.log('Successfully joined Daily.co room');
+            setIsConnected(true);
+            setIsLoading(false);
+          };
+
+          const handleLeft = () => {
+            console.log('Left Daily.co room');
+            setIsConnected(false);
+          };
+
+          const handleError = (event?: unknown) => {
+            const errorEvent = event as { errorMsg?: string } | undefined;
+            console.error('Daily.co error:', event);
+            setError(`Video error: ${errorEvent?.errorMsg || 'Unknown error'}`);
+            setIsLoading(false);
+          };
+
+          callFrame.current.on('joined-meeting', handleJoined);
+          callFrame.current.on('left-meeting', handleLeft);
+          callFrame.current.on('error', handleError);
+
+          // Append iframe to container
           if (callFrameRef.current && callFrame.current.iframe()) {
-            // Clear any existing content first
             callFrameRef.current.innerHTML = '';
             callFrameRef.current.appendChild(callFrame.current.iframe());
           }
 
-          // Set up event listeners
-          callFrame.current
-            .on('joined-meeting', () => {
-              setIsConnected(true);
-              setIsLoading(false);
-              setError(null);
-            })
-            .on('left-meeting', () => {
-              setIsConnected(false);
-            })
-            .on('error', (event: { error?: { msg: string } }) => {
-              const errorMsg = event.error?.msg || 'Unknown error';
-              console.error('Daily.co error:', errorMsg);
-              setError(`Connection error: ${errorMsg}`);
-              setIsLoading(false);
-            });
-
-          // Join the room with proper room URL
-          const roomUrl = `https://thirty-challenge.daily.co/${roomName}`;
-          console.log('Joining Daily.co room:', roomUrl, 'as', userName);
-          
-          await callFrame.current.join({ 
-            url: roomUrl,
-            userName: userName
+          // Join room with token
+          await callFrame.current.join({
+            url: roomData.url,
+            token: token
           });
-
-        } catch (err: unknown) {
-          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-          console.error('Failed to initialize Daily.co:', errorMessage);
-          setError(`Failed to initialize video: ${errorMessage}`);
-          setIsLoading(false);
         }
-      } else {
+
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        console.error('Setup error:', errorMessage);
+        setError(`Setup failed: ${errorMessage}`);
         setIsLoading(false);
       }
     };
 
     setup();
 
-    // Cleanup function
+    // Cleanup
     return () => {
       if (callFrame.current) {
         try {
@@ -145,152 +201,105 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User', i
       }
       isInitialized.current = false;
     };
-  }, [roomName, userName]); // Only re-run if roomName or userName changes
+  }, [roomName, userName, isHost]);
 
-  // If this is a host video on PC, show placeholder
-  if (isHost) {
+  // Host PC view (control only, no video)
+  if (isHost && !userName.includes('mobile')) {
     return (
       <div className="relative w-full aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center">
-          <motion.div
+          <motion.div 
             className="text-center p-4"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
-            <div className="w-16 h-16 bg-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-              </svg>
-            </div>
-            <p className="text-white text-sm font-arabic mb-2">جهاز التحكم - بدون كاميرا</p>
-            <p className="text-white/70 text-xs font-arabic">للمشاركة بالفيديو، انضم من هاتفك كمقدم</p>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
-
-  // If Daily.co is not available, show placeholder with instructions
-  if (!dailyAvailable) {
-    return (
-      <div className="relative w-full aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <motion.div
-            className="text-center p-4"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
-            <div className="w-16 h-16 bg-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
-              </svg>
-            </div>
-            <p className="text-white text-sm font-arabic">إعداد الفيديو مطلوب</p>
-            <button
-              onClick={() => setShowInstructions(true)}
-              className="mt-2 px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white text-xs rounded"
-            >
-              إعداد Daily.co
-            </button>
-          </motion.div>
-        </div>
-
-        {/* Setup instructions overlay */}
-        {showInstructions && (
-          <motion.div
-            className="absolute inset-0 bg-black/90 p-4 text-white text-xs overflow-y-auto"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            <button
-              onClick={() => setShowInstructions(false)}
-              className="absolute top-2 right-2 text-white hover:text-gray-300"
-            >
-              ✕
-            </button>
-            
-            <h3 className="font-bold mb-3 text-yellow-300">🎥 Daily.co Setup Instructions:</h3>
-            
-            <div className="space-y-3">
-              <div className="bg-blue-500/20 p-3 rounded">
-                <p className="font-bold text-blue-300">1. Get Daily.co API Key:</p>
-                <p>• Go to https://daily.co/dashboard</p>
-                <p>• Sign up (free account)</p>
-                <p>• Go to Developers → API Keys</p>
-                <p>• Copy your API key</p>
+            <div className="text-white text-lg font-arabic mb-2">🎮 جهاز التحكم</div>
+            <p className="text-white/70 text-sm font-arabic mb-4">هذا الجهاز للتحكم في اللعبة فقط</p>
+            {roomUrl && (
+              <div className="bg-blue-500/20 rounded-lg p-3">
+                <p className="text-blue-300 text-xs font-arabic mb-1">غرفة الفيديو جاهزة</p>
+                <p className="text-blue-200 text-xs font-mono">{roomName}</p>
               </div>
-              
-              <div className="bg-green-500/20 p-3 rounded">
-                <p className="font-bold text-green-300">2. Add to Environment:</p>
-                <p>• Local: Add to your .env file:</p>
-                <code className="block bg-black/50 p-2 mt-1 rounded text-xs">
-                  VITE_DAILY_API_KEY=your_api_key_here
-                </code>
-                <p className="mt-2">• Netlify: Add in Site Settings → Environment Variables</p>
-              </div>
-              
-              <div className="bg-purple-500/20 p-3 rounded">
-                <p className="font-bold text-purple-300">3. Daily.co Free Tier:</p>
-                <p>• 10,000 minutes/month FREE</p>
-                <p>• $15 credit for evaluation</p>
-                <p>• Perfect for your quiz sessions!</p>
-              </div>
-            </div>
-            
-            <div className="mt-4 p-3 bg-yellow-500/20 rounded">
-              <p className="text-yellow-200 font-bold">💡 Alternative Options:</p>
-              <p className="text-yellow-200">If you prefer not to use Daily.co:</p>
-              <p>• Use WhatsApp video call on phones</p>
-              <p>• Use Discord voice chat</p>
-              <p>• Use Zoom (40min limit)</p>
-            </div>
+            )}
           </motion.div>
-        )}
+        </div>
       </div>
     );
   }
 
-  // Daily.co is available - show video interface
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="relative w-full aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <motion.div 
+            className="text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-white text-sm font-arabic">جاري الاتصال بالفيديو...</p>
+            <p className="text-white/70 text-xs font-arabic mt-1">{userName}</p>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="relative w-full aspect-video bg-gradient-to-br from-red-900/30 to-gray-900 rounded-lg overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center p-4">
+          <motion.div 
+            className="text-center max-w-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="text-red-400 text-lg mb-2">⚠️</div>
+            <p className="text-red-300 text-sm font-arabic mb-4">{error}</p>
+            
+            <button
+              onClick={() => setShowInstructions(!showInstructions)}
+              className="text-blue-400 text-xs font-arabic underline hover:text-blue-300"
+            >
+              عرض البدائل المجانية
+            </button>
+
+            {showInstructions && (
+              <motion.div 
+                className="mt-4 p-3 bg-blue-500/10 rounded-lg text-right"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+              >
+                <p className="text-blue-300 text-xs font-arabic mb-2">بدائل مجانية للفيديو:</p>
+                <div className="text-blue-200 text-xs font-arabic space-y-1">
+                  <p>• واتساب (مكالمة جماعية)</p>
+                  <p>• ديسكورد (مجاني تماماً)</p>
+                  <p>• زوم (40 دقيقة مجاناً)</p>
+                  <p>• جوجل ميت (مجاني)</p>
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // Video interface
   return (
     <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
-      {/* Video container */}
       <div ref={callFrameRef} className="w-full h-full" />
       
-      {/* Loading overlay */}
-      {isLoading && (
-        <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
-          <div className="text-center text-white">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-            <p className="text-sm font-arabic">جاري الاتصال بالفيديو...</p>
-            <p className="text-xs text-white/70 font-arabic mt-1">{userName}</p>
-          </div>
-        </div>
-      )}
-      
-      {/* Error overlay */}
-      {error && (
-        <div className="absolute inset-0 bg-red-900/80 flex items-center justify-center">
-          <div className="text-center text-white p-4">
-            <p className="text-sm font-arabic mb-2">خطأ في الاتصال:</p>
-            <p className="text-xs">{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-2 px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded"
-            >
-              إعادة المحاولة
-            </button>
-          </div>
-        </div>
-      )}
-      
-      {/* Connection status indicator */}
-      <div className="absolute top-2 left-2">
-        <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+      {/* User info overlay */}
+      <div className="absolute bottom-2 left-2 bg-black/50 rounded px-2 py-1">
+        <p className="text-white text-xs font-arabic">{userName}</p>
       </div>
 
-      {/* User name indicator */}
-      <div className="absolute bottom-2 left-2 bg-black/70 px-2 py-1 rounded text-white text-xs font-arabic">
-        {userName}
+      {/* Connection status */}
+      <div className="absolute top-2 right-2">
+        <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
       </div>
     </div>
   );

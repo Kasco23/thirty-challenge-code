@@ -6,6 +6,7 @@ import Join from './pages/Join';
 import HostSetup from './pages/HostSetup';
 import QuizRoom from './pages/QuizRoom';
 import Lobby from './pages/Lobby';
+import UnifiedLobby from './pages/UnifiedLobby';
 import Room from './pages/Room';
 import SegmentIntro from './pages/SegmentIntro';
 import HostPanel from './pages/HostPanel';
@@ -35,9 +36,9 @@ function App() {
             <Route path="/join" element={<Join />} />
             <Route path="/host-setup/:gameId" element={<HostSetup />} />
             
-            {/* New proper routing structure */}
-            <Route path="/lobby/:gameId" element={<Lobby />} />
-            <Route path="/game/:gameId" element={<QuizRoom />} />
+                              {/* New proper routing structure */}
+                  <Route path="/lobby/:gameId" element={<UnifiedLobby />} />
+                  <Route path="/game/:gameId" element={<QuizRoom />} />
             
             {/* Legacy routes for backward compatibility */}
             <Route path="/room/:roomId" element={<QuizRoom />} />

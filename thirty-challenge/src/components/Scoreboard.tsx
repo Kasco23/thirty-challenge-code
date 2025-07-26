@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useGame } from '../context/GameContext';
+import { useGame } from '../hooks/useGame';
 import { CLUB_THEMES } from '../themes/clubs';
 import type { PlayerId } from '../types/game';
 
