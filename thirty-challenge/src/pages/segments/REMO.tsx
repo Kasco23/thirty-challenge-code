@@ -1,3 +1,3 @@
 export default function REMO() {
-  return <div className="p">REMO Segment</tiv>;
+  return (<div className="p">REMO segment</div>);
 }
