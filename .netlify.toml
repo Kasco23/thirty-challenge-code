@@ -1,18 +1,15 @@
 [build]
   base = "thirty-challenge"
-  command = "npm ci && npm run build"
+  command = "npm run build"
   publish = "dist"
-  environment = { SECRETS_SCAN_ENABLED = "false" }
+  # Re-export read-only Netlify vars so they're visible to the client bundle
+  environment = { VITE_COMMIT_REF = "$COMMIT_REF" }
 
-# Context-specific settings
-[context.production]
-  command = "npm ci && npm run build"
-  environment = { SECRETS_SCAN_ENABLED = "false" }
+[functions]
+  node_bundler = "esbuild"
 
-[context.deploy-preview]
-  command = "npm ci && npm run build"
-  environment = { SECRETS_SCAN_ENABLED = "false" }
-
-[context.branch-deploy]
-  command = "npm ci && npm run build"
-  environment = { SECRETS_SCAN_ENABLED = "false" }
+# Redirects for SPA routing
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
