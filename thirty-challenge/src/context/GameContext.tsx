@@ -3,7 +3,6 @@ import { supabase } from '../lib/supabaseClient';
 import type { 
   GameState, 
   GameAction, 
-  GameActionType, 
   PlayerId, 
   Player,
   Question 
@@ -125,14 +124,14 @@ const initialGameState: GameState = {
 
 // Game reducer
 function gameReducer(state: GameState, action: GameAction): GameState {
-  switch (action.type as GameActionType) {
+  switch (action.type) {
     case 'PLAYER_JOIN':
       return {
         ...state,
         players: {
           ...state.players,
           [action.payload.playerId]: {
-            ...state.players[action.payload.playerId as PlayerId],
+            ...state.players[action.payload.playerId],
             name: action.payload.name,
             flag: action.payload.flag,
             club: action.payload.club,
@@ -149,7 +148,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         gameId: action.payload.gameId,
       };
 
-    case 'NEXT_SEGMENT':
+    case 'NEXT_SEGMENT': {
       const currentIndex = state.settings.enabledSegments.indexOf(state.currentSegment!);
       const nextSegment = state.settings.enabledSegments[currentIndex + 1];
       
@@ -163,6 +162,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           ? [...state.completedSegments, state.currentSegment]
           : state.completedSegments,
       };
+    }
 
     case 'NEXT_QUESTION':
       return {
@@ -188,7 +188,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           bell: {
             isActive: false,
-            clickedBy: action.playerId!,
+            clickedBy: action.playerId,
             clickTime: action.timestamp,
           },
           timer: {
@@ -200,8 +200,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       }
       return state;
 
-    case 'ADD_STRIKE':
-      const playerId = action.playerId!;
+    case 'ADD_STRIKE': {
+      const playerId = action.playerId;
       const newStrikes = state.players[playerId].strikes + 1;
       
       return {
@@ -214,9 +214,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           }
         }
       };
+    }
 
-    case 'UPDATE_SCORE':
-      const scorePlayerId = action.payload.playerId as PlayerId;
+    case 'UPDATE_SCORE': {
+      const scorePlayerId = action.payload.playerId;
       return {
         ...state,
         players: {
@@ -227,23 +228,24 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           }
         }
       };
+    }
 
-    case 'USE_SPECIAL_BUTTON':
+    case 'USE_SPECIAL_BUTTON': {
       const { playerId: buttonPlayerId, buttonType } = action.payload;
-      const targetPlayerId = buttonPlayerId as PlayerId;
       return {
         ...state,
         players: {
           ...state.players,
-          [targetPlayerId]: {
-            ...state.players[targetPlayerId],
+          [buttonPlayerId]: {
+            ...state.players[buttonPlayerId],
             specialButtons: {
-              ...state.players[targetPlayerId].specialButtons,
+              ...state.players[buttonPlayerId].specialButtons,
               [buttonType]: false, // Disable after use
             }
           }
         }
       };
+    }
 
     case 'START_TIMER':
       return {
@@ -272,7 +274,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           ...state.auction,
           bids: {
             ...state.auction.bids,
-            [action.playerId!]: action.payload.bidAmount,
+            [action.playerId]: action.payload.bidAmount,
           }
         }
       };
@@ -313,7 +315,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     joinGame: (playerId: PlayerId, playerData: Partial<Player>) => {
       dispatch({
         type: 'PLAYER_JOIN',
-        payload: { playerId, ...playerData },
+        payload: { 
+          playerId, 
+          name: playerData.name || state.players[playerId].name,
+          flag: playerData.flag,
+          club: playerData.club,
+        },
         timestamp: Date.now(),
       });
     },
