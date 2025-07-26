@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useReducer, useEffect, useMemo } from 'react';
+import React, { useReducer, useEffect, useMemo } from 'react';
 import type { GameState, GameAction, PlayerId, SegmentCode } from '../types/game';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { INITIAL_GAME_STATE } from '../constants/gameState';
+import { GameContext } from './GameContextDefinition';
 
 // Using imported initial state
 
@@ -205,25 +206,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
   }
 }
 
-interface GameContextType {
-  state: GameState;
-  actions: {
-    startGame: (gameId: string) => void;
-    joinGame: (playerId: PlayerId, playerData: Partial<GameState['players'][PlayerId]>) => void;
-    updateHostName: (hostName: string) => void;
-    updateSegmentSettings: (settings: Record<SegmentCode, number>) => void;
-    nextQuestion: () => void;
-    nextSegment: () => void;
-    updateScore: (playerId: PlayerId, points: number) => void;
-    addStrike: (playerId: PlayerId) => void;
-    useSpecialButton: (playerId: PlayerId, buttonType: keyof GameState['players'][PlayerId]['specialButtons']) => void;
-    startTimer: (duration: number) => void;
-    stopTimer: () => void;
-    resetGame: () => void;
-  };
-}
 
-const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, INITIAL_GAME_STATE);
@@ -289,6 +272,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     stopTimer: () => {
       dispatch({ type: 'STOP_TIMER' });
     },
+    tickTimer: () => {
+      dispatch({ type: 'TICK_TIMER' });
+    },
     resetGame: () => {
       dispatch({ type: 'RESET_GAME' });
     },
@@ -299,12 +285,4 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       {children}
     </GameContext.Provider>
   );
-}
-
-export function useGame() {
-  const context = useContext(GameContext);
-  if (context === undefined) {
-    throw new Error('useGame must be used within a GameProvider');
-  }
-  return context;
 }

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useGame } from '../context/GameContext';
+import { useGame } from '../hooks/useGame';
 import VideoRoom from '../components/VideoRoom';
 import { CLUB_THEMES } from '../themes/clubs';
 

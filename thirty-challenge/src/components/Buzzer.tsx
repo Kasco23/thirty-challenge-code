@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useGame } from '../context/GameContext';
+import { useGame } from '../hooks/useGame';
 
 export default function Buzzer() {
   const { state } = useGame();

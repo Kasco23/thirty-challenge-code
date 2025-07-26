@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useGame } from '../context/GameContext';
+import { useGame } from '../hooks/useGame';
 import type { SegmentCode } from '../types/game';
 
 export default function HostSetup() {

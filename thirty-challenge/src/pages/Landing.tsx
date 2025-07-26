@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useGame } from "../context/GameContext";
+import { useGame } from "../hooks/useGame";
 import { useState } from "react";
 
 export default function Landing() {
