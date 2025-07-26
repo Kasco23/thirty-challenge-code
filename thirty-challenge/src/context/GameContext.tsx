@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import type { 
   GameState, 
   GameAction, 
@@ -405,9 +405,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     },
   };
 
-  // Real-time synchronization with Supabase (optional)
+  // Real-time synchronization with Supabase (only if configured)
   useEffect(() => {
-    if (state.gameId) {
+    if (state.gameId && isSupabaseConfigured()) {
       // Set up real-time listeners here
       const channel = supabase.channel(`game:${state.gameId}`)
         .on('broadcast', { event: 'game-action' }, (payload) => {
