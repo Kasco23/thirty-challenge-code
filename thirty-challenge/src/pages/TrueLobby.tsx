@@ -22,8 +22,11 @@ export default function TrueLobby() {
   const { state, actions } = useGame();
 
   const [myParticipant, setMyParticipant] = useState<LobbyParticipant | null>(null);
-  const [videoRoomCreated, setVideoRoomCreated] = useState(false);
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  
+  // Use global video room state
+  const videoRoomCreated = state.videoRoomCreated || false;
+  const videoRoomUrl = state.videoRoomUrl || '';
 
   // Initialize game and determine my role
   useEffect(() => {
@@ -85,6 +88,11 @@ export default function TrueLobby() {
     }
 
     setMyParticipant(participant);
+
+    // Track presence for real-time synchronization
+    if (participant) {
+      actions.trackPresence(participant);
+    }
   }, [gameId, searchParams, state.gameId, state.hostName, actions]);
 
   // Create video room when host PC clicks button
@@ -93,20 +101,14 @@ export default function TrueLobby() {
     
     setIsCreatingRoom(true);
     try {
-      // Call our Netlify function to create the room
-      const response = await fetch('/.netlify/functions/create-daily-room', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomName: gameId })
-      });
-
-      if (response.ok) {
-        setVideoRoomCreated(true);
-      } else {
-        console.error('Failed to create room');
+      const result = await actions.createVideoRoom(gameId);
+      if (!result.success) {
+        console.error('Failed to create room:', result.error);
+        alert('فشل في إنشاء غرفة الفيديو: ' + result.error);
       }
     } catch (error) {
       console.error('Error creating room:', error);
+      alert('خطأ في إنشاء غرفة الفيديو');
     } finally {
       setIsCreatingRoom(false);
     }
@@ -209,20 +211,25 @@ export default function TrueLobby() {
             </h3>
             
             <div className="aspect-video bg-black/30 rounded-lg mb-4 overflow-hidden">
-              {videoRoomCreated ? (
+              {videoRoomCreated && myParticipant.type === 'host-mobile' ? (
                 <VideoRoom 
-                  roomName={gameId} 
+                  gameId={gameId}
                   userName={state.hostName}
-                  isHost={false} // Host mobile shows video
+                  userRole="host-mobile"
+                  className="w-full h-full"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center text-white/50">
                     <div className="text-4xl mb-2">📱</div>
                     <p className="text-sm font-arabic">
-                      {myParticipant.type === 'host-pc' 
-                        ? 'اضغط "إنشاء غرفة الفيديو" أولاً' 
-                        : 'في انتظار إنشاء الغرفة...'}
+                      {!videoRoomCreated 
+                        ? myParticipant.type === 'host-pc' 
+                          ? 'اضغط "إنشاء غرفة الفيديو" أولاً' 
+                          : 'في انتظار إنشاء الغرفة...'
+                        : myParticipant.type === 'host-pc'
+                        ? 'انضم من هاتفك للفيديو'
+                        : 'في انتظار المقدم...'}
                     </p>
                   </div>
                 </div>
@@ -262,11 +269,12 @@ export default function TrueLobby() {
                 </h3>
 
                 <div className="aspect-video bg-black/30 rounded-lg mb-4 overflow-hidden">
-                  {player.isConnected && videoRoomCreated ? (
+                  {player.isConnected && videoRoomCreated && isMe ? (
                     <VideoRoom 
-                      roomName={gameId} 
+                      gameId={gameId}
                       userName={player.name}
-                      isHost={false}
+                      userRole={playerId}
+                      className="w-full h-full"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -275,7 +283,11 @@ export default function TrueLobby() {
                         <p className="text-sm font-arabic">
                           {!player.isConnected 
                             ? 'في انتظار الاتصال...' 
-                            : 'في انتظار إنشاء الغرفة...'}
+                            : !videoRoomCreated
+                            ? 'في انتظار إنشاء الغرفة...'
+                            : !isMe
+                            ? 'فيديو اللاعب الآخر'
+                            : 'في انتظار الفيديو...'}
                         </p>
                       </div>
                     </div>

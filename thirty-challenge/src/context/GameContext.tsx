@@ -1,8 +1,9 @@
-import React, { useReducer, useEffect, useMemo } from 'react';
+import React, { useReducer, useEffect, useMemo, useRef } from 'react';
 import type { GameState, GameAction, PlayerId, SegmentCode } from '../types/game';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
 import { INITIAL_GAME_STATE } from '../constants/gameState';
 import { GameContext } from './GameContextDefinition';
+import { createGameSync, GameSync, GameSyncCallbacks } from '../lib/gameSync';
 
 // Using imported initial state
 
@@ -210,20 +211,51 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, INITIAL_GAME_STATE);
+  const gameSyncRef = useRef<GameSync | null>(null);
+  const [videoRoomUrl, setVideoRoomUrl] = React.useState<string>('');
+  const [videoRoomCreated, setVideoRoomCreated] = React.useState<boolean>(false);
 
-  // Real-time synchronization with Supabase (if configured)
+  // Initialize real-time synchronization when game starts
   useEffect(() => {
-    if (!isSupabaseConfigured() || !state.gameId) return;
+    if (state.gameId && !gameSyncRef.current) {
+      const callbacks: GameSyncCallbacks = {
+        onGameStateUpdate: (gameState) => {
+          // Update local state with remote changes
+          if (gameState.hostName) {
+            dispatch({ type: 'UPDATE_HOST_NAME', payload: { hostName: gameState.hostName } });
+          }
+          if (gameState.players) {
+            Object.entries(gameState.players).forEach(([playerId, playerData]) => {
+              dispatch({ type: 'JOIN_GAME', payload: { playerId: playerId as PlayerId, playerData } });
+            });
+          }
+        },
+        onPlayerJoin: (playerId, playerData) => {
+          dispatch({ type: 'JOIN_GAME', payload: { playerId, playerData } });
+        },
+        onPlayerLeave: (playerId) => {
+          // Mark player as disconnected instead of removing
+          dispatch({ type: 'JOIN_GAME', payload: { playerId, playerData: { isConnected: false } } });
+        },
+        onHostUpdate: (hostName) => {
+          dispatch({ type: 'UPDATE_HOST_NAME', payload: { hostName } });
+        },
+        onVideoRoomUpdate: (roomUrl, roomCreated) => {
+          setVideoRoomUrl(roomUrl);
+          setVideoRoomCreated(roomCreated);
+        }
+      };
 
-    const channel = supabase.channel(`game-${state.gameId}`)
-      .on('broadcast', { event: 'game-update' }, ({ payload }) => {
-        // Handle incoming game state updates
-        console.log('Received game update:', payload);
-      })
-      .subscribe();
+      gameSyncRef.current = createGameSync(state.gameId, callbacks);
+      gameSyncRef.current.connect();
+    }
 
+    // Cleanup on unmount or game change
     return () => {
-      supabase.removeChannel(channel);
+      if (gameSyncRef.current) {
+        gameSyncRef.current.disconnect();
+        gameSyncRef.current = null;
+      }
     };
   }, [state.gameId]);
 
@@ -244,12 +276,73 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     },
     joinGame: (playerId: PlayerId, playerData: Partial<GameState['players'][PlayerId]>) => {
       dispatch({ type: 'JOIN_GAME', payload: { playerId, playerData } });
+      // Broadcast to other participants
+      gameSyncRef.current?.broadcastPlayerJoin(playerId, playerData);
     },
     updateHostName: (hostName: string) => {
       dispatch({ type: 'UPDATE_HOST_NAME', payload: { hostName } });
+      // Broadcast to other participants
+      gameSyncRef.current?.broadcastHostUpdate(hostName);
     },
     updateSegmentSettings: (settings: Record<SegmentCode, number>) => {
       dispatch({ type: 'UPDATE_SEGMENT_SETTINGS', payload: { settings } });
+      // Broadcast to other participants
+      gameSyncRef.current?.broadcastGameState({ segments: state.segments });
+    },
+    createVideoRoom: async (gameId: string) => {
+      try {
+        const response = await fetch('/.netlify/functions/create-daily-room', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomName: gameId })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const roomUrl = data.room.url;
+          setVideoRoomUrl(roomUrl);
+          setVideoRoomCreated(true);
+          // Broadcast to other participants
+          gameSyncRef.current?.broadcastVideoRoomUpdate(roomUrl, true);
+          return { success: true, roomUrl };
+        } else {
+          console.error('Failed to create room');
+          return { success: false, error: 'Failed to create room' };
+        }
+      } catch (error) {
+        console.error('Error creating room:', error);
+        return { success: false, error: 'Network error' };
+      }
+    },
+    generateDailyToken: async (gameId: string, userName: string, userRole: string) => {
+      try {
+        const response = await fetch('/.netlify/functions/create-daily-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomName: gameId, userName, userRole })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return { success: true, token: data.token };
+        } else {
+          console.error('Failed to create token');
+          return { success: false, error: 'Failed to create token' };
+        }
+      } catch (error) {
+        console.error('Error creating token:', error);
+        return { success: false, error: 'Network error' };
+      }
+    },
+    trackPresence: (participantData: {
+      id: string;
+      name: string;
+      type: 'host-pc' | 'host-mobile' | 'player';
+      playerId?: PlayerId;
+      flag?: string;
+      club?: string;
+    }) => {
+      gameSyncRef.current?.trackPresence(participantData);
     },
     nextQuestion: () => {
       dispatch({ type: 'NEXT_QUESTION' });
@@ -281,7 +374,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }), []);
 
   return (
-    <GameContext.Provider value={{ state, actions }}>
+    <GameContext.Provider value={{ 
+      state: { 
+        ...state, 
+        videoRoomUrl, 
+        videoRoomCreated 
+      }, 
+      actions 
+    }}>
       {children}
     </GameContext.Provider>
   );
