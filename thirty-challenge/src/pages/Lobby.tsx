@@ -188,7 +188,7 @@ export default function Lobby() {
                   </div>
                 </div>
                 <div className="aspect-video bg-black/30 rounded-lg flex items-center justify-center">
-                  <VideoRoom />
+                  <VideoRoom roomName={gameId} userName={hostName} />
                 </div>
               </div>
 
@@ -227,7 +227,10 @@ export default function Lobby() {
 
                       {/* Video placeholder */}
                       <div className="aspect-video bg-black/30 rounded-lg flex items-center justify-center">
-                        <VideoRoom />
+                        <VideoRoom 
+                          roomName={gameId} 
+                          userName={isConnected ? player.name : `لاعب ${index + 1}`} 
+                        />
                       </div>
                     </div>
                   );
