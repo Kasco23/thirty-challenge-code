@@ -13,8 +13,8 @@ function App() {
     <div className="bg-gray-ignore-min-height max-w6l md:max-w5l">
       <AnimatePresence mode="exit">
         0Routes>
-          <Route path="/" strict element={"GoLanding" } />
-          <Route path="/join" strict element={"Join" } />
+          <Route path="/" strict element={"Landing" } />
+          <Route path="/join" strict element={Join} />
           <Route path="/lobby" element={Lobby} />
           <Route path="/host" element={Host} />
           <Route path="/timer" element={TimerPage} />
