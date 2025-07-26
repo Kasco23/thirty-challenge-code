@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGame } from '../hooks/useGame';
-import VideoRoom from '../components/VideoRoom';
+// VideoRoom import removed - using TrueLobby instead
 import { CLUB_THEMES } from '../themes/clubs';
 
 type UserRole = 'host' | 'host-mobile' | 'playerA' | 'playerB';
@@ -111,7 +111,10 @@ export default function Lobby() {
 
           {/* Video Chat */}
           <div className="mb-6">
-            <VideoRoom roomName={gameId} userName={state.hostName} isHost={false} />
+            {/* <VideoRoom gameId={gameId} userName={state.hostName} userRole="host-mobile" /> */}
+            <div className="bg-gray-800 rounded-lg p-4 text-center text-white/50 font-arabic">
+              استخدم TrueLobby للفيديو
+            </div>
           </div>
 
           {/* Game Status */}
@@ -205,7 +208,10 @@ export default function Lobby() {
                     </div>
                   </div>
                   <div className="aspect-video bg-black/30 rounded-lg flex items-center justify-center">
-                    <VideoRoom roomName={gameId} userName={state.hostName} isHost={true} />
+                    {/* <VideoRoom gameId={gameId} userName={state.hostName} userRole="host-mobile" /> */}
+                    <div className="bg-gray-800 rounded-lg p-4 text-center text-white/50 font-arabic">
+                      استخدم TrueLobby للفيديو
+                    </div>
                   </div>
                 </div>
 
@@ -244,11 +250,9 @@ export default function Lobby() {
 
                         {/* Video placeholder */}
                         <div className="aspect-video bg-black/30 rounded-lg flex items-center justify-center">
-                          <VideoRoom 
-                            roomName={gameId} 
-                            userName={isConnected ? player.name : `لاعب ${index + 1}`} 
-                            isHost={false}
-                          />
+                          <div className="bg-gray-800 rounded-lg p-4 text-center text-white/50 font-arabic">
+                            استخدم TrueLobby للفيديو
+                          </div>
                         </div>
                       </div>
                     );
@@ -308,7 +312,10 @@ export default function Lobby() {
 
           {/* Video Chat */}
           <div className="mb-6">
-            <VideoRoom roomName={gameId} userName={player.name} isHost={false} />
+            {/* <VideoRoom gameId={gameId} userName={player.name} userRole="playerA" /> */}
+            <div className="bg-gray-800 rounded-lg p-4 text-center text-white/50 font-arabic">
+              استخدم TrueLobby للفيديو
+            </div>
           </div>
 
           {/* Waiting Status */}

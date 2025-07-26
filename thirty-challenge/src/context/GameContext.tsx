@@ -1,9 +1,9 @@
 import React, { useReducer, useEffect, useMemo, useRef } from 'react';
 import type { GameState, GameAction, PlayerId, SegmentCode } from '../types/game';
-import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+// Removed unused imports - using gameSync for real-time functionality
 import { INITIAL_GAME_STATE } from '../constants/gameState';
 import { GameContext } from './GameContextDefinition';
-import { createGameSync, GameSync, GameSyncCallbacks } from '../lib/gameSync';
+import { createGameSync, GameSync, type GameSyncCallbacks } from '../lib/gameSync';
 
 // Using imported initial state
 
@@ -231,7 +231,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           }
         },
         onPlayerJoin: (playerId, playerData) => {
-          dispatch({ type: 'JOIN_GAME', payload: { playerId, playerData } });
+          dispatch({ type: 'JOIN_GAME', payload: { playerId, playerData: playerData as Partial<GameState['players'][PlayerId]> } });
         },
         onPlayerLeave: (playerId) => {
           // Mark player as disconnected instead of removing
@@ -371,7 +371,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     resetGame: () => {
       dispatch({ type: 'RESET_GAME' });
     },
-  }), []);
+  }), [gameSyncRef, state.segments]);
 
   return (
     <GameContext.Provider value={{ 

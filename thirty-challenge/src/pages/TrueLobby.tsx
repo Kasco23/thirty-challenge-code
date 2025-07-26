@@ -26,7 +26,6 @@ export default function TrueLobby() {
   
   // Use global video room state
   const videoRoomCreated = state.videoRoomCreated || false;
-  const videoRoomUrl = state.videoRoomUrl || '';
 
   // Initialize game and determine my role
   useEffect(() => {

@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useRef, useState, useCallback } from 'react';
 import DailyIframe from '@daily-co/daily-js';
 import { useGame } from '../hooks/useGame';
 
@@ -12,21 +13,12 @@ interface VideoRoomProps {
 export default function VideoRoom({ gameId, userName, userRole, className = '' }: VideoRoomProps) {
   const { state, actions } = useGame();
   const callFrameRef = useRef<HTMLDivElement>(null);
-  const callObjectRef = useRef<any>(null);
+  const callObjectRef = useRef<unknown>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [callState, setCallState] = useState<string>('new');
   const [error, setError] = useState<string>('');
 
-  // Join the video call when room is available
-  useEffect(() => {
-    if (!state.videoRoomCreated || !state.videoRoomUrl || callObjectRef.current) {
-      return;
-    }
-
-    joinCall();
-  }, [state.videoRoomCreated, state.videoRoomUrl, gameId, userName, userRole]);
-
-  const joinCall = async () => {
+  const joinCall = useCallback(async () => {
     if (!callFrameRef.current) return;
 
     setIsJoining(true);
@@ -40,7 +32,7 @@ export default function VideoRoom({ gameId, userName, userRole, className = '' }
       }
 
       // Create Daily call object
-      callObjectRef.current = DailyIframe.createCallObject({
+      const callObject = DailyIframe.createCallObject({
         iframeStyle: {
           position: 'relative',
           width: '100%',
@@ -49,9 +41,11 @@ export default function VideoRoom({ gameId, userName, userRole, className = '' }
           borderRadius: '12px'
         }
       });
+      
+      callObjectRef.current = callObject;
 
       // Add event listeners
-      callObjectRef.current
+      (callObject as any)
         .on('joined-meeting', () => {
           console.log('Joined meeting successfully');
           setCallState('joined');
@@ -61,20 +55,21 @@ export default function VideoRoom({ gameId, userName, userRole, className = '' }
           console.log('Left meeting');
           setCallState('left');
         })
-        .on('error', (error: any) => {
+        .on('error', (error: unknown) => {
           console.error('Daily.co error:', error);
-          setError(error.errorMsg || 'Video call error');
+          const errorMsg = (error as { errorMsg?: string })?.errorMsg || 'Video call error';
+          setError(errorMsg);
           setIsJoining(false);
         })
-        .on('participant-joined', (event: any) => {
-          console.log('Participant joined:', event.participant);
+        .on('participant-joined', (event: unknown) => {
+          console.log('Participant joined:', (event as { participant?: unknown })?.participant);
         })
-        .on('participant-left', (event: any) => {
-          console.log('Participant left:', event.participant);
+        .on('participant-left', (event: unknown) => {
+          console.log('Participant left:', (event as { participant?: unknown })?.participant);
         });
 
       // Join the meeting
-      await callObjectRef.current.join({
+      await (callObject as any).join({
         url: state.videoRoomUrl,
         token: tokenResult.token,
         userName: userName,
@@ -83,20 +78,30 @@ export default function VideoRoom({ gameId, userName, userRole, className = '' }
       });
 
       // Append to DOM
-      callFrameRef.current.appendChild(callObjectRef.current.iframe());
+      callFrameRef.current.appendChild((callObject as any).iframe());
 
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to join video call';
       console.error('Failed to join call:', error);
-      setError(error.message || 'Failed to join video call');
+      setError(errorMessage);
       setIsJoining(false);
     }
-  };
+  }, [actions, gameId, userName, userRole, state.videoRoomUrl]);
+
+  // Join the video call when room is available
+  useEffect(() => {
+    if (!state.videoRoomCreated || !state.videoRoomUrl || callObjectRef.current) {
+      return;
+    }
+
+    joinCall();
+  }, [state.videoRoomCreated, state.videoRoomUrl, joinCall]);
 
   const leaveCall = async () => {
     if (callObjectRef.current) {
       try {
-        await callObjectRef.current.leave();
-        await callObjectRef.current.destroy();
+        await (callObjectRef.current as any).leave();
+        await (callObjectRef.current as any).destroy();
         callObjectRef.current = null;
         setCallState('left');
       } catch (error) {

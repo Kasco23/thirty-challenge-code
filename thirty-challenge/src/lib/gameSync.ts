@@ -1,9 +1,10 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 import type { GameState, PlayerId } from '../types/game';
 
 export interface GameSyncCallbacks {
   onGameStateUpdate: (gameState: Partial<GameState>) => void;
-  onPlayerJoin: (playerId: PlayerId, playerData: any) => void;
+  onPlayerJoin: (playerId: PlayerId, playerData: unknown) => void;
   onPlayerLeave: (playerId: PlayerId) => void;
   onHostUpdate: (hostName: string) => void;
   onVideoRoomUpdate: (roomUrl: string, roomCreated: boolean) => void;
@@ -11,7 +12,7 @@ export interface GameSyncCallbacks {
 
 export class GameSync {
   private gameId: string;
-  private channel: any = null;
+  private channel: unknown = null;
   private callbacks: GameSyncCallbacks;
 
   constructor(gameId: string, callbacks: GameSyncCallbacks) {
@@ -33,45 +34,55 @@ export class GameSync {
           broadcast: { self: true },
           presence: { key: 'participants' }
         }
-      });
+      }) as unknown;
 
       // Listen for game state broadcasts
-      this.channel.on('broadcast', { event: 'game_state_update' }, (payload: any) => {
-        this.callbacks.onGameStateUpdate(payload.gameState);
+      (this.channel as any)?.on('broadcast', { event: 'game_state_update' }, (payload: Record<string, unknown>) => {
+        if (payload.gameState) {
+          this.callbacks.onGameStateUpdate(payload.gameState as Partial<GameState>);
+        }
       });
 
-      this.channel.on('broadcast', { event: 'player_join' }, (payload: any) => {
-        this.callbacks.onPlayerJoin(payload.playerId, payload.playerData);
+      (this.channel as any)?.on('broadcast', { event: 'player_join' }, (payload: Record<string, unknown>) => {
+        if (payload.playerId && payload.playerData !== undefined) {
+          this.callbacks.onPlayerJoin(payload.playerId as PlayerId, payload.playerData);
+        }
       });
 
-      this.channel.on('broadcast', { event: 'player_leave' }, (payload: any) => {
-        this.callbacks.onPlayerLeave(payload.playerId);
+      (this.channel as any)?.on('broadcast', { event: 'player_leave' }, (payload: Record<string, unknown>) => {
+        if (payload.playerId) {
+          this.callbacks.onPlayerLeave(payload.playerId as PlayerId);
+        }
       });
 
-      this.channel.on('broadcast', { event: 'host_update' }, (payload: any) => {
-        this.callbacks.onHostUpdate(payload.hostName);
+      (this.channel as any)?.on('broadcast', { event: 'host_update' }, (payload: Record<string, unknown>) => {
+        if (payload.hostName) {
+          this.callbacks.onHostUpdate(payload.hostName as string);
+        }
       });
 
-      this.channel.on('broadcast', { event: 'video_room_update' }, (payload: any) => {
-        this.callbacks.onVideoRoomUpdate(payload.roomUrl, payload.roomCreated);
+      (this.channel as any)?.on('broadcast', { event: 'video_room_update' }, (payload: Record<string, unknown>) => {
+        if (payload.roomUrl && payload.roomCreated !== undefined) {
+          this.callbacks.onVideoRoomUpdate(payload.roomUrl as string, payload.roomCreated as boolean);
+        }
       });
 
       // Handle presence (who's currently in the lobby)
-      this.channel.on('presence', { event: 'sync' }, () => {
-        const newState = this.channel.presenceState();
+      (this.channel as any)?.on('presence', { event: 'sync' }, () => {
+        const newState = (this.channel as any)?.presenceState();
         console.log('Presence sync:', newState);
       });
 
-      this.channel.on('presence', { event: 'join' }, ({ key, newPresences }: any) => {
-        console.log('Participant joined:', key, newPresences);
+      (this.channel as any)?.on('presence', { event: 'join' }, (payload: Record<string, unknown>) => {
+        console.log('Participant joined:', payload);
       });
 
-      this.channel.on('presence', { event: 'leave' }, ({ key, leftPresences }: any) => {
-        console.log('Participant left:', key, leftPresences);
+      (this.channel as any)?.on('presence', { event: 'leave' }, (payload: Record<string, unknown>) => {
+        console.log('Participant left:', payload);
       });
 
       // Subscribe to the channel
-      await this.channel.subscribe(async (status: string) => {
+      await (this.channel as any)?.subscribe(async (status: string) => {
         if (status === 'SUBSCRIBED') {
           console.log(`Connected to game channel: ${this.gameId}`);
         }
@@ -87,7 +98,7 @@ export class GameSync {
     if (!this.channel) return;
 
     try {
-      await this.channel.send({
+      await (this.channel as any).send({
         type: 'broadcast',
         event: 'game_state_update',
         gameState
@@ -98,11 +109,11 @@ export class GameSync {
   }
 
   // Broadcast player join
-  async broadcastPlayerJoin(playerId: PlayerId, playerData: any) {
+  async broadcastPlayerJoin(playerId: PlayerId, playerData: unknown) {
     if (!this.channel) return;
 
     try {
-      await this.channel.send({
+      await (this.channel as any).send({
         type: 'broadcast',
         event: 'player_join',
         playerId,
@@ -118,7 +129,7 @@ export class GameSync {
     if (!this.channel) return;
 
     try {
-      await this.channel.send({
+      await (this.channel as any).send({
         type: 'broadcast',
         event: 'player_leave',
         playerId
@@ -133,7 +144,7 @@ export class GameSync {
     if (!this.channel) return;
 
     try {
-      await this.channel.send({
+      await (this.channel as any).send({
         type: 'broadcast',
         event: 'host_update',
         hostName
@@ -148,7 +159,7 @@ export class GameSync {
     if (!this.channel) return;
 
     try {
-      await this.channel.send({
+      await (this.channel as any).send({
         type: 'broadcast',
         event: 'video_room_update',
         roomUrl,
@@ -171,7 +182,7 @@ export class GameSync {
     if (!this.channel) return;
 
     try {
-      await this.channel.track(participantData);
+      await (this.channel as any).track(participantData);
     } catch (error) {
       console.error('Failed to track presence:', error);
     }
@@ -180,14 +191,14 @@ export class GameSync {
   // Disconnect from the channel
   async disconnect() {
     if (this.channel) {
-      await this.channel.unsubscribe();
+      await (this.channel as any).unsubscribe();
       this.channel = null;
     }
   }
 
   // Get current presence state
   getPresenceState() {
-    return this.channel ? this.channel.presenceState() : {};
+    return this.channel ? (this.channel as any).presenceState() : {};
   }
 }
 
