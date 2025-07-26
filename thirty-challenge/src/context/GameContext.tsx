@@ -1,9 +1,22 @@
 import React, { useReducer, useEffect, useMemo, useRef } from 'react';
-import type { GameState, GameAction, PlayerId, SegmentCode } from '../types/game';
+import type {
+  GameState,
+  GameAction,
+  PlayerId,
+  SegmentCode,
+} from '../types/game';
 // Removed unused imports - using gameSync for real-time functionality
 import { INITIAL_GAME_STATE } from '../constants/gameState';
 import { GameContext } from './GameContextDefinition';
-import { createGameSync, GameSync, type GameSyncCallbacks } from '../lib/gameSync';
+import {
+  createGameSync,
+  GameSync,
+  type GameSyncCallbacks,
+} from '../lib/gameSync';
+
+interface PresenceEntry {
+  playerId?: string;
+}
 
 // Using imported initial state
 
@@ -45,7 +58,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'UPDATE_SEGMENT_SETTINGS': {
       const { settings } = action.payload;
       const updatedSegments = { ...state.segments };
-      
+
       // Update questionsPerSegment for each segment
       Object.entries(settings).forEach(([segmentCode, questionsCount]) => {
         if (updatedSegments[segmentCode as SegmentCode]) {
@@ -55,7 +68,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           };
         }
       });
-      
+
       return {
         ...state,
         segments: updatedSegments,
@@ -65,7 +78,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'NEXT_QUESTION': {
       const currentSegmentState = state.segments[state.currentSegment];
       const nextQuestionIndex = currentSegmentState.currentQuestionIndex + 1;
-      
+
       if (nextQuestionIndex >= currentSegmentState.questionsPerSegment) {
         return {
           ...state,
@@ -78,7 +91,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           },
         };
       }
-      
+
       return {
         ...state,
         segments: {
@@ -92,17 +105,23 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'NEXT_SEGMENT': {
-      const segmentOrder: Array<keyof GameState['segments']> = ['WSHA', 'AUCT', 'BELL', 'SING', 'REMO'];
+      const segmentOrder: Array<keyof GameState['segments']> = [
+        'WSHA',
+        'AUCT',
+        'BELL',
+        'SING',
+        'REMO',
+      ];
       const currentIndex = segmentOrder.indexOf(state.currentSegment);
       const nextSegment = segmentOrder[currentIndex + 1];
-      
+
       if (!nextSegment) {
         return {
           ...state,
           phase: 'FINAL_SCORES',
         };
       }
-      
+
       return {
         ...state,
         currentSegment: nextSegment,
@@ -119,7 +138,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'UPDATE_SCORE': {
       const { playerId, points } = action.payload;
       const newScore = Math.max(0, state.players[playerId].score + points);
-      
+
       return {
         ...state,
         players: {
@@ -136,7 +155,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
             points,
             timestamp: Date.now(),
             segment: state.currentSegment,
-            questionIndex: state.segments[state.currentSegment].currentQuestionIndex,
+            questionIndex:
+              state.segments[state.currentSegment].currentQuestionIndex,
           },
         ],
       };
@@ -145,7 +165,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'ADD_STRIKE': {
       const { playerId } = action.payload;
       const newStrikes = Math.min(3, state.players[playerId].strikes + 1);
-      
+
       return {
         ...state,
         players: {
@@ -207,13 +227,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
   }
 }
 
-
-
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, INITIAL_GAME_STATE);
   const gameSyncRef = useRef<GameSync | null>(null);
   const [videoRoomUrl, setVideoRoomUrl] = React.useState<string>('');
-  const [videoRoomCreated, setVideoRoomCreated] = React.useState<boolean>(false);
+  const [videoRoomCreated, setVideoRoomCreated] =
+    React.useState<boolean>(false);
 
   // Initialize real-time synchronization when game starts
   useEffect(() => {
@@ -222,20 +241,37 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         onGameStateUpdate: (gameState) => {
           // Update local state with remote changes
           if (gameState.hostName) {
-            dispatch({ type: 'UPDATE_HOST_NAME', payload: { hostName: gameState.hostName } });
+            dispatch({
+              type: 'UPDATE_HOST_NAME',
+              payload: { hostName: gameState.hostName },
+            });
           }
           if (gameState.players) {
-            Object.entries(gameState.players).forEach(([playerId, playerData]) => {
-              dispatch({ type: 'JOIN_GAME', payload: { playerId: playerId as PlayerId, playerData } });
-            });
+            Object.entries(gameState.players).forEach(
+              ([playerId, playerData]) => {
+                dispatch({
+                  type: 'JOIN_GAME',
+                  payload: { playerId: playerId as PlayerId, playerData },
+                });
+              },
+            );
           }
         },
         onPlayerJoin: (playerId, playerData) => {
-          dispatch({ type: 'JOIN_GAME', payload: { playerId, playerData: playerData as Partial<GameState['players'][PlayerId]> } });
+          dispatch({
+            type: 'JOIN_GAME',
+            payload: {
+              playerId,
+              playerData: playerData as Partial<GameState['players'][PlayerId]>,
+            },
+          });
         },
         onPlayerLeave: (playerId) => {
           // Mark player as disconnected instead of removing
-          dispatch({ type: 'JOIN_GAME', payload: { playerId, playerData: { isConnected: false } } });
+          dispatch({
+            type: 'JOIN_GAME',
+            payload: { playerId, playerData: { isConnected: false } },
+          });
         },
         onHostUpdate: (hostName) => {
           dispatch({ type: 'UPDATE_HOST_NAME', payload: { hostName } });
@@ -243,7 +279,25 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         onVideoRoomUpdate: (roomUrl, roomCreated) => {
           setVideoRoomUrl(roomUrl);
           setVideoRoomCreated(roomCreated);
-        }
+        },
+        onPresenceUpdate: (presenceState) => {
+          const connectedPlayers = new Set<string>();
+          Object.values(presenceState).forEach((entries: unknown[]) => {
+            entries.forEach((entry: PresenceEntry) => {
+              if (entry.playerId) connectedPlayers.add(entry.playerId);
+            });
+          });
+
+          ['playerA', 'playerB'].forEach((pid) => {
+            dispatch({
+              type: 'JOIN_GAME',
+              payload: {
+                playerId: pid as PlayerId,
+                playerData: { isConnected: connectedPlayers.has(pid) },
+              },
+            });
+          });
+        },
       };
 
       gameSyncRef.current = createGameSync(state.gameId, callbacks);
@@ -264,124 +318,148 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (!state.isTimerRunning) return;
 
     const interval = setInterval(() => {
-              dispatch({ type: 'TICK_TIMER' });
+      dispatch({ type: 'TICK_TIMER' });
     }, 1000);
 
     return () => clearInterval(interval);
   }, [state.isTimerRunning]);
 
-  const actions = useMemo(() => ({
-    startGame: (gameId: string) => {
-      dispatch({ type: 'START_GAME', payload: { gameId } });
-    },
-    joinGame: (playerId: PlayerId, playerData: Partial<GameState['players'][PlayerId]>) => {
-      dispatch({ type: 'JOIN_GAME', payload: { playerId, playerData } });
-      // Broadcast to other participants
-      gameSyncRef.current?.broadcastPlayerJoin(playerId, playerData);
-    },
-    updateHostName: (hostName: string) => {
-      dispatch({ type: 'UPDATE_HOST_NAME', payload: { hostName } });
-      // Broadcast to other participants
-      gameSyncRef.current?.broadcastHostUpdate(hostName);
-    },
-    updateSegmentSettings: (settings: Record<SegmentCode, number>) => {
-      dispatch({ type: 'UPDATE_SEGMENT_SETTINGS', payload: { settings } });
-      // Broadcast to other participants
-      gameSyncRef.current?.broadcastGameState({ segments: state.segments });
-    },
-    createVideoRoom: async (gameId: string) => {
-      try {
-        const response = await fetch('/.netlify/functions/create-daily-room', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ roomName: gameId })
-        });
+  const actions = useMemo(
+    () => ({
+      startGame: (gameId: string) => {
+        dispatch({ type: 'START_GAME', payload: { gameId } });
+      },
+      joinGame: (
+        playerId: PlayerId,
+        playerData: Partial<GameState['players'][PlayerId]>,
+      ) => {
+        dispatch({ type: 'JOIN_GAME', payload: { playerId, playerData } });
+        // Broadcast to other participants
+        gameSyncRef.current?.broadcastPlayerJoin(playerId, playerData);
+      },
+      updateHostName: (hostName: string) => {
+        dispatch({ type: 'UPDATE_HOST_NAME', payload: { hostName } });
+        // Broadcast to other participants
+        gameSyncRef.current?.broadcastHostUpdate(hostName);
+      },
+      updateSegmentSettings: (settings: Record<SegmentCode, number>) => {
+        dispatch({ type: 'UPDATE_SEGMENT_SETTINGS', payload: { settings } });
+        // Broadcast to other participants
+        gameSyncRef.current?.broadcastGameState({ segments: state.segments });
+      },
+      createVideoRoom: async (gameId: string) => {
+        try {
+          const response = await fetch(
+            '/.netlify/functions/create-daily-room',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ roomName: gameId }),
+            },
+          );
 
-        if (response.ok) {
-          const data = await response.json();
-          const roomUrl = data.room.url;
-          setVideoRoomUrl(roomUrl);
-          setVideoRoomCreated(true);
-          // Broadcast to other participants
-          gameSyncRef.current?.broadcastVideoRoomUpdate(roomUrl, true);
-          return { success: true, roomUrl };
-        } else {
-          console.error('Failed to create room');
-          return { success: false, error: 'Failed to create room' };
+          if (response.ok) {
+            const data = await response.json();
+            const roomUrl = data.room.url;
+            setVideoRoomUrl(roomUrl);
+            setVideoRoomCreated(true);
+            // Broadcast to other participants
+            gameSyncRef.current?.broadcastVideoRoomUpdate(roomUrl, true);
+            return { success: true, roomUrl };
+          } else {
+            console.error('Failed to create room');
+            return { success: false, error: 'Failed to create room' };
+          }
+        } catch (error) {
+          console.error('Error creating room:', error);
+          return { success: false, error: 'Network error' };
         }
-      } catch (error) {
-        console.error('Error creating room:', error);
-        return { success: false, error: 'Network error' };
-      }
-    },
-    generateDailyToken: async (gameId: string, userName: string, userRole: string) => {
-      try {
-        const response = await fetch('/.netlify/functions/create-daily-token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ roomName: gameId, userName, userRole })
-        });
+      },
+      generateDailyToken: async (
+        gameId: string,
+        userName: string,
+        userRole: string,
+      ) => {
+        try {
+          const response = await fetch(
+            '/.netlify/functions/create-daily-token',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ roomName: gameId, userName, userRole }),
+            },
+          );
 
-        if (response.ok) {
-          const data = await response.json();
-          return { success: true, token: data.token };
-        } else {
-          console.error('Failed to create token');
-          return { success: false, error: 'Failed to create token' };
+          if (response.ok) {
+            const data = await response.json();
+            return { success: true, token: data.token };
+          } else {
+            console.error('Failed to create token');
+            return { success: false, error: 'Failed to create token' };
+          }
+        } catch (error) {
+          console.error('Error creating token:', error);
+          return { success: false, error: 'Network error' };
         }
-      } catch (error) {
-        console.error('Error creating token:', error);
-        return { success: false, error: 'Network error' };
-      }
-    },
-    trackPresence: (participantData: {
-      id: string;
-      name: string;
-      type: 'host-pc' | 'host-mobile' | 'player';
-      playerId?: PlayerId;
-      flag?: string;
-      club?: string;
-    }) => {
-      gameSyncRef.current?.trackPresence(participantData);
-    },
-    nextQuestion: () => {
-      dispatch({ type: 'NEXT_QUESTION' });
-    },
-    nextSegment: () => {
-      dispatch({ type: 'NEXT_SEGMENT' });
-    },
-    updateScore: (playerId: PlayerId, points: number) => {
-      dispatch({ type: 'UPDATE_SCORE', payload: { playerId, points } });
-    },
-    addStrike: (playerId: PlayerId) => {
-      dispatch({ type: 'ADD_STRIKE', payload: { playerId } });
-    },
-    useSpecialButton: (playerId: PlayerId, buttonType: keyof GameState['players'][PlayerId]['specialButtons']) => {
-      dispatch({ type: 'USE_SPECIAL_BUTTON', payload: { playerId, buttonType } });
-    },
-    startTimer: (duration: number) => {
-      dispatch({ type: 'START_TIMER', payload: { duration } });
-    },
-    stopTimer: () => {
-      dispatch({ type: 'STOP_TIMER' });
-    },
-    tickTimer: () => {
-      dispatch({ type: 'TICK_TIMER' });
-    },
-    resetGame: () => {
-      dispatch({ type: 'RESET_GAME' });
-    },
-  }), [gameSyncRef, state.segments]);
+      },
+      trackPresence: (participantData: {
+        id: string;
+        name: string;
+        type: 'host-pc' | 'host-mobile' | 'player';
+        playerId?: PlayerId;
+        flag?: string;
+        club?: string;
+      }) => {
+        gameSyncRef.current?.trackPresence(participantData);
+      },
+      nextQuestion: () => {
+        dispatch({ type: 'NEXT_QUESTION' });
+      },
+      nextSegment: () => {
+        dispatch({ type: 'NEXT_SEGMENT' });
+      },
+      updateScore: (playerId: PlayerId, points: number) => {
+        dispatch({ type: 'UPDATE_SCORE', payload: { playerId, points } });
+      },
+      addStrike: (playerId: PlayerId) => {
+        dispatch({ type: 'ADD_STRIKE', payload: { playerId } });
+      },
+      useSpecialButton: (
+        playerId: PlayerId,
+        buttonType: keyof GameState['players'][PlayerId]['specialButtons'],
+      ) => {
+        dispatch({
+          type: 'USE_SPECIAL_BUTTON',
+          payload: { playerId, buttonType },
+        });
+      },
+      startTimer: (duration: number) => {
+        dispatch({ type: 'START_TIMER', payload: { duration } });
+      },
+      stopTimer: () => {
+        dispatch({ type: 'STOP_TIMER' });
+      },
+      tickTimer: () => {
+        dispatch({ type: 'TICK_TIMER' });
+      },
+      resetGame: () => {
+        dispatch({ type: 'RESET_GAME' });
+      },
+    }),
+    [gameSyncRef, state.segments],
+  );
 
   return (
-    <GameContext.Provider value={{ 
-      state: { 
-        ...state, 
-        videoRoomUrl, 
-        videoRoomCreated 
-      }, 
-      actions 
-    }}>
+    <GameContext.Provider
+      value={{
+        state: {
+          ...state,
+          videoRoomUrl,
+          videoRoomCreated,
+        },
+        actions,
+      }}
+    >
       {children}
     </GameContext.Provider>
   );

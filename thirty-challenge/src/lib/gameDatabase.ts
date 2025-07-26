@@ -1,5 +1,5 @@
-import { supabase, isSupabaseConfigured } from './supabaseClient';
-import type { GameState, PlayerId } from '../types/game';
+import { supabase, isSupabaseConfigured } from "./supabaseClient";
+// GameState and PlayerId types are not needed in this module
 
 export interface GameRecord {
   id: string;
@@ -32,7 +32,6 @@ export interface PlayerRecord {
 }
 
 export class GameDatabase {
-  
   // Check if Supabase is configured
   static isConfigured(): boolean {
     return isSupabaseConfigured();
@@ -42,31 +41,34 @@ export class GameDatabase {
   // GAME OPERATIONS
   // =====================================
 
-  static async createGame(gameId: string, hostName?: string): Promise<GameRecord | null> {
+  static async createGame(
+    gameId: string,
+    hostName?: string,
+  ): Promise<GameRecord | null> {
     if (!this.isConfigured()) {
-      console.warn('Supabase not configured');
+      console.warn("Supabase not configured");
       return null;
     }
 
     try {
       const { data, error } = await supabase
-        .from('games')
+        .from("games")
         .insert({
           id: gameId,
           host_name: hostName || null,
-          phase: 'lobby'
+          phase: "lobby",
         })
         .select()
         .single();
 
       if (error) {
-        console.error('Error creating game:', error);
+        console.error("Error creating game:", error);
         return null;
       }
 
       return data as GameRecord;
     } catch (error) {
-      console.error('Error creating game:', error);
+      console.error("Error creating game:", error);
       return null;
     }
   }
@@ -76,42 +78,45 @@ export class GameDatabase {
 
     try {
       const { data, error } = await supabase
-        .from('games')
-        .select('*')
-        .eq('id', gameId)
+        .from("games")
+        .select("*")
+        .eq("id", gameId)
         .single();
 
       if (error) {
-        console.error('Error fetching game:', error);
+        console.error("Error fetching game:", error);
         return null;
       }
 
       return data as GameRecord;
     } catch (error) {
-      console.error('Error fetching game:', error);
+      console.error("Error fetching game:", error);
       return null;
     }
   }
 
-  static async updateGame(gameId: string, updates: Partial<GameRecord>): Promise<GameRecord | null> {
+  static async updateGame(
+    gameId: string,
+    updates: Partial<GameRecord>,
+  ): Promise<GameRecord | null> {
     if (!this.isConfigured()) return null;
 
     try {
       const { data, error } = await supabase
-        .from('games')
+        .from("games")
         .update(updates)
-        .eq('id', gameId)
+        .eq("id", gameId)
         .select()
         .single();
 
       if (error) {
-        console.error('Error updating game:', error);
+        console.error("Error updating game:", error);
         return null;
       }
 
       return data as GameRecord;
     } catch (error) {
-      console.error('Error updating game:', error);
+      console.error("Error updating game:", error);
       return null;
     }
   }
@@ -120,37 +125,41 @@ export class GameDatabase {
   // PLAYER OPERATIONS
   // =====================================
 
-  static async addPlayer(playerId: string, gameId: string, playerData: {
-    name: string;
-    flag?: string;
-    club?: string;
-    role?: string;
-  }): Promise<PlayerRecord | null> {
+  static async addPlayer(
+    playerId: string,
+    gameId: string,
+    playerData: {
+      name: string;
+      flag?: string;
+      club?: string;
+      role?: string;
+    },
+  ): Promise<PlayerRecord | null> {
     if (!this.isConfigured()) return null;
 
     try {
       const { data, error } = await supabase
-        .from('players')
+        .from("players")
         .insert({
           id: playerId,
           game_id: gameId,
           name: playerData.name,
           flag: playerData.flag || null,
           club: playerData.club || null,
-          role: playerData.role || 'playerA',
-          is_connected: true
+          role: playerData.role || "playerA",
+          is_connected: true,
         })
         .select()
         .single();
 
       if (error) {
-        console.error('Error adding player:', error);
+        console.error("Error adding player:", error);
         return null;
       }
 
       return data as PlayerRecord;
     } catch (error) {
-      console.error('Error adding player:', error);
+      console.error("Error adding player:", error);
       return null;
     }
   }
@@ -160,42 +169,45 @@ export class GameDatabase {
 
     try {
       const { data, error } = await supabase
-        .from('players')
-        .select('*')
-        .eq('game_id', gameId)
-        .order('joined_at', { ascending: true });
+        .from("players")
+        .select("*")
+        .eq("game_id", gameId)
+        .order("joined_at", { ascending: true });
 
       if (error) {
-        console.error('Error fetching players:', error);
+        console.error("Error fetching players:", error);
         return [];
       }
 
       return data as PlayerRecord[];
     } catch (error) {
-      console.error('Error fetching players:', error);
+      console.error("Error fetching players:", error);
       return [];
     }
   }
 
-  static async updatePlayer(playerId: string, updates: Partial<PlayerRecord>): Promise<PlayerRecord | null> {
+  static async updatePlayer(
+    playerId: string,
+    updates: Partial<PlayerRecord>,
+  ): Promise<PlayerRecord | null> {
     if (!this.isConfigured()) return null;
 
     try {
       const { data, error } = await supabase
-        .from('players')
+        .from("players")
         .update(updates)
-        .eq('id', playerId)
+        .eq("id", playerId)
         .select()
         .single();
 
       if (error) {
-        console.error('Error updating player:', error);
+        console.error("Error updating player:", error);
         return null;
       }
 
       return data as PlayerRecord;
     } catch (error) {
-      console.error('Error updating player:', error);
+      console.error("Error updating player:", error);
       return null;
     }
   }
@@ -205,18 +217,18 @@ export class GameDatabase {
 
     try {
       const { error } = await supabase
-        .from('players')
+        .from("players")
         .delete()
-        .eq('id', playerId);
+        .eq("id", playerId);
 
       if (error) {
-        console.error('Error removing player:', error);
+        console.error("Error removing player:", error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Error removing player:', error);
+      console.error("Error removing player:", error);
       return false;
     }
   }
@@ -225,41 +237,62 @@ export class GameDatabase {
   // REAL-TIME SUBSCRIPTIONS
   // =====================================
 
-  static subscribeToGame(gameId: string, callbacks: {
-    onGameUpdate?: (game: GameRecord) => void;
-    onPlayerJoin?: (player: PlayerRecord) => void;
-    onPlayerUpdate?: (player: PlayerRecord) => void;
-    onPlayerLeave?: (playerId: string) => void;
-  }) {
+  static subscribeToGame(
+    gameId: string,
+    callbacks: {
+      onGameUpdate?: (game: GameRecord) => void;
+      onPlayerJoin?: (player: PlayerRecord) => void;
+      onPlayerUpdate?: (player: PlayerRecord) => void;
+      onPlayerLeave?: (playerId: string) => void;
+    },
+  ) {
     if (!this.isConfigured()) {
-      console.warn('Supabase not configured - real-time disabled');
+      console.warn("Supabase not configured - real-time disabled");
       return null;
     }
 
     // Subscribe to game updates
     const gameSubscription = supabase
       .channel(`game:${gameId}`)
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "games",
+          filter: `id=eq.${gameId}`,
+        },
         (payload) => {
-          console.log('Game update:', payload);
-          if (payload.eventType === 'UPDATE' && callbacks.onGameUpdate) {
+          console.log("Game update:", payload);
+          if (payload.eventType === "UPDATE" && callbacks.onGameUpdate) {
             callbacks.onGameUpdate(payload.new as GameRecord);
           }
-        }
+        },
       )
-      .on('postgres_changes',
-        { event: '*', schema: 'public', table: 'players', filter: `game_id=eq.${gameId}` },
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "players",
+          filter: `game_id=eq.${gameId}`,
+        },
         (payload) => {
-          console.log('Player update:', payload);
-          if (payload.eventType === 'INSERT' && callbacks.onPlayerJoin) {
+          console.log("Player update:", payload);
+          if (payload.eventType === "INSERT" && callbacks.onPlayerJoin) {
             callbacks.onPlayerJoin(payload.new as PlayerRecord);
-          } else if (payload.eventType === 'UPDATE' && callbacks.onPlayerUpdate) {
+          } else if (
+            payload.eventType === "UPDATE" &&
+            callbacks.onPlayerUpdate
+          ) {
             callbacks.onPlayerUpdate(payload.new as PlayerRecord);
-          } else if (payload.eventType === 'DELETE' && callbacks.onPlayerLeave) {
+          } else if (
+            payload.eventType === "DELETE" &&
+            callbacks.onPlayerLeave
+          ) {
             callbacks.onPlayerLeave(payload.old.id);
           }
-        }
+        },
       )
       .subscribe();
 
@@ -270,26 +303,28 @@ export class GameDatabase {
   // UTILITY FUNCTIONS
   // =====================================
 
-  static async logGameEvent(gameId: string, eventType: string, eventData: Record<string, unknown>): Promise<boolean> {
+  static async logGameEvent(
+    gameId: string,
+    eventType: string,
+    eventData: Record<string, unknown>,
+  ): Promise<boolean> {
     if (!this.isConfigured()) return false;
 
     try {
-      const { error } = await supabase
-        .from('game_events')
-        .insert({
-          game_id: gameId,
-          event_type: eventType,
-          event_data: eventData
-        });
+      const { error } = await supabase.from("game_events").insert({
+        game_id: gameId,
+        event_type: eventType,
+        event_data: eventData,
+      });
 
       if (error) {
-        console.error('Error logging game event:', error);
+        console.error("Error logging game event:", error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error('Error logging game event:', error);
+      console.error("Error logging game event:", error);
       return false;
     }
   }
