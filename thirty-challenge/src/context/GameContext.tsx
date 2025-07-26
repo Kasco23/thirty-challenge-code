@@ -276,14 +276,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           setVideoRoomUrl(roomUrl);
           setVideoRoomCreated(roomCreated);
         },
-        onPresenceStateChange: (
-          presence: Record<
-            string,
-            { participants: Array<{ playerId?: string }> }
-          >,
-        ) => {
+        onPresenceStateChange: (presence: Record<string, unknown>) => {
+          // Cast to expected shape: { participants: Array<{ playerId?: string }> }
+          const typedPresence =
+            presence as Record<string, { participants?: Array<{ playerId?: string }> }>;
           const connected = new Set<PlayerId>();
-          Object.values(presence).forEach((entry) => {
+          Object.values(typedPresence).forEach((entry) => {
             entry.participants?.forEach((p) => {
               if (p.playerId === "playerA" || p.playerId === "playerB") {
                 connected.add(p.playerId as PlayerId);
