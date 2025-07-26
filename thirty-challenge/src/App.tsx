@@ -32,24 +32,40 @@ function App() {
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Landing />} />
             <Route path="/join" element={<Join />} />
+            
+            {/* New proper routing structure */}
+            <Route path="/lobby/:gameId" element={<Lobby />} />
+            <Route path="/game/:gameId" element={<QuizRoom />} />
+            
+            {/* Legacy routes for backward compatibility */}
             <Route path="/room/:roomId" element={<QuizRoom />} />
             <Route path="/lobby" element={<Lobby />} />
             <Route path="/room" element={<Room />} />
+            
+            {/* Game flow routes */}
             <Route path="/segment" element={<SegmentIntro />} />
             <Route path="/host" element={<HostPanel />} />
             <Route path="/final" element={<FinalScores />} />
             <Route path="/scoreboard" element={<Scoreboard />} />
             <Route path="/judge" element={<JudgePanel />} />
             <Route path="/hostquestion" element={<HostQuestion />} />
+            
+            {/* Component routes */}
             <Route path="/timer" element={<Timer />} />
             <Route path="/buzzer" element={<Buzzer playerId="playerA" />} />
+            
+            {/* Admin and utility routes */}
             <Route path="/admin" element={<Admin />} />
             <Route path="/reconnect" element={<Reconnect />} />
+            
+            {/* Segment routes */}
             <Route path="/wsha" element={<WSHA />} />
             <Route path="/auct" element={<AUCT />} />
             <Route path="/bell" element={<BELL />} />
             <Route path="/sing" element={<SING />} />
             <Route path="/remo" element={<REMO />} />
+            
+            {/* 404 route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AnimatePresence>

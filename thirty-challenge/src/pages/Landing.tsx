@@ -1,36 +1,105 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useGame } from "../context/GameContext";
+import { useState } from "react";
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { actions } = useGame();
+  const [isCreating, setIsCreating] = useState(false);
+
+  const handleStartSession = async () => {
+    setIsCreating(true);
+    try {
+      // Generate a unique game ID
+      const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      // Initialize the game
+      actions.startGame(gameId);
+      
+      // Navigate to lobby as host
+      navigate(`/lobby/${gameId}?role=host`, { replace: true });
+    } catch (error) {
+      console.error('Failed to start session:', error);
+      setIsCreating(false);
+    }
+  };
+
+  const handleJoinGame = () => {
+    navigate("/join");
+  };
+
   return (
     <motion.div
-      className="flex flex-col items-center justify-center min-h-screen"
+      className="flex flex-col items-center justify-center min-h-screen px-4"
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
     >
-      <h1
-        className="text-5xl sm:text-7xl font-extrabold mb-6 text-accent glow font-arabic"
+      <motion.h1
+        className="text-5xl sm:text-7xl font-extrabold mb-6 text-accent glow font-arabic text-center"
         style={{
           textShadow: "0 0 30px #7c3aed, 0 0 20px #38bdf8",
         }}
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2 }}
       >
         تحدي الثلاثين
-      </h1>
-      <p className="mb-10 text-accent2 text-lg font-arabic">!ابدأ التحدي مع أصدقائك الآن</p>
-      <button
-        onClick={() => navigate("/room/demo")}
-        className="px-10 py-4 text-xl rounded-2xl font-bold bg-accent2 hover:bg-accent shadow-lg transition-all border border-accent glow"
+      </motion.h1>
+      
+      <motion.p 
+        className="mb-10 text-accent2 text-lg font-arabic text-center"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.4 }}
       >
-        Start Session
-      </button>
-      <button
-        onClick={() => navigate("/join")}
-        className="mt-6 underline text-sm text-white/80 hover:text-accent2"
+        !ابدأ التحدي مع أصدقائك الآن
+      </motion.p>
+      
+      <motion.div
+        className="flex flex-col gap-4 items-center"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.6 }}
       >
-        Join a game
-      </button>
+        <button
+          onClick={handleStartSession}
+          disabled={isCreating}
+          className="px-10 py-4 text-xl rounded-2xl font-bold bg-accent2 hover:bg-accent shadow-lg transition-all border border-accent glow disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isCreating ? (
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              إنشاء الجلسة...
+            </div>
+          ) : (
+            "إنشاء جلسة جديدة"
+          )}
+        </button>
+        
+        <button
+          onClick={handleJoinGame}
+          className="mt-2 px-6 py-3 text-lg rounded-xl font-bold bg-transparent hover:bg-white/10 text-white/80 hover:text-accent2 border border-white/20 hover:border-accent2 transition-all"
+        >
+          الانضمام لجلسة
+        </button>
+      </motion.div>
+
+      {/* Instructions */}
+      <motion.div
+        className="mt-12 text-center text-white/60 text-sm max-w-md"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1 }}
+      >
+        <p className="font-arabic">
+          إنشاء جلسة جديدة: ستصبح المقدم وتتحكم في اللعبة
+        </p>
+        <p className="font-arabic mt-1">
+          الانضمام لجلسة: ادخل كلاعب في جلسة موجودة
+        </p>
+      </motion.div>
     </motion.div>
   );
 }
