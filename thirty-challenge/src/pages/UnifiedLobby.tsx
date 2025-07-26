@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGame } from '../hooks/useGame';
-import VideoRoom from '../components/VideoRoom';
+// VideoRoom import removed - using TrueLobby instead
 import { CLUB_THEMES } from '../themes/clubs';
 
 interface ParticipantInfo {
@@ -136,11 +136,9 @@ export default function UnifiedLobby() {
             </h3>
             
             <div className="aspect-video bg-black/30 rounded-lg mb-4 overflow-hidden">
-              <VideoRoom 
-                roomName={gameId} 
-                userName={state.hostName}
-                isHost={participant.type === 'host-pc'}
-              />
+              <div className="bg-gray-800 rounded-lg p-4 text-center text-white/50 font-arabic">
+                استخدم TrueLobby للفيديو
+              </div>
             </div>
             
             <div className="text-center">
@@ -201,11 +199,9 @@ export default function UnifiedLobby() {
 
                 <div className="aspect-video bg-black/30 rounded-lg mb-4 overflow-hidden">
                   {player.isConnected ? (
-                    <VideoRoom 
-                      roomName={gameId} 
-                      userName={player.name}
-                      isHost={false}
-                    />
+                    <div className="bg-gray-800 rounded-lg p-4 text-center text-white/50 font-arabic">
+                      استخدم TrueLobby للفيديو
+                    </div>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
                       <div className="text-center text-white/50">

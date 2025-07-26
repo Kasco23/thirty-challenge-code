@@ -48,6 +48,8 @@ export interface GameState {
   currentQuestionIndex: number;
   timer: number;
   isTimerRunning: boolean;
+  videoRoomUrl?: string;
+  videoRoomCreated?: boolean;
   players: Record<PlayerId, Player>;
   hostName: string;
   segments: Record<SegmentCode, SegmentState>;

@@ -1,305 +1,178 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-
-// Dynamic import for Daily.co
-let DailyIframe: typeof import('@daily-co/daily-js').default | null = null;
-
-interface DailyCallFrame {
-  join(options: { url: string; token?: string }): Promise<void>;
-  leave(): Promise<void>;
-  destroy(): void;
-  iframe(): HTMLIFrameElement;
-  on(event: string, handler: (event?: unknown) => void): void;
-  off(event: string, handler: (event?: unknown) => void): void;
-}
-
-interface DailyFrameOptions {
-  showLeaveButton: boolean;
-  showFullscreenButton: boolean;
-  showLocalVideo: boolean;
-  showParticipantsBar: boolean;
-}
-
-// Initialize Daily.co SDK
-const initializeDaily = async (): Promise<boolean> => {
-  try {
-    if (!DailyIframe) {
-      const DailyJs = await import('@daily-co/daily-js');
-      DailyIframe = DailyJs.default;
-    }
-    return true;
-  } catch (error) {
-    console.error('Failed to load Daily.co SDK:', error);
-    return false;
-  }
-};
-
-// API functions for room and token management
-const createRoom = async (roomName: string): Promise<{ roomName: string; url: string } | null> => {
-  try {
-    const response = await fetch('/.netlify/functions/create-daily-room', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ roomName })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to create room: ${response.status}`);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    console.error('Error creating room:', error);
-    return null;
-  }
-};
-
-const createToken = async (room: string, user: string, isHost: boolean): Promise<string | null> => {
-  try {
-    const response = await fetch('/.netlify/functions/create-daily-token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ room, user, isHost })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to create token: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data.token;
-  } catch (error) {
-    console.error('Error creating token:', error);
-    return null;
-  }
-};
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useRef, useState, useCallback } from 'react';
+import DailyIframe from '@daily-co/daily-js';
+import { useGame } from '../hooks/useGame';
 
 interface VideoRoomProps {
-  roomName?: string;
-  userName?: string;
-  isHost?: boolean;
+  gameId: string;
+  userName: string;
+  userRole: 'host-mobile' | 'playerA' | 'playerB';
+  className?: string;
 }
 
-export default function VideoRoom({ roomName = 'quiz-room', userName = 'User', isHost = false }: VideoRoomProps) {
-  const [isConnected, setIsConnected] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showInstructions, setShowInstructions] = useState(false);
-  const [roomUrl, setRoomUrl] = useState<string | null>(null);
-  
+export default function VideoRoom({ gameId, userName, userRole, className = '' }: VideoRoomProps) {
+  const { state, actions } = useGame();
   const callFrameRef = useRef<HTMLDivElement>(null);
-  const callFrame = useRef<DailyCallFrame | null>(null);
-  const isInitialized = useRef(false);
+  const callObjectRef = useRef<unknown>(null);
+  const [isJoining, setIsJoining] = useState(false);
+  const [callState, setCallState] = useState<string>('new');
+  const [error, setError] = useState<string>('');
 
+  const joinCall = useCallback(async () => {
+    if (!callFrameRef.current) return;
+
+    setIsJoining(true);
+    setError('');
+
+    try {
+      // Get Daily.co token for this user
+      const tokenResult = await actions.generateDailyToken(gameId, userName, userRole);
+      if (!tokenResult.success) {
+        throw new Error(tokenResult.error || 'Failed to get access token');
+      }
+
+      // Create Daily call object
+      const callObject = DailyIframe.createCallObject({
+        iframeStyle: {
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          border: 'none',
+          borderRadius: '12px'
+        }
+      });
+      
+      callObjectRef.current = callObject;
+
+      // Add event listeners
+      (callObject as any)
+        .on('joined-meeting', () => {
+          console.log('Joined meeting successfully');
+          setCallState('joined');
+          setIsJoining(false);
+        })
+        .on('left-meeting', () => {
+          console.log('Left meeting');
+          setCallState('left');
+        })
+        .on('error', (error: unknown) => {
+          console.error('Daily.co error:', error);
+          const errorMsg = (error as { errorMsg?: string })?.errorMsg || 'Video call error';
+          setError(errorMsg);
+          setIsJoining(false);
+        })
+        .on('participant-joined', (event: unknown) => {
+          console.log('Participant joined:', (event as { participant?: unknown })?.participant);
+        })
+        .on('participant-left', (event: unknown) => {
+          console.log('Participant left:', (event as { participant?: unknown })?.participant);
+        });
+
+      // Join the meeting
+      await (callObject as any).join({
+        url: state.videoRoomUrl,
+        token: tokenResult.token,
+        userName: userName,
+        startVideoOff: false,
+        startAudioOff: false
+      });
+
+      // Append to DOM
+      callFrameRef.current.appendChild((callObject as any).iframe());
+
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to join video call';
+      console.error('Failed to join call:', error);
+      setError(errorMessage);
+      setIsJoining(false);
+    }
+  }, [actions, gameId, userName, userRole, state.videoRoomUrl]);
+
+  // Join the video call when room is available
   useEffect(() => {
-    if (isInitialized.current) return;
-    isInitialized.current = true;
+    if (!state.videoRoomCreated || !state.videoRoomUrl || callObjectRef.current) {
+      return;
+    }
 
-    const setup = async () => {
-      setIsLoading(true);
-      setError(null);
+    joinCall();
+  }, [state.videoRoomCreated, state.videoRoomUrl, joinCall]);
 
-      // Initialize Daily.co SDK
-      const dailyAvailable = await initializeDaily();
-      if (!dailyAvailable) {
-        setError('Daily.co SDK not available');
-        setIsLoading(false);
-        return;
-      }
-
+  const leaveCall = async () => {
+    if (callObjectRef.current) {
       try {
-        // Create room first
-        const roomData = await createRoom(roomName);
-        if (!roomData) {
-          setError('Failed to create video room');
-          setIsLoading(false);
-          return;
-        }
-
-        setRoomUrl(roomData.url);
-
-        // Create token for user
-        const token = await createToken(roomName, userName, isHost);
-        if (!token) {
-          setError('Failed to create access token');
-          setIsLoading(false);
-          return;
-        }
-
-        // If this is a host PC (control only), don't initialize video
-        if (isHost && !userName.includes('mobile')) {
-          setIsLoading(false);
-          return;
-        }
-
-        // Initialize Daily.co frame
-        if (DailyIframe && !callFrame.current) {
-          const frameOptions: DailyFrameOptions = {
-            showLeaveButton: true,
-            showFullscreenButton: false,
-            showLocalVideo: true,
-            showParticipantsBar: true
-          };
-
-          callFrame.current = DailyIframe.createFrame(frameOptions) as DailyCallFrame;
-
-          // Event listeners
-          const handleJoined = () => {
-            console.log('Successfully joined Daily.co room');
-            setIsConnected(true);
-            setIsLoading(false);
-          };
-
-          const handleLeft = () => {
-            console.log('Left Daily.co room');
-            setIsConnected(false);
-          };
-
-          const handleError = (event?: unknown) => {
-            const errorEvent = event as { errorMsg?: string } | undefined;
-            console.error('Daily.co error:', event);
-            setError(`Video error: ${errorEvent?.errorMsg || 'Unknown error'}`);
-            setIsLoading(false);
-          };
-
-          callFrame.current.on('joined-meeting', handleJoined);
-          callFrame.current.on('left-meeting', handleLeft);
-          callFrame.current.on('error', handleError);
-
-          // Append iframe to container
-          if (callFrameRef.current && callFrame.current.iframe()) {
-            callFrameRef.current.innerHTML = '';
-            callFrameRef.current.appendChild(callFrame.current.iframe());
-          }
-
-          // Join room with token
-          await callFrame.current.join({
-            url: roomData.url,
-            token: token
-          });
-        }
-
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-        console.error('Setup error:', errorMessage);
-        setError(`Setup failed: ${errorMessage}`);
-        setIsLoading(false);
+        await (callObjectRef.current as any).leave();
+        await (callObjectRef.current as any).destroy();
+        callObjectRef.current = null;
+        setCallState('left');
+      } catch (error) {
+        console.error('Error leaving call:', error);
       }
-    };
+    }
+  };
 
-    setup();
-
-    // Cleanup
+  // Cleanup on unmount
+  useEffect(() => {
     return () => {
-      if (callFrame.current) {
-        try {
-          callFrame.current.destroy();
-        } catch (error) {
-          console.warn('Error destroying Daily.co frame:', error);
-        }
-        callFrame.current = null;
-      }
-      isInitialized.current = false;
+      leaveCall();
     };
-  }, [roomName, userName, isHost]);
+  }, []);
 
-  // Host PC view (control only, no video)
-  if (isHost && !userName.includes('mobile')) {
-    return (
-      <div className="relative w-full aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <motion.div 
-            className="text-center p-4"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <div className="text-white text-lg font-arabic mb-2">🎮 جهاز التحكم</div>
-            <p className="text-white/70 text-sm font-arabic mb-4">هذا الجهاز للتحكم في اللعبة فقط</p>
-            {roomUrl && (
-              <div className="bg-blue-500/20 rounded-lg p-3">
-                <p className="text-blue-300 text-xs font-arabic mb-1">غرفة الفيديو جاهزة</p>
-                <p className="text-blue-200 text-xs font-mono">{roomName}</p>
-              </div>
-            )}
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="relative w-full aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <motion.div 
-            className="text-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-white text-sm font-arabic">جاري الاتصال بالفيديو...</p>
-            <p className="text-white/70 text-xs font-arabic mt-1">{userName}</p>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
   if (error) {
     return (
-      <div className="relative w-full aspect-video bg-gradient-to-br from-red-900/30 to-gray-900 rounded-lg overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center p-4">
-          <motion.div 
-            className="text-center max-w-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+      <div className={`bg-red-500/20 border border-red-500/30 rounded-xl p-6 ${className}`}>
+        <div className="text-center">
+          <div className="text-red-400 text-lg font-bold mb-2 font-arabic">خطأ في الفيديو</div>
+          <div className="text-red-300 text-sm mb-4 font-arabic">{error}</div>
+          <button
+            onClick={joinCall}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-arabic transition-colors"
           >
-            <div className="text-red-400 text-lg mb-2">⚠️</div>
-            <p className="text-red-300 text-sm font-arabic mb-4">{error}</p>
-            
-            <button
-              onClick={() => setShowInstructions(!showInstructions)}
-              className="text-blue-400 text-xs font-arabic underline hover:text-blue-300"
-            >
-              عرض البدائل المجانية
-            </button>
-
-            {showInstructions && (
-              <motion.div 
-                className="mt-4 p-3 bg-blue-500/10 rounded-lg text-right"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-              >
-                <p className="text-blue-300 text-xs font-arabic mb-2">بدائل مجانية للفيديو:</p>
-                <div className="text-blue-200 text-xs font-arabic space-y-1">
-                  <p>• واتساب (مكالمة جماعية)</p>
-                  <p>• ديسكورد (مجاني تماماً)</p>
-                  <p>• زوم (40 دقيقة مجاناً)</p>
-                  <p>• جوجل ميت (مجاني)</p>
-                </div>
-              </motion.div>
-            )}
-          </motion.div>
+            إعادة المحاولة
+          </button>
         </div>
       </div>
     );
   }
 
-  // Video interface
-  return (
-    <div className="relative w-full aspect-video bg-black rounded-lg overflow-hidden">
-      <div ref={callFrameRef} className="w-full h-full" />
-      
-      {/* User info overlay */}
-      <div className="absolute bottom-2 left-2 bg-black/50 rounded px-2 py-1">
-        <p className="text-white text-xs font-arabic">{userName}</p>
+  if (!state.videoRoomCreated) {
+    return (
+      <div className={`bg-gray-500/20 border border-gray-500/30 rounded-xl p-6 ${className}`}>
+        <div className="text-center">
+          <div className="text-gray-400 text-lg font-bold mb-2 font-arabic">غرفة الفيديو غير متاحة</div>
+          <div className="text-gray-300 text-sm font-arabic">في انتظار إنشاء غرفة الفيديو...</div>
+        </div>
       </div>
+    );
+  }
 
-      {/* Connection status */}
-      <div className="absolute top-2 right-2">
-        <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+  if (isJoining) {
+    return (
+      <div className={`bg-blue-500/20 border border-blue-500/30 rounded-xl p-6 ${className}`}>
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-blue-400 text-lg font-bold mb-2 font-arabic">الانضمام للفيديو</div>
+          <div className="text-blue-300 text-sm font-arabic">جاري الاتصال...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`relative ${className}`}>
+      <div 
+        ref={callFrameRef} 
+        className="w-full h-full min-h-[300px] bg-gray-800 rounded-xl overflow-hidden"
+        style={{ aspectRatio: '16/9' }}
+      />
+      
+      {callState === 'joined' && (
+        <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-arabic">
+          متصل
+        </div>
+      )}
+      
+      <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs font-arabic">
+        {userName}
       </div>
     </div>
   );

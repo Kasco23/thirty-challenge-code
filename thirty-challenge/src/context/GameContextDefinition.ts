@@ -8,6 +8,16 @@ interface GameContextType {
     joinGame: (playerId: PlayerId, playerData: Partial<GameState['players'][PlayerId]>) => void;
     updateHostName: (hostName: string) => void;
     updateSegmentSettings: (settings: Record<SegmentCode, number>) => void;
+    createVideoRoom: (gameId: string) => Promise<{ success: boolean; roomUrl?: string; error?: string }>;
+    generateDailyToken: (gameId: string, userName: string, userRole: string) => Promise<{ success: boolean; token?: string; error?: string }>;
+    trackPresence: (participantData: {
+      id: string;
+      name: string;
+      type: 'host-pc' | 'host-mobile' | 'player';
+      playerId?: PlayerId;
+      flag?: string;
+      club?: string;
+    }) => void;
     nextQuestion: () => void;
     nextSegment: () => void;
     updateScore: (playerId: PlayerId, points: number) => void;
