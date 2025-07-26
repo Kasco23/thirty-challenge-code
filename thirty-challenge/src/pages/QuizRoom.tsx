@@ -1,6 +1,5 @@
-import { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import { getQuestionsForSegment } from '../data/questions';
 import Scoreboard from '../components/Scoreboard';
@@ -8,15 +7,39 @@ import Timer from '../components/Timer';
 import Buzzer from '../components/Buzzer';
 import VideoRoom from '../components/VideoRoom';
 
-export default function QuizRoom() {
-  const { roomId } = useParams<{ roomId: string }>();
-  const { state, actions } = useGame();
+type UserRole = 'host' | 'playerA' | 'playerB';
 
+export default function QuizRoom() {
+  const { gameId, roomId } = useParams<{ gameId?: string; roomId?: string }>();
+  const [searchParams] = useSearchParams();
+  const { state, actions } = useGame();
+  const [userRole, setUserRole] = useState<UserRole>('host');
+  const [isMobile, setIsMobile] = useState(false);
+
+  const currentGameId = gameId || roomId;
+
+  // Determine user role and device type
   useEffect(() => {
-    if (roomId && !state.gameId) {
-      actions.startGame(roomId);
+    const role = searchParams.get('role') as UserRole;
+    if (role && ['host', 'playerA', 'playerB'].includes(role)) {
+      setUserRole(role);
     }
-  }, [roomId, state.gameId, actions]);
+
+    // Check if mobile device
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [searchParams]);
+
+  // Initialize game if needed
+  useEffect(() => {
+    if (currentGameId && state.gameId !== currentGameId) {
+      actions.startGame(currentGameId);
+    }
+  }, [currentGameId, state.gameId, actions]);
 
   const handleNextQuestion = () => {
     if (!state.currentSegment) return;
@@ -31,202 +54,237 @@ export default function QuizRoom() {
     actions.nextSegment();
   };
 
-  const SegmentBanner = () => {
-    if (!state.currentSegment) return null;
-    
-    const segment = state.segments.find(s => s.code === state.currentSegment);
-    if (!segment) return null;
-
-    return (
-      <motion.div
-        className="mx-auto my-4 text-center py-4 px-6 rounded-2xl shadow-lg bg-gradient-to-r from-purple-600 to-blue-600"
-        initial={{ opacity: 0, y: -32 }}
-        animate={{ opacity: 1, y: 0 }}
-        dir="rtl"
-      >
-        <h2 className="text-2xl font-bold text-white mb-2">
-          {segment.name}
-        </h2>
-        <p className="text-purple-100 text-sm mb-2">{segment.description}</p>
-        <div className="text-xs text-purple-200">
-          سؤال {state.currentQuestionIndex} / {state.settings.questionsPerSegment[state.currentSegment]}
-        </div>
-      </motion.div>
-    );
+  const handleTimeUp = () => {
+    // Handle when timer runs out
+    console.log('Time up!');
   };
 
-  const QuestionPanel = () => {
-    if (!state.currentQuestion) {
-      return (
-        <motion.div 
-          className="rounded-xl p-6 shadow-lg bg-white/10 backdrop-blur-sm text-center my-4"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <div className="text-lg text-white/80" dir="rtl">
-            {state.phase === 'lobby' && 'انتظر بدء اللعبة...'}
-            {state.phase === 'segment-intro' && 'استعد للفقرة القادمة'}
-            {state.phase === 'playing' && 'جاري تحميل السؤال...'}
-            {state.phase === 'final' && '🎉 انتهت اللعبة!'}
-          </div>
-        </motion.div>
-      );
-    }
-
+  // Host PC View
+  if (userRole === 'host' && !isMobile) {
     return (
-      <motion.div
-        className="rounded-xl p-6 shadow-lg bg-white/10 backdrop-blur-sm text-center my-4"
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        key={state.currentQuestion.id}
-      >
-        <div className="text-xl font-bold mb-4 text-white" dir="rtl">
-          {state.currentQuestion.text}
+      <main className="relative min-h-screen px-4 py-6 bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-white font-arabic">تحدي الثلاثين</h1>
+              <p className="text-accent2 font-arabic">الجلسة: {currentGameId}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-white/80 font-arabic">المقدم (PC)</p>
+              <div className="text-sm text-green-400">متصل</div>
+            </div>
+          </div>
+
+          <div className="grid lg:grid-cols-4 gap-6">
+            {/* Host Controls Panel */}
+            <div className="lg:col-span-1 space-y-4">
+              {/* Current Segment Info */}
+              {state.currentSegment && (
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <h3 className="text-white font-bold mb-2 font-arabic">الفقرة الحالية</h3>
+                  <div className="text-accent2 font-arabic">
+                    {state.segments.find(s => s.code === state.currentSegment)?.name}
+                  </div>
+                  <div className="text-white/70 text-sm font-arabic">
+                    سؤال {state.currentQuestionIndex} / {state.settings.questionsPerSegment[state.currentSegment]}
+                  </div>
+                </div>
+              )}
+
+              {/* Host Controls */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                <h3 className="text-white font-bold mb-4 font-arabic">تحكم المقدم</h3>
+                <div className="space-y-3">
+                  <button
+                    onClick={handleNextQuestion}
+                    className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-arabic text-sm"
+                    disabled={state.phase !== 'playing' && state.phase !== 'segment-intro'}
+                  >
+                    السؤال التالي
+                  </button>
+                  
+                  <button
+                    onClick={handleNextSegment}
+                    className="w-full py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-arabic text-sm"
+                  >
+                    الفقرة التالية
+                  </button>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => actions.addStrike('playerA')}
+                      className="py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-arabic text-xs"
+                    >
+                      خطأ أ
+                    </button>
+                    <button
+                      onClick={() => actions.addStrike('playerB')}
+                      className="py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-arabic text-xs"
+                    >
+                      خطأ ب
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => actions.updateScore('playerA', 1, 'إجابة صحيحة')}
+                      className="py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-arabic text-xs"
+                    >
+                      +1 أ
+                    </button>
+                    <button
+                      onClick={() => actions.updateScore('playerB', 1, 'إجابة صحيحة')}
+                      className="py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-arabic text-xs"
+                    >
+                      +1 ب
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timer */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+                <Timer onTimeUp={handleTimeUp} />
+              </div>
+            </div>
+
+            {/* Main Game Area */}
+            <div className="lg:col-span-3 space-y-6">
+              {/* Question Display */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6">
+                <h2 className="text-xl font-bold text-white mb-4 font-arabic">منطقة السؤال</h2>
+                {state.currentQuestion ? (
+                  <div>
+                    <div className="text-lg text-white mb-4 font-arabic" dir="rtl">
+                      {state.currentQuestion.text}
+                    </div>
+                    
+                    {/* Host sees the answers */}
+                    <div className="bg-yellow-500/20 rounded-lg p-4 mb-4">
+                      <h4 className="text-yellow-300 font-bold mb-2 font-arabic">الإجابات (للمقدم فقط):</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {state.currentQuestion.answers.map((answer, index) => (
+                          <span key={index} className="bg-yellow-500/30 text-yellow-100 rounded px-2 py-1 text-sm font-arabic">
+                            {answer}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Bell status for BELL segment */}
+                    {state.currentSegment === 'BELL' && (
+                      <div className="bg-blue-500/20 rounded-lg p-4">
+                        <h4 className="text-blue-300 font-bold mb-2 font-arabic">حالة الجرس:</h4>
+                        {state.bell.clickedBy ? (
+                          <p className="text-blue-100 font-arabic">
+                            ضغط الجرس: {state.players[state.bell.clickedBy].name}
+                          </p>
+                        ) : (
+                          <p className="text-blue-100 font-arabic">انتظار ضغط الجرس...</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center text-white/70 font-arabic">
+                    {state.phase === 'lobby' && 'انتظار بدء اللعبة...'}
+                    {state.phase === 'segment-intro' && 'استعد للفقرة القادمة'}
+                    {state.phase === 'final' && '🎉 انتهت اللعبة!'}
+                  </div>
+                )}
+              </div>
+
+              {/* Scoreboard */}
+              <Scoreboard />
+
+              {/* Video Chat Area */}
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <h3 className="text-white font-bold mb-2 font-arabic text-center">لاعب أ</h3>
+                  <VideoRoom />
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                  <h3 className="text-white font-bold mb-2 font-arabic text-center">لاعب ب</h3>
+                  <VideoRoom />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        
-        {/* Show answers for WSHA and AUCT segments */}
-        {(state.currentSegment === 'WSHA' || state.currentSegment === 'AUCT') && (
-          <div className="flex flex-wrap gap-2 justify-center mt-4">
-            {state.currentQuestion.answers.map((answer, index) => (
-              <motion.span
-                key={index}
-                className="bg-blue-100 text-blue-800 rounded-full px-3 py-1 text-sm"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                {answer}
-              </motion.span>
-            ))}
-          </div>
-        )}
-
-        {/* Bell component for BELL segment */}
-        {state.currentSegment === 'BELL' && (
-          <div className="flex justify-center gap-8 mt-6">
-            <div className="text-center">
-              <p className="text-white/80 mb-2 text-sm">لاعب أ</p>
-              <Buzzer playerId="playerA" />
-            </div>
-            <div className="text-center">
-              <p className="text-white/80 mb-2 text-sm">لاعب ب</p>
-              <Buzzer playerId="playerB" />
-            </div>
-          </div>
-        )}
-      </motion.div>
+      </main>
     );
-  };
+  }
 
-  const HostControls = () => (
-    <div className="mt-6 flex gap-4 justify-center flex-wrap">
-      <motion.button
-        onClick={handleNextQuestion}
-        className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 shadow-lg font-bold transition-colors"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        disabled={state.phase !== 'playing' && state.phase !== 'segment-intro'}
-      >
-        السؤال التالي
-      </motion.button>
-
-      <motion.button
-        onClick={handleNextSegment}
-        className="rounded-xl bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 shadow-lg font-bold transition-colors"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        الفقرة التالية
-      </motion.button>
-
-      <motion.button
-        onClick={() => actions.addStrike('playerA')}
-        className="rounded-xl bg-red-500 hover:bg-red-600 text-white px-4 py-3 shadow-lg font-bold transition-colors"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        خطأ لاعب أ
-      </motion.button>
-
-      <motion.button
-        onClick={() => actions.addStrike('playerB')}
-        className="rounded-xl bg-red-500 hover:bg-red-600 text-white px-4 py-3 shadow-lg font-bold transition-colors"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        خطأ لاعب ب
-      </motion.button>
-
-      <motion.button
-        onClick={() => actions.updateScore('playerA', 1, 'إجابة صحيحة')}
-        className="rounded-xl bg-green-500 hover:bg-green-600 text-white px-4 py-3 shadow-lg font-bold transition-colors"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        +1 لاعب أ
-      </motion.button>
-
-      <motion.button
-        onClick={() => actions.updateScore('playerB', 1, 'إجابة صحيحة')}
-        className="rounded-xl bg-green-500 hover:bg-green-600 text-white px-4 py-3 shadow-lg font-bold transition-colors"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        +1 لاعب ب
-      </motion.button>
-    </div>
-  );
-
+  // Mobile Player View
   return (
-    <main className="relative min-h-screen px-4 py-6 bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900">
-      <div className="max-w-6xl mx-auto">
-        {/* Segment Banner */}
-        <SegmentBanner />
+    <main className="relative min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900">
+      <div className="max-w-md mx-auto p-4">
+        {/* Header */}
+        <div className="text-center mb-4">
+          <h1 className="text-2xl font-bold text-white font-arabic">تحدي الثلاثين</h1>
+          <p className="text-accent2 text-sm font-arabic">
+            {userRole === 'host' ? 'المقدم (موبايل)' : state.players[userRole].name}
+          </p>
+        </div>
 
-        {/* Video Chat Section */}
-        <section className="grid md:grid-cols-3 gap-6 mb-6">
-          <div className="relative">
-            <h3 className="text-white text-center mb-2 font-bold">المقدم</h3>
-            <VideoRoom />
+        {/* Current Segment */}
+        {state.currentSegment && (
+          <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-4 text-center">
+            <h2 className="text-white font-bold font-arabic">
+              {state.segments.find(s => s.code === state.currentSegment)?.name}
+            </h2>
+            <p className="text-white/70 text-sm font-arabic">
+              سؤال {state.currentQuestionIndex} / {state.settings.questionsPerSegment[state.currentSegment]}
+            </p>
           </div>
-          <div className="relative">
-            <h3 className="text-white text-center mb-2 font-bold">لاعب أ</h3>
-            <VideoRoom />
-          </div>
-          <div className="relative">
-            <h3 className="text-white text-center mb-2 font-bold">لاعب ب</h3>
-            <VideoRoom />
-          </div>
-        </section>
+        )}
 
         {/* Timer */}
-        <div className="flex justify-center mb-6">
-          <Timer />
+        <div className="flex justify-center mb-4">
+          <Timer onTimeUp={handleTimeUp} />
         </div>
 
         {/* Scoreboard */}
-        <Scoreboard className="mb-6" />
+        <div className="mb-4">
+          <Scoreboard />
+        </div>
 
-        {/* Question Panel */}
-        <QuestionPanel />
+        {/* Question Area for Players */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 mb-4">
+          {state.currentQuestion ? (
+            <div>
+              {/* Players don't see the question text in some segments */}
+              {(state.currentSegment === 'BELL' || state.currentSegment === 'SING') ? (
+                <div className="text-center text-white/70 font-arabic">
+                  انتظار السؤال من المقدم...
+                </div>
+              ) : (
+                <div className="text-lg text-white font-arabic text-center" dir="rtl">
+                  {state.currentQuestion.text}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="text-center text-white/70 font-arabic">
+              {state.phase === 'lobby' && 'انتظار بدء اللعبة...'}
+              {state.phase === 'segment-intro' && 'استعد للفقرة القادمة'}
+              {state.phase === 'final' && '🎉 انتهت اللعبة!'}
+            </div>
+          )}
+        </div>
 
-        {/* Host Controls */}
-        <HostControls />
-
-        {/* Game State Debug Info (remove in production) */}
-        {process.env.NODE_ENV === 'development' && (
-          <motion.div
-            className="fixed bottom-4 right-4 bg-black/80 text-white p-4 rounded-lg text-xs max-w-sm"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <div>Phase: {state.phase}</div>
-            <div>Segment: {state.currentSegment}</div>
-            <div>Question: {state.currentQuestionIndex}</div>
-            <div>Bell Active: {state.bell.isActive ? 'Yes' : 'No'}</div>
-            <div>Clicked By: {state.bell.clickedBy || 'None'}</div>
-          </motion.div>
+        {/* Bell for BELL segment */}
+        {state.currentSegment === 'BELL' && userRole !== 'host' && (
+          <div className="flex justify-center mb-4">
+            <Buzzer playerId={userRole} />
+          </div>
         )}
+
+        {/* Video Chat */}
+        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+          <VideoRoom />
+        </div>
       </div>
     </main>
   );
