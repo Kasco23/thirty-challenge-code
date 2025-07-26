@@ -2,7 +2,28 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 // Daily.co integration
-let DailyIframe: any = null;
+let DailyIframe: typeof import('@daily-co/daily-js').default | null = null;
+
+// Daily.co types
+interface DailyCallFrame {
+  iframe(): HTMLIFrameElement;
+  join(options: { url: string; userName: string }): Promise<void>;
+  on(event: string, callback: (data: { error?: { msg: string } }) => void): DailyCallFrame;
+  destroy(): void;
+}
+
+interface DailyFrameOptions {
+  iframeStyle: {
+    width: string;
+    height: string;
+    border: string;
+    borderRadius: string;
+  };
+  showLeaveButton: boolean;
+  showFullscreenButton: boolean;
+  showLocalVideo: boolean;
+  showParticipantsBar: boolean;
+}
 
 // Dynamically import Daily.co only if API key is available
 const initializeDaily = async () => {
@@ -31,7 +52,7 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User' }:
   const [showInstructions, setShowInstructions] = useState(false);
   const [dailyAvailable, setDailyAvailable] = useState(false);
   const callFrameRef = useRef<HTMLDivElement>(null);
-  const callFrame = useRef<any>(null);
+  const callFrame = useRef<DailyCallFrame | null>(null);
 
   // Initialize Daily.co
   useEffect(() => {
@@ -43,7 +64,7 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User' }:
       if (available && DailyIframe) {
         try {
           // Create Daily call frame
-          callFrame.current = DailyIframe.createFrame({
+          const frameOptions: DailyFrameOptions = {
             iframeStyle: {
               width: '100%',
               height: '100%',
@@ -54,7 +75,9 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User' }:
             showFullscreenButton: false,
             showLocalVideo: true,
             showParticipantsBar: false,
-          });
+          };
+          
+          callFrame.current = DailyIframe.createFrame(frameOptions) as DailyCallFrame;
 
           // Attach to DOM
           if (callFrameRef.current && callFrame.current.iframe()) {
@@ -71,7 +94,7 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User' }:
             .on('left-meeting', () => {
               setIsConnected(false);
             })
-            .on('error', (event: any) => {
+            .on('error', (event: { error?: { msg: string } }) => {
               setError(`Connection error: ${event.error?.msg || 'Unknown error'}`);
               setIsLoading(false);
             });
@@ -83,8 +106,9 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User' }:
             userName: userName
           });
 
-        } catch (err: any) {
-          setError(`Failed to initialize video: ${err.message}`);
+        } catch (err: unknown) {
+          const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+          setError(`Failed to initialize video: ${errorMessage}`);
           setIsLoading(false);
         }
       } else {
