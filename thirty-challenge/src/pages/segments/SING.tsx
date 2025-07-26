@@ -1,3 +1,3 @@
 export default function SING() {
-  return <div className="p">SING Segment</tiv>;
+  return (<div className="p">SING segment</div>);
 }
