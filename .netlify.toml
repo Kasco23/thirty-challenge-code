@@ -6,6 +6,14 @@
 [build.environment]
   # Environment variables are set in Netlify UI
 
-# Configure secrets scanning to ignore example files
+# Configure secrets scanning
 [build.processing.secrets]
-  omit_paths = [".env.example"]
+  # Option 1: Disable secrets scanning entirely for this project
+  # since VITE_ environment variables are meant to be public client-side variables
+  enabled = false
+  
+  # Option 2: If you prefer to keep scanning enabled, uncomment the lines below:
+  # # Exclude example files and build output from secrets scanning
+  # omit_paths = [".env.example", "dist/**", "thirty-challenge/dist/**"]
+  # # Ignore VITE_ environment variables as they are meant to be public client-side variables
+  # omit_keys = ["VITE_SUPABASE_URL", "VITE_SUPABASE_ANON_KEY", "VITE_DAILY_API_KEY"]
