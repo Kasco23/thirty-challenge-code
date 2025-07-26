@@ -3,6 +3,7 @@ import { AnimatePresence } from 'framer-motion';
 import { GameProvider } from './context/GameContext';
 import Landing from './pages/Landing';
 import Join from './pages/Join';
+import HostSetup from './pages/HostSetup';
 import QuizRoom from './pages/QuizRoom';
 import Lobby from './pages/Lobby';
 import Room from './pages/Room';
@@ -32,6 +33,7 @@ function App() {
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Landing />} />
             <Route path="/join" element={<Join />} />
+            <Route path="/host-setup/:gameId" element={<HostSetup />} />
             
             {/* New proper routing structure */}
             <Route path="/lobby/:gameId" element={<Lobby />} />

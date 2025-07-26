@@ -6,7 +6,7 @@ import { useGame } from '../context/GameContext';
 import VideoRoom from '../components/VideoRoom';
 import { CLUB_THEMES } from '../themes/clubs';
 
-type UserRole = 'host' | 'playerA' | 'playerB';
+type UserRole = 'host' | 'host-mobile' | 'playerA' | 'playerB';
 
 export default function Lobby() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -15,7 +15,6 @@ export default function Lobby() {
   const { state, actions } = useGame();
 
   const [userRole, setUserRole] = useState<UserRole>('host');
-  const [selectedClub, setSelectedClub] = useState('liverpool');
 
   // Extract URL parameters
   useEffect(() => {
@@ -30,8 +29,13 @@ export default function Lobby() {
       setUserRole(role);
     }
 
+    // Handle host-mobile role - join as host with video capability
+    if (role === 'host-mobile' && name) {
+      actions.updateHostName(name);
+    }
+
     // Auto-join players directly
-    if (role && role !== 'host' && autoJoin && name && flag && club) {
+    if (role && ['playerA', 'playerB'].includes(role) && autoJoin && name && flag && club) {
       actions.joinGame(role as 'playerA' | 'playerB', {
         name,
         flag,
@@ -56,25 +60,14 @@ export default function Lobby() {
   // Update host name when it changes
   useEffect(() => {
     const hostName = searchParams.get('hostName');
-    if (userRole === 'host' && hostName && hostName !== state.hostName) {
+    if ((userRole === 'host' || userRole === 'host-mobile') && hostName && hostName !== state.hostName) {
       actions.updateHostName(hostName);
     }
   }, [searchParams, userRole, state.hostName, actions]);
 
-  const handleClubSelection = (club: string) => {
-    setSelectedClub(club);
-    if (userRole !== 'host') {
-      actions.joinGame(userRole as 'playerA' | 'playerB', {
-        name: state.players[userRole as 'playerA' | 'playerB']?.name || 'لاعب',
-        club,
-        isConnected: true,
-      });
-    }
-  };
-
   const handleStartGame = () => {
     if (gameId) {
-      navigate(`/game/${gameId}?role=host`);
+      navigate(`/game/${gameId}?role=${userRole === 'host-mobile' ? 'host' : userRole}`);
     }
   };
 
@@ -91,6 +84,55 @@ export default function Lobby() {
     );
   }
 
+  // Host Mobile View (when host joins from mobile for video)
+  if (userRole === 'host-mobile') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 flex items-center justify-center p-4">
+        <motion.div
+          className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 w-full max-w-md text-center"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-white mb-2 font-arabic">المقدم - الهاتف</h1>
+            <p className="text-accent2 font-arabic">رمز الجلسة: {gameId}</p>
+          </div>
+
+          {/* Host Info */}
+          <div className="mb-6">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="text-3xl">🎤</div>
+              <h2 className="text-xl font-bold text-white font-arabic">{state.hostName}</h2>
+            </div>
+            <div className="inline-block px-3 py-1 rounded-full text-sm font-bold bg-blue-500 text-white">
+              مقدم متصل
+            </div>
+          </div>
+
+          {/* Video Chat */}
+          <div className="mb-6">
+            <VideoRoom roomName={gameId} userName={state.hostName} isHost={false} />
+          </div>
+
+          {/* Game Status */}
+          <div className="bg-white/5 rounded-xl p-4 mb-6">
+            <p className="text-white/80 font-arabic mb-2">حالة اللعبة:</p>
+            <p className="text-accent2 font-arabic">اللاعبون المتصلون: {connectedPlayers}/2</p>
+            {connectedPlayers >= 2 && (
+              <p className="text-green-400 font-arabic mt-2">جاهز للبدء! تحكم من الكمبيوتر</p>
+            )}
+          </div>
+
+          {/* Instructions */}
+          <div className="text-sm text-white/70 font-arabic">
+            <p>• تحكم في اللعبة من جهاز الكمبيوتر</p>
+            <p>• هذا الجهاز للفيديو فقط</p>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   // Host PC View
   if (userRole === 'host') {
     return (
@@ -99,8 +141,11 @@ export default function Lobby() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-white mb-2 font-arabic">صالة الانتظار</h1>
-            <p className="text-accent2 font-arabic">رمز الجلسة: <span className="font-mono text-2xl">{gameId}</span></p>
-            <p className="text-white/70 font-arabic mt-2">اللاعبون المتصلون: {connectedPlayers}/2</p>
+            <div className="space-y-2">
+              <p className="text-accent2 font-arabic">رمز الجلسة: <span className="font-mono text-2xl">{gameId}</span></p>
+              <p className="text-blue-300 font-arabic">رمز المقدم: <span className="font-mono text-lg">{gameId}-HOST</span></p>
+              <p className="text-white/70 font-arabic mt-2">اللاعبون المتصلون: {connectedPlayers}/2</p>
+            </div>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
@@ -156,11 +201,11 @@ export default function Lobby() {
                     <h3 className="text-xl font-bold text-white font-arabic">المقدم</h3>
                     <p className="text-accent2 font-arabic">{state.hostName}</p>
                     <div className="inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 bg-blue-500 text-white">
-                      متصل
+                      متصل (تحكم)
                     </div>
                   </div>
                   <div className="aspect-video bg-black/30 rounded-lg flex items-center justify-center">
-                    <VideoRoom roomName={gameId} userName={state.hostName} />
+                    <VideoRoom roomName={gameId} userName={state.hostName} isHost={true} />
                   </div>
                 </div>
 
@@ -202,6 +247,7 @@ export default function Lobby() {
                           <VideoRoom 
                             roomName={gameId} 
                             userName={isConnected ? player.name : `لاعب ${index + 1}`} 
+                            isHost={false}
                           />
                         </div>
                       </div>
@@ -243,7 +289,7 @@ export default function Lobby() {
             </div>
 
             {player.club && (
-              <div className="flex flex-col items-center">
+              <div className="flex flex-col items-center mb-4">
                 <div className="w-20 h-20 mb-2">
                   <img 
                     src={CLUB_THEMES[player.club as keyof typeof CLUB_THEMES]?.logo} 
@@ -254,62 +300,31 @@ export default function Lobby() {
                 <p className="text-white/80 font-arabic capitalize">{player.club}</p>
               </div>
             )}
+
+            <div className="inline-block px-3 py-1 rounded-full text-sm font-bold bg-green-500 text-white">
+              متصل
+            </div>
           </div>
 
-          <div className="bg-green-500/20 border border-green-500/30 rounded-2xl p-4 mb-6">
-            <p className="text-green-300 font-bold font-arabic">تم الانضمام بنجاح!</p>
-            <p className="text-white/70 text-sm font-arabic mt-1">انتظر المقدم لبدء اللعبة</p>
+          {/* Video Chat */}
+          <div className="mb-6">
+            <VideoRoom roomName={gameId} userName={player.name} isHost={false} />
           </div>
 
-          <div className="flex items-center justify-center gap-2">
-            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-            <p className="text-white/70 text-sm font-arabic">متصل</p>
+          {/* Waiting Status */}
+          <div className="bg-white/5 rounded-xl p-4">
+            <p className="text-white/80 font-arabic mb-2">في انتظار بدء اللعبة...</p>
+            <p className="text-accent2 font-arabic">اللاعبون المتصلون: {connectedPlayers}/2</p>
           </div>
         </motion.div>
       </div>
     );
   }
 
-  // Player Mobile View - Manual Club Selection (fallback)
+  // Default fallback
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 p-4">
-      <div className="max-w-md mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2 font-arabic">اختر فريقك</h1>
-          <p className="text-accent2 font-arabic">رمز الجلسة: {gameId}</p>
-        </div>
-
-        {/* Club Selection */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          {Object.entries(CLUB_THEMES).map(([clubKey, theme]) => (
-            <motion.button
-              key={clubKey}
-              onClick={() => handleClubSelection(clubKey)}
-              className={`p-4 rounded-2xl border-2 transition-all ${
-                selectedClub === clubKey
-                  ? 'border-accent2 bg-accent2/20'
-                  : 'border-white/20 bg-white/10'
-              }`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <div className="w-16 h-16 mx-auto mb-2">
-                <img src={theme.logo} alt={clubKey} className="w-full h-full object-contain" />
-              </div>
-              <p className="text-white text-sm font-arabic capitalize">{clubKey}</p>
-            </motion.button>
-          ))}
-        </div>
-
-        <motion.button
-          onClick={() => navigate(`/game/${gameId}?role=${userRole}`)}
-          className="w-full bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-4 px-6 rounded-2xl font-arabic"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          جاهز للعب
-        </motion.button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 flex items-center justify-center">
+      <div className="text-white text-center font-arabic">خطأ في تحميل الصفحة</div>
     </div>
   );
 }
