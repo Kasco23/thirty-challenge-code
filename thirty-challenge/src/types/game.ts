@@ -1,7 +1,7 @@
 // Game Types for Thirty Challenge Quiz
-export type PlayerId = 'host' | 'playerA' | 'playerB';
+export type PlayerId = 'playerA' | 'playerB';
 export type SegmentCode = 'WSHA' | 'AUCT' | 'BELL' | 'SING' | 'REMO';
-export type GamePhase = 'lobby' | 'segment-intro' | 'playing' | 'scoring' | 'final';
+export type GamePhase = 'LOBBY' | 'PLAYING' | 'FINAL_SCORES';
 
 export interface Player {
   id: PlayerId;
@@ -12,9 +12,9 @@ export interface Player {
   strikes: number;
   isConnected: boolean;
   specialButtons: {
-    lockButton: boolean;      // AUCT segment - available at 40 points
-    travelerButton: boolean;  // BELL segment - one use per player
-    pitButton: boolean;       // SING segment - one use per player
+    LOCK_BUTTON: boolean;      // AUCT segment - available at 40 points
+    TRAVELER_BUTTON: boolean;  // BELL segment - one use per player
+    PIT_BUTTON: boolean;       // SING segment - one use per player
   };
 }
 
@@ -23,113 +23,66 @@ export interface Question {
   text: string;
   answers: string[];
   correctAnswer?: string;
-  segmentCode: SegmentCode;
   difficulty?: 'easy' | 'medium' | 'hard';
+  points?: number;
 }
 
-export interface SegmentConfig {
-  code: SegmentCode;
-  name: string;
-  maxQuestions: number;
-  description: string;
-  rules: string[];
+export interface SegmentState {
+  questionsPerSegment: number;
+  currentQuestionIndex: number;
+  isComplete: boolean;
+}
+
+export interface ScoreEvent {
+  playerId: PlayerId;
+  points: number;
+  timestamp: number;
+  segment: SegmentCode;
+  questionIndex: number;
 }
 
 export interface GameState {
   gameId: string;
   phase: GamePhase;
-  currentSegment: SegmentCode | null;
+  currentSegment: SegmentCode;
   currentQuestionIndex: number;
-  currentQuestion: Question | null;
+  timer: number;
+  isTimerRunning: boolean;
   players: Record<PlayerId, Player>;
-  host: PlayerId;
-  segments: SegmentConfig[];
-  completedSegments: SegmentCode[];
-  timer: {
-    isActive: boolean;
-    timeLeft: number;
-    duration: number;
-  };
-  bell: {
-    isActive: boolean;
-    clickedBy: PlayerId | null;
-    clickTime: number | null;
-  };
-  auction: {
-    isActive: boolean;
-    bids: Record<PlayerId, number>;
-    winner: PlayerId | null;
-    targetCount: number;
-    correctCount: number;
-  };
-  settings: {
-    questionsPerSegment: Record<SegmentCode, number>;
-    enabledSegments: SegmentCode[];
-    timePerQuestion: number;
-  };
+  hostName: string;
+  segments: Record<SegmentCode, SegmentState>;
+  scoreHistory: ScoreEvent[];
 }
 
-// Action types
-export type GameActionType = 
-  | 'PLAYER_JOIN'
-  | 'PLAYER_LEAVE' 
-  | 'START_GAME'
-  | 'NEXT_SEGMENT'
-  | 'NEXT_QUESTION'
-  | 'ANSWER_QUESTION'
-  | 'BELL_CLICK'
-  | 'ADD_STRIKE'
-  | 'UPDATE_SCORE'
-  | 'USE_SPECIAL_BUTTON'
-  | 'START_TIMER'
-  | 'STOP_TIMER'
-  | 'PLACE_BID'
-  | 'REVEAL_ANSWER'
-  | 'END_GAME';
-
-// Specific action interfaces
-export interface PlayerJoinAction {
-  type: 'PLAYER_JOIN';
-  payload: {
-    playerId: PlayerId;
-    name: string;
-    flag?: string;
-    club?: string;
-  };
-  timestamp: number;
-}
-
+// Action interfaces
 export interface StartGameAction {
   type: 'START_GAME';
   payload: {
     gameId: string;
   };
-  timestamp: number;
 }
 
-export interface NextSegmentAction {
-  type: 'NEXT_SEGMENT';
-  timestamp: number;
+export interface JoinGameAction {
+  type: 'JOIN_GAME';
+  payload: {
+    playerId: PlayerId;
+    playerData: Partial<Player>;
+  };
+}
+
+export interface UpdateHostNameAction {
+  type: 'UPDATE_HOST_NAME';
+  payload: {
+    hostName: string;
+  };
 }
 
 export interface NextQuestionAction {
   type: 'NEXT_QUESTION';
-  payload: {
-    question: Question;
-  };
-  timestamp: number;
 }
 
-export interface BellClickAction {
-  type: 'BELL_CLICK';
-  playerId: PlayerId;
-  timestamp: number;
-}
-
-export interface AddStrikeAction {
-  type: 'ADD_STRIKE';
-  playerId: PlayerId;
-  timestamp: number;
+export interface NextSegmentAction {
+  type: 'NEXT_SEGMENT';
 }
 
 export interface UpdateScoreAction {
@@ -137,55 +90,57 @@ export interface UpdateScoreAction {
   payload: {
     playerId: PlayerId;
     points: number;
-    reason: string;
   };
-  timestamp: number;
+}
+
+export interface AddStrikeAction {
+  type: 'ADD_STRIKE';
+  payload: {
+    playerId: PlayerId;
+  };
 }
 
 export interface UseSpecialButtonAction {
   type: 'USE_SPECIAL_BUTTON';
   payload: {
     playerId: PlayerId;
-    buttonType: string;
+    buttonType: keyof Player['specialButtons'];
   };
-  timestamp: number;
 }
 
 export interface StartTimerAction {
   type: 'START_TIMER';
   payload: {
-    duration?: number;
+    duration: number;
   };
-  timestamp: number;
 }
 
 export interface StopTimerAction {
   type: 'STOP_TIMER';
-  timestamp: number;
 }
 
-export interface PlaceBidAction {
-  type: 'PLACE_BID';
-  playerId: PlayerId;
-  payload: {
-    bidAmount: number;
-  };
-  timestamp: number;
+export interface TickTimerAction {
+  type: 'TICK_TIMER';
+}
+
+export interface ResetGameAction {
+  type: 'RESET_GAME';
 }
 
 // Union type for all actions
 export type GameAction = 
-  | PlayerJoinAction
   | StartGameAction
-  | NextSegmentAction
+  | JoinGameAction
+  | UpdateHostNameAction
   | NextQuestionAction
-  | BellClickAction
-  | AddStrikeAction
+  | NextSegmentAction
   | UpdateScoreAction
+  | AddStrikeAction
   | UseSpecialButtonAction
   | StartTimerAction
   | StopTimerAction
-  | PlaceBidAction;
+  | TickTimerAction
+  | ResetGameAction;
 
 // Segment-specific types
 export interface WSHAState {
@@ -217,12 +172,4 @@ export interface REMOState {
   cluesRevealed: number;
   totalClues: number;
   careerClues: string[];
-}
-
-export interface ScoreEvent {
-  playerId: PlayerId;
-  points: number;
-  reason: string;
-  timestamp: number;
-  segmentCode: SegmentCode;
 }

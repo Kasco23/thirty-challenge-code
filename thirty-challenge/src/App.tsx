@@ -52,7 +52,7 @@ function App() {
             
             {/* Component routes */}
             <Route path="/timer" element={<Timer />} />
-            <Route path="/buzzer" element={<Buzzer playerId="playerA" />} />
+            <Route path="/buzzer" element={<Buzzer />} />
             
             {/* Admin and utility routes */}
             <Route path="/admin" element={<Admin />} />

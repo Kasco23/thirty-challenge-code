@@ -1,33 +1,16 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import type { GameState, GameAction, PlayerId } from '../types/game';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
-import type { 
-  GameState, 
-  GameAction, 
-  PlayerId, 
-  Player,
-  Question 
-} from '../types/game';
 
-// Initial game state
-const initialGameState: GameState = {
+// Constants moved to top level
+const INITIAL_GAME_STATE: GameState = {
   gameId: '',
-  phase: 'lobby',
-  currentSegment: null,
+  phase: 'LOBBY',
+  currentSegment: 'WSHA',
   currentQuestionIndex: 0,
-  currentQuestion: null,
+  timer: 0,
+  isTimerRunning: false,
   players: {
-    host: {
-      id: 'host',
-      name: 'المقدم',
-      score: 0,
-      strikes: 0,
-      isConnected: false,
-      specialButtons: {
-        lockButton: false,
-        travelerButton: false,
-        pitButton: false,
-      }
-    },
     playerA: {
       id: 'playerA',
       name: 'لاعب أ',
@@ -35,10 +18,12 @@ const initialGameState: GameState = {
       strikes: 0,
       isConnected: false,
       specialButtons: {
-        lockButton: false,
-        travelerButton: true,
-        pitButton: true,
-      }
+        LOCK_BUTTON: true,
+        TRAVELER_BUTTON: true,
+        PIT_BUTTON: true,
+      },
+      club: 'liverpool',
+      flag: 'sa',
     },
     playerB: {
       id: 'playerB',
@@ -47,162 +32,163 @@ const initialGameState: GameState = {
       strikes: 0,
       isConnected: false,
       specialButtons: {
-        lockButton: false,
-        travelerButton: true,
-        pitButton: true,
-      }
-    }
+        LOCK_BUTTON: true,
+        TRAVELER_BUTTON: true,
+        PIT_BUTTON: true,
+      },
+      club: 'real-madrid',
+      flag: 'ae',
+    },
   },
-  host: 'host',
-  segments: [
-    {
-      code: 'WSHA',
-      name: 'وش تعرف',
-      maxQuestions: 10,
-      description: 'قائمة متناوبة حتى 3 أخطاء',
-      rules: ['تناوب بين اللاعبين', 'تكرار الإجابة = خطأ', '3 أخطاء = نقطة للخصم']
+  hostName: 'المقدم',
+  segments: {
+    WSHA: {
+      questionsPerSegment: 10,
+      currentQuestionIndex: 0,
+      isComplete: false,
     },
-    {
-      code: 'AUCT',
-      name: 'المزاد',
-      maxQuestions: 8,
-      description: 'مزايدة على عدد العناصر',
-      rules: ['مزايدة على العدد', 'يجب تحقيق 50% من الوعد', 'زر القفل متاح عند 40 نقطة']
+    AUCT: {
+      questionsPerSegment: 8,
+      currentQuestionIndex: 0,
+      isComplete: false,
     },
-    {
-      code: 'BELL',
-      name: 'فقرة الجرس',
-      maxQuestions: 12,
-      description: 'أسرع في الضغط على الجرس',
-      rules: ['أول من يضغط الجرس يجيب', 'زر المسافر متاح مرة واحدة', 'لا توجد أخطاء']
+    BELL: {
+      questionsPerSegment: 12,
+      currentQuestionIndex: 0,
+      isComplete: false,
     },
-    {
-      code: 'SING',
-      name: 'سين & جيم',
-      maxQuestions: 4,
-      description: 'أسئلة صعبة مع زر الحفرة',
-      rules: ['4 أسئلة صعبة', 'زر الحفرة: +2 لك و -2 للخصم', 'استخدام واحد لكل لاعب']
+    SING: {
+      questionsPerSegment: 6,
+      currentQuestionIndex: 0,
+      isComplete: false,
     },
-    {
-      code: 'REMO',
-      name: 'التعويض',
-      maxQuestions: 6,
-      description: 'تخمين المهنة من الأدلة',
-      rules: ['أدلة متدرجة عن المهنة', 'أول إجابة صحيحة تفوز', 'فرصة للعودة']
-    }
-  ],
-  completedSegments: [],
-  timer: {
-    isActive: false,
-    timeLeft: 0,
-    duration: 30,
+    REMO: {
+      questionsPerSegment: 5,
+      currentQuestionIndex: 0,
+      isComplete: false,
+    },
   },
-  bell: {
-    isActive: false,
-    clickedBy: null,
-    clickTime: null,
-  },
-  auction: {
-    isActive: false,
-    bids: { host: 0, playerA: 0, playerB: 0 },
-    winner: null,
-    targetCount: 0,
-    correctCount: 0,
-  },
-  settings: {
-    questionsPerSegment: {
-      WSHA: 10,
-      AUCT: 8,
-      BELL: 12,
-      SING: 4,
-      REMO: 6,
-    },
-    enabledSegments: ['WSHA', 'AUCT', 'BELL', 'SING', 'REMO'],
-    timePerQuestion: 30,
-  }
+  scoreHistory: [],
 };
 
-// Game reducer
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
-    case 'PLAYER_JOIN':
+    case 'START_GAME': {
+      const { gameId } = action.payload;
+      return {
+        ...INITIAL_GAME_STATE,
+        gameId,
+        phase: 'LOBBY',
+      };
+    }
+
+    case 'JOIN_GAME': {
+      const { playerId, playerData } = action.payload;
       return {
         ...state,
         players: {
           ...state.players,
-          [action.payload.playerId]: {
-            ...state.players[action.payload.playerId],
-            name: action.payload.name,
-            flag: action.payload.flag,
-            club: action.payload.club,
+          [playerId]: {
+            ...state.players[playerId],
+            ...playerData,
+            name: playerData.name || state.players[playerId].name,
             isConnected: true,
-          }
-        }
-      };
-
-    case 'START_GAME':
-      return {
-        ...state,
-        phase: 'segment-intro',
-        currentSegment: state.settings.enabledSegments[0],
-        gameId: action.payload.gameId,
-      };
-
-    case 'NEXT_SEGMENT': {
-      const currentIndex = state.settings.enabledSegments.indexOf(state.currentSegment!);
-      const nextSegment = state.settings.enabledSegments[currentIndex + 1];
-      
-      return {
-        ...state,
-        phase: nextSegment ? 'segment-intro' : 'final',
-        currentSegment: nextSegment || null,
-        currentQuestionIndex: 0,
-        currentQuestion: null,
-        completedSegments: state.currentSegment 
-          ? [...state.completedSegments, state.currentSegment]
-          : state.completedSegments,
+          },
+        },
       };
     }
 
-    case 'NEXT_QUESTION':
+    case 'UPDATE_HOST_NAME': {
+      const { hostName } = action.payload;
       return {
         ...state,
-        phase: 'playing',
-        currentQuestionIndex: state.currentQuestionIndex + 1,
-        currentQuestion: action.payload.question,
-        timer: {
-          ...state.timer,
-          isActive: true,
-          timeLeft: state.settings.timePerQuestion,
-        },
-        bell: {
-          isActive: state.currentSegment === 'BELL',
-          clickedBy: null,
-          clickTime: null,
-        }
+        hostName,
       };
+    }
 
-    case 'BELL_CLICK':
-      if (state.currentSegment === 'BELL' && state.bell.isActive) {
+    case 'NEXT_QUESTION': {
+      const currentSegmentState = state.segments[state.currentSegment];
+      const nextQuestionIndex = currentSegmentState.currentQuestionIndex + 1;
+      
+      if (nextQuestionIndex >= currentSegmentState.questionsPerSegment) {
         return {
           ...state,
-          bell: {
-            isActive: false,
-            clickedBy: action.playerId,
-            clickTime: action.timestamp,
+          segments: {
+            ...state.segments,
+            [state.currentSegment]: {
+              ...currentSegmentState,
+              isComplete: true,
+            },
           },
-          timer: {
-            ...state.timer,
-            isActive: true,
-            timeLeft: 10, // 10 seconds to answer after bell click
-          }
         };
       }
-      return state;
+      
+      return {
+        ...state,
+        segments: {
+          ...state.segments,
+          [state.currentSegment]: {
+            ...currentSegmentState,
+            currentQuestionIndex: nextQuestionIndex,
+          },
+        },
+      };
+    }
+
+    case 'NEXT_SEGMENT': {
+      const segmentOrder: Array<keyof GameState['segments']> = ['WSHA', 'AUCT', 'BELL', 'SING', 'REMO'];
+      const currentIndex = segmentOrder.indexOf(state.currentSegment);
+      const nextSegment = segmentOrder[currentIndex + 1];
+      
+      if (!nextSegment) {
+        return {
+          ...state,
+          phase: 'FINAL_SCORES',
+        };
+      }
+      
+      return {
+        ...state,
+        currentSegment: nextSegment,
+        segments: {
+          ...state.segments,
+          [state.currentSegment]: {
+            ...state.segments[state.currentSegment],
+            isComplete: true,
+          },
+        },
+      };
+    }
+
+    case 'UPDATE_SCORE': {
+      const { playerId, points } = action.payload;
+      const newScore = Math.max(0, state.players[playerId].score + points);
+      
+      return {
+        ...state,
+        players: {
+          ...state.players,
+          [playerId]: {
+            ...state.players[playerId],
+            score: newScore,
+          },
+        },
+        scoreHistory: [
+          ...state.scoreHistory,
+          {
+            playerId,
+            points,
+            timestamp: Date.now(),
+            segment: state.currentSegment,
+            questionIndex: state.segments[state.currentSegment].currentQuestionIndex,
+          },
+        ],
+      };
+    }
 
     case 'ADD_STRIKE': {
-      const playerId = action.playerId;
-      const newStrikes = state.players[playerId].strikes + 1;
+      const { playerId } = action.payload;
+      const newStrikes = Math.min(3, state.players[playerId].strikes + 1);
       
       return {
         ...state,
@@ -211,224 +197,152 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           [playerId]: {
             ...state.players[playerId],
             strikes: newStrikes,
-          }
-        }
-      };
-    }
-
-    case 'UPDATE_SCORE': {
-      const scorePlayerId = action.payload.playerId;
-      return {
-        ...state,
-        players: {
-          ...state.players,
-          [scorePlayerId]: {
-            ...state.players[scorePlayerId],
-            score: state.players[scorePlayerId].score + action.payload.points,
-          }
-        }
+          },
+        },
       };
     }
 
     case 'USE_SPECIAL_BUTTON': {
-      const { playerId: buttonPlayerId, buttonType } = action.payload;
+      const { playerId, buttonType } = action.payload;
       return {
         ...state,
         players: {
           ...state.players,
-          [buttonPlayerId]: {
-            ...state.players[buttonPlayerId],
+          [playerId]: {
+            ...state.players[playerId],
             specialButtons: {
-              ...state.players[buttonPlayerId].specialButtons,
-              [buttonType]: false, // Disable after use
-            }
-          }
-        }
+              ...state.players[playerId].specialButtons,
+              [buttonType]: false,
+            },
+          },
+        },
       };
     }
 
-    case 'START_TIMER':
+    case 'START_TIMER': {
+      const { duration } = action.payload;
       return {
         ...state,
-        timer: {
-          ...state.timer,
-          isActive: true,
-          timeLeft: action.payload.duration || state.settings.timePerQuestion,
-          duration: action.payload.duration || state.settings.timePerQuestion,
-        }
+        timer: duration,
+        isTimerRunning: true,
       };
+    }
 
     case 'STOP_TIMER':
       return {
         ...state,
-        timer: {
-          ...state.timer,
-          isActive: false,
-        }
+        isTimerRunning: false,
       };
 
-    case 'PLACE_BID':
+    case 'TICK_TIMER':
+      if (!state.isTimerRunning || state.timer <= 0) {
+        return state;
+      }
       return {
         ...state,
-        auction: {
-          ...state.auction,
-          bids: {
-            ...state.auction.bids,
-            [action.playerId]: action.payload.bidAmount,
-          }
-        }
+        timer: state.timer - 1,
       };
+
+    case 'RESET_GAME':
+      return INITIAL_GAME_STATE;
 
     default:
       return state;
   }
 }
 
-// Context types
 interface GameContextType {
   state: GameState;
-  dispatch: React.Dispatch<GameAction>;
   actions: {
-    joinGame: (playerId: PlayerId, playerData: Partial<Player>) => void;
     startGame: (gameId: string) => void;
+    joinGame: (playerId: PlayerId, playerData: Partial<GameState['players'][PlayerId]>) => void;
+    updateHostName: (hostName: string) => void;
+    nextQuestion: () => void;
     nextSegment: () => void;
-    nextQuestion: (question: Question) => void;
-    clickBell: (playerId: PlayerId) => void;
+    updateScore: (playerId: PlayerId, points: number) => void;
     addStrike: (playerId: PlayerId) => void;
-    updateScore: (playerId: PlayerId, points: number, reason: string) => void;
-    useSpecialButton: (playerId: PlayerId, buttonType: string) => void;
-    startTimer: (duration?: number) => void;
+    useSpecialButton: (playerId: PlayerId, buttonType: keyof GameState['players'][PlayerId]['specialButtons']) => void;
+    startTimer: (duration: number) => void;
     stopTimer: () => void;
-    placeBid: (playerId: PlayerId, amount: number) => void;
+    resetGame: () => void;
   };
 }
 
-// Create context
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
-// Provider component
 export function GameProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(gameReducer, initialGameState);
+  const [state, dispatch] = useReducer(gameReducer, INITIAL_GAME_STATE);
 
-  // Action creators
+  // Real-time synchronization with Supabase (if configured)
+  useEffect(() => {
+    if (!isSupabaseConfigured() || !state.gameId) return;
+
+    const channel = supabase.channel(`game-${state.gameId}`)
+      .on('broadcast', { event: 'game-update' }, ({ payload }) => {
+        // Handle incoming game state updates
+        console.log('Received game update:', payload);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [state.gameId]);
+
+  // Timer effect
+  useEffect(() => {
+    if (!state.isTimerRunning) return;
+
+    const interval = setInterval(() => {
+              dispatch({ type: 'TICK_TIMER' });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [state.isTimerRunning]);
+
   const actions = {
-    joinGame: (playerId: PlayerId, playerData: Partial<Player>) => {
-      dispatch({
-        type: 'PLAYER_JOIN',
-        payload: { 
-          playerId, 
-          name: playerData.name || state.players[playerId].name,
-          flag: playerData.flag,
-          club: playerData.club,
-        },
-        timestamp: Date.now(),
-      });
-    },
-
     startGame: (gameId: string) => {
-      dispatch({
-        type: 'START_GAME',
-        payload: { gameId },
-        timestamp: Date.now(),
-      });
+      dispatch({ type: 'START_GAME', payload: { gameId } });
     },
-
+    joinGame: (playerId: PlayerId, playerData: Partial<GameState['players'][PlayerId]>) => {
+      dispatch({ type: 'JOIN_GAME', payload: { playerId, playerData } });
+    },
+    updateHostName: (hostName: string) => {
+      dispatch({ type: 'UPDATE_HOST_NAME', payload: { hostName } });
+    },
+    nextQuestion: () => {
+      dispatch({ type: 'NEXT_QUESTION' });
+    },
     nextSegment: () => {
-      dispatch({
-        type: 'NEXT_SEGMENT',
-        timestamp: Date.now(),
-      });
+      dispatch({ type: 'NEXT_SEGMENT' });
     },
-
-    nextQuestion: (question: Question) => {
-      dispatch({
-        type: 'NEXT_QUESTION',
-        payload: { question },
-        timestamp: Date.now(),
-      });
+    updateScore: (playerId: PlayerId, points: number) => {
+      dispatch({ type: 'UPDATE_SCORE', payload: { playerId, points } });
     },
-
-    clickBell: (playerId: PlayerId) => {
-      dispatch({
-        type: 'BELL_CLICK',
-        playerId,
-        timestamp: Date.now(),
-      });
-    },
-
     addStrike: (playerId: PlayerId) => {
-      dispatch({
-        type: 'ADD_STRIKE',
-        playerId,
-        timestamp: Date.now(),
-      });
+      dispatch({ type: 'ADD_STRIKE', payload: { playerId } });
     },
-
-    updateScore: (playerId: PlayerId, points: number, reason: string) => {
-      dispatch({
-        type: 'UPDATE_SCORE',
-        payload: { playerId, points, reason },
-        timestamp: Date.now(),
-      });
+    useSpecialButton: (playerId: PlayerId, buttonType: keyof GameState['players'][PlayerId]['specialButtons']) => {
+      dispatch({ type: 'USE_SPECIAL_BUTTON', payload: { playerId, buttonType } });
     },
-
-    useSpecialButton: (playerId: PlayerId, buttonType: string) => {
-      dispatch({
-        type: 'USE_SPECIAL_BUTTON',
-        payload: { playerId, buttonType },
-        timestamp: Date.now(),
-      });
+    startTimer: (duration: number) => {
+      dispatch({ type: 'START_TIMER', payload: { duration } });
     },
-
-    startTimer: (duration?: number) => {
-      dispatch({
-        type: 'START_TIMER',
-        payload: { duration },
-        timestamp: Date.now(),
-      });
-    },
-
     stopTimer: () => {
-      dispatch({
-        type: 'STOP_TIMER',
-        timestamp: Date.now(),
-      });
+      dispatch({ type: 'STOP_TIMER' });
     },
-
-    placeBid: (playerId: PlayerId, amount: number) => {
-      dispatch({
-        type: 'PLACE_BID',
-        playerId,
-        payload: { bidAmount: amount },
-        timestamp: Date.now(),
-      });
+    resetGame: () => {
+      dispatch({ type: 'RESET_GAME' });
     },
   };
 
-  // Real-time synchronization with Supabase (only if configured)
-  useEffect(() => {
-    if (state.gameId && isSupabaseConfigured()) {
-      // Set up real-time listeners here
-      const channel = supabase.channel(`game:${state.gameId}`)
-        .on('broadcast', { event: 'game-action' }, (payload) => {
-          dispatch(payload.action);
-        })
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [state.gameId]);
-
   return (
-    <GameContext.Provider value={{ state, dispatch, actions }}>
+    <GameContext.Provider value={{ state, actions }}>
       {children}
     </GameContext.Provider>
   );
 }
 
-// Hook to use game context
 export function useGame() {
   const context = useContext(GameContext);
   if (context === undefined) {

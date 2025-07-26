@@ -1,179 +1,155 @@
 import { motion } from 'framer-motion';
 import { useGame } from '../context/GameContext';
-import type { PlayerId } from '../types/game';
 import { CLUB_THEMES } from '../themes/clubs';
+import type { PlayerId } from '../types/game';
 
-interface ScoreboardProps {
-  className?: string;
-  showSpecialButtons?: boolean;
-}
-
-export default function Scoreboard({ className = '', showSpecialButtons = true }: ScoreboardProps) {
+export default function Scoreboard() {
   const { state } = useGame();
 
-  const getPlayerClubTheme = (playerId: PlayerId) => {
-    const player = state.players[playerId];
-    if (player.club && player.club in CLUB_THEMES) {
-      return CLUB_THEMES[player.club as keyof typeof CLUB_THEMES];
+  // Special button configurations
+  const buttonConfig = {
+    LOCK_BUTTON: {
+      name: 'القفل',
+      color: 'bg-yellow-500',
+      icon: '🔒'
+    },
+    TRAVELER_BUTTON: {
+      name: 'المسافر', 
+      color: 'bg-blue-500',
+      icon: '✈️'
+    },
+    PIT_BUTTON: {
+      name: 'الحفرة',
+      color: 'bg-red-500', 
+      icon: '🕳️'
     }
-    return {
-      primary: 'bg-gray-700',
-      accent: 'bg-gray-600',
-      text: 'text-white',
-      logo: null
-    };
   };
 
-  const getStrikeDisplay = (strikes: number) => {
-    return Array(strikes).fill(0).map((_, idx) => (
-      <motion.span
-        key={idx}
-        className="text-red-500 text-xl mx-0.5"
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ delay: idx * 0.1 }}
-      >
-        ✗
-      </motion.span>
-    ));
-  };
-
-  const renderSpecialButton = (playerId: PlayerId, buttonType: keyof typeof state.players.playerA.specialButtons) => {
+  const renderPlayer = (playerId: PlayerId) => {
     const player = state.players[playerId];
-    const isAvailable = player.specialButtons[buttonType];
-    
-    const buttonConfig = {
-      lockButton: { name: 'قفل', color: 'bg-yellow-500', icon: '🔒' },
-      travelerButton: { name: 'مسافر', color: 'bg-blue-500', icon: '✈️' },
-      pitButton: { name: 'حفرة', color: 'bg-red-500', icon: '⚡' }
-    };
+    if (!player) return null;
 
-    const config = buttonConfig[buttonType];
-    
+    const clubTheme = player.club ? CLUB_THEMES[player.club as keyof typeof CLUB_THEMES] : null;
+    const playerIndex = playerId === 'playerA' ? 0 : 1;
+
     return (
       <motion.div
-        key={buttonType}
-        className={`px-2 py-1 rounded-full text-xs font-bold ${
-          isAvailable 
-            ? `${config.color} text-white shadow-lg` 
-            : 'bg-gray-600 text-gray-400'
+        key={playerId}
+        className={`relative bg-white/10 backdrop-blur-sm rounded-2xl p-4 border-2 ${
+          clubTheme 
+            ? `border-[${clubTheme.primary}] bg-gradient-to-br from-[${clubTheme.primary}]/20 to-transparent`
+            : 'border-white/20'
         }`}
-        animate={isAvailable ? { scale: [1, 1.05, 1] } : { scale: 1 }}
-        transition={{ duration: 2, repeat: isAvailable ? Infinity : 0 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: playerIndex * 0.1 }}
       >
-        <span className="mr-1">{config.icon}</span>
-        {config.name}
+        {/* Player Header */}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            {/* Flag */}
+            {player.flag && (
+              <span className={`fi fi-${player.flag} text-2xl`}></span>
+            )}
+            
+            {/* Player Name */}
+            <div>
+              <h3 className="text-white font-bold font-arabic">{player.name}</h3>
+              <div className={`text-xs px-2 py-1 rounded-full ${
+                player.isConnected ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'
+              }`}>
+                {player.isConnected ? 'متصل' : 'غير متصل'}
+              </div>
+            </div>
+          </div>
+
+          {/* Club Logo */}
+          {clubTheme && (
+            <div className="w-12 h-12 flex items-center justify-center">
+              <img 
+                src={clubTheme.logo} 
+                alt={player.club}
+                className="w-full h-full object-contain"
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Score Display */}
+        <div className="text-center mb-3">
+          <motion.div
+            className="text-3xl font-bold text-white mb-1"
+            animate={{ scale: [1, 1.1, 1] }}
+            transition={{ duration: 0.3 }}
+            key={player.score}
+          >
+            {player.score}
+          </motion.div>
+          <p className="text-white/70 text-sm font-arabic">النقاط</p>
+        </div>
+
+        {/* Strikes */}
+        <div className="flex justify-center gap-1 mb-3">
+          {[...Array(3)].map((_, index) => (
+            <div
+              key={index}
+              className={`w-3 h-3 rounded-full ${
+                index < player.strikes ? 'bg-red-500' : 'bg-white/20'
+              }`}
+            />
+          ))}
+        </div>
+
+        {/* Special Buttons */}
+        <div className="space-y-2">
+          {Object.entries(player.specialButtons).map(([buttonType, available]) => {
+            const config = buttonConfig[buttonType as keyof typeof buttonConfig];
+            if (!config) return null;
+
+            return (
+              <div
+                key={buttonType}
+                className={`flex items-center justify-between p-2 rounded-lg ${
+                  available ? config.color + '/20' : 'bg-gray-500/20'
+                }`}
+              >
+                <span className="text-white/80 text-xs font-arabic">{config.name}</span>
+                <span className={`text-lg ${available ? '' : 'grayscale opacity-50'}`}>
+                  {config.icon}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Connection Status Indicator */}
+        <div className="absolute top-2 right-2">
+          <div className={`w-3 h-3 rounded-full ${
+            player.isConnected ? 'bg-green-500' : 'bg-red-500'
+          }`} />
+        </div>
       </motion.div>
     );
   };
 
   return (
-    <div className={`grid grid-cols-3 gap-4 text-center ${className}`}>
-      {(['host', 'playerA', 'playerB'] as PlayerId[]).map((playerId) => {
-        const player = state.players[playerId];
-        const theme = getPlayerClubTheme(playerId);
-        const isCurrentPlayer = state.currentSegment === 'WSHA' && playerId !== 'host';
-        
-        return (
-          <motion.div
-            key={playerId}
-            className={`rounded-xl p-4 shadow-lg relative overflow-hidden ${theme.primary}`}
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: playerId === 'host' ? 0 : playerId === 'playerA' ? 0.1 : 0.2 }}
-            whileHover={{ scale: 1.02 }}
-          >
-            {/* Background pattern */}
-            <div className="absolute inset-0 opacity-10">
-              <div className="w-full h-full bg-gradient-to-br from-white to-transparent" />
-            </div>
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-white text-center mb-4 font-arabic">
+        لوحة النتائج
+      </h2>
+      
+      <div className="grid gap-4">
+        {(['playerA', 'playerB'] as const).map(renderPlayer)}
+      </div>
 
-            {/* Club logo */}
-            {theme.logo && (
-              <div className="absolute top-2 right-2 w-8 h-8 opacity-30">
-                <img src={theme.logo} alt="Club logo" className="w-full h-full object-contain" />
-              </div>
-            )}
-
-            {/* Connection status */}
-            <div className="absolute top-2 left-2">
-              <div className={`w-3 h-3 rounded-full ${player.isConnected ? 'bg-green-400' : 'bg-red-400'}`} />
-            </div>
-
-            {/* Player name */}
-            <div className={`font-bold text-lg mb-2 ${theme.text} relative z-10`}>
-              {player.name}
-              {player.flag && (
-                <span className={`fi fi-${player.flag.toLowerCase()} ml-2 text-base`} />
-              )}
-            </div>
-
-            {/* Score */}
-            <motion.div 
-              className={`text-3xl font-extrabold mb-2 ${theme.text} relative z-10`}
-              key={player.score} // Re-animate when score changes
-              initial={{ scale: 1.2, color: '#10b981' }}
-              animate={{ scale: 1, color: 'inherit' }}
-              transition={{ duration: 0.3 }}
-            >
-              {player.score}
-              <div className="text-xs text-white/70 font-normal">نقاط</div>
-            </motion.div>
-
-            {/* Strikes (only for players, not host) */}
-            {playerId !== 'host' && (
-              <div className="mb-3 min-h-[1.5rem] relative z-10">
-                {getStrikeDisplay(player.strikes)}
-                {player.strikes === 0 && (
-                  <span className="text-green-400 text-sm">نظيف ✨</span>
-                )}
-              </div>
-            )}
-
-            {/* Special buttons */}
-            {showSpecialButtons && playerId !== 'host' && (
-              <div className="flex flex-wrap gap-1 justify-center relative z-10">
-                {Object.keys(player.specialButtons).map((buttonType) =>
-                  renderSpecialButton(playerId, buttonType as keyof typeof player.specialButtons)
-                )}
-              </div>
-            )}
-
-            {/* Current player indicator */}
-            {isCurrentPlayer && (
-              <motion.div
-                className="absolute inset-0 border-4 border-yellow-400 rounded-xl"
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1, repeat: Infinity }}
-              />
-            )}
-
-            {/* Segment-specific indicators */}
-            {state.currentSegment === 'BELL' && state.bell.clickedBy === playerId && (
-              <motion.div
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-4xl"
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', stiffness: 200 }}
-              >
-                🔔
-              </motion.div>
-            )}
-
-            {/* Auction winner indicator */}
-            {state.currentSegment === 'AUCT' && state.auction.winner === playerId && (
-              <motion.div
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ type: 'spring' }}
-              >
-                👑
-              </motion.div>
-            )}
-          </motion.div>
-        );
-      })}
+      {/* Current Segment Info */}
+      <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 text-center">
+        <h3 className="text-white font-bold mb-2 font-arabic">الفقرة الحالية</h3>
+        <div className="text-accent2 font-arabic text-lg">{state.currentSegment}</div>
+        <div className="text-white/70 text-sm font-arabic">
+          السؤال {state.segments[state.currentSegment].currentQuestionIndex + 1} من {state.segments[state.currentSegment].questionsPerSegment}
+        </div>
+      </div>
     </div>
   );
 }
