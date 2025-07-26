@@ -16,6 +16,7 @@ export default function Lobby() {
   const [userRole, setUserRole] = useState<UserRole>('host');
   const [selectedClub, setSelectedClub] = useState<string>('');
   const [isReady, setIsReady] = useState(false);
+  const [hostName, setHostName] = useState('المقدم');
 
   // Determine user role from URL parameters
   useEffect(() => {
@@ -23,12 +24,19 @@ export default function Lobby() {
     const name = searchParams.get('name');
     const flag = searchParams.get('flag');
     const club = searchParams.get('club');
+    const autoJoin = searchParams.get('autoJoin');
+    const urlHostName = searchParams.get('hostName');
     
     if (role && ['host', 'playerA', 'playerB'].includes(role)) {
       setUserRole(role);
       
-      // If player data is in URL, join the game immediately
-      if (role !== 'host' && name && flag && club) {
+      // Set host name from URL if provided
+      if (role === 'host' && urlHostName) {
+        setHostName(decodeURIComponent(urlHostName));
+      }
+      
+      // If player data is in URL and autoJoin is true, join immediately
+      if (role !== 'host' && name && flag && club && autoJoin === 'true') {
         actions.joinGame(role, { 
           name: decodeURIComponent(name),
           flag: flag,
@@ -46,6 +54,13 @@ export default function Lobby() {
       actions.startGame(gameId);
     }
   }, [gameId, state.gameId, actions]);
+
+  // Update host name when changed
+  useEffect(() => {
+    if (userRole === 'host' && hostName !== state.players.host.name) {
+      actions.joinGame('host', { name: hostName });
+    }
+  }, [hostName, userRole, state.players.host.name, actions]);
 
   const handleClubSelection = (clubKey: string) => {
     setSelectedClub(clubKey);
@@ -113,6 +128,18 @@ export default function Lobby() {
             >
               <h2 className="text-2xl font-bold text-white mb-6 font-arabic">إعدادات المقدم</h2>
               
+              {/* Host Name Input */}
+              <div className="mb-6">
+                <label className="block text-white/80 mb-2 font-arabic">اسم المقدم</label>
+                <input
+                  type="text"
+                  value={hostName}
+                  onChange={(e) => setHostName(e.target.value)}
+                  className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic"
+                  placeholder="أدخل اسمك"
+                />
+              </div>
+
               {/* Game Settings */}
               <div className="space-y-4 mb-6">
                 <div>
@@ -146,49 +173,66 @@ export default function Lobby() {
 
             {/* Players Status */}
             <motion.div
-              className="lg:col-span-2 grid md:grid-cols-2 gap-6"
+              className="lg:col-span-2 space-y-6"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
             >
-              {(['playerA', 'playerB'] as const).map((playerId, index) => {
-                const player = state.players[playerId];
-                const isConnected = player.isConnected;
-                
-                return (
-                  <div key={playerId} className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-                    <div className="text-center mb-4">
-                      <h3 className="text-xl font-bold text-white font-arabic">
-                        {isConnected ? player.name : `لاعب ${index + 1}`}
-                      </h3>
-                      <div className={`inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 ${
-                        isConnected ? 'bg-green-500 text-white' : 'bg-gray-500 text-gray-300'
-                      }`}>
-                        {isConnected ? 'متصل' : 'غير متصل'}
-                      </div>
-                    </div>
-
-                    {/* Player's selected club */}
-                    {isConnected && player.club && (
-                      <div className="text-center">
-                        <div className="w-16 h-16 mx-auto mb-2">
-                          <img 
-                            src={CLUB_THEMES[player.club as keyof typeof CLUB_THEMES]?.logo} 
-                            alt={player.club}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                        <p className="text-white/80 text-sm font-arabic capitalize">{player.club}</p>
-                      </div>
-                    )}
-
-                    {/* Video placeholder */}
-                    <div className="mt-4 aspect-video bg-black/30 rounded-lg flex items-center justify-center">
-                      <VideoRoom />
-                    </div>
+              {/* Host Card */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                <div className="text-center mb-4">
+                  <h3 className="text-xl font-bold text-white font-arabic">المقدم</h3>
+                  <p className="text-accent2 font-arabic">{hostName}</p>
+                  <div className="inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 bg-blue-500 text-white">
+                    متصل
                   </div>
-                );
-              })}
+                </div>
+                <div className="aspect-video bg-black/30 rounded-lg flex items-center justify-center">
+                  <VideoRoom />
+                </div>
+              </div>
+
+              {/* Players Grid */}
+              <div className="grid md:grid-cols-2 gap-6">
+                {(['playerA', 'playerB'] as const).map((playerId, index) => {
+                  const player = state.players[playerId];
+                  const isConnected = player.isConnected;
+                  
+                  return (
+                    <div key={playerId} className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                      <div className="text-center mb-4">
+                        <h3 className="text-xl font-bold text-white font-arabic">
+                          {isConnected ? player.name : `لاعب ${index + 1}`}
+                        </h3>
+                        <div className={`inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 ${
+                          isConnected ? 'bg-green-500 text-white' : 'bg-gray-500 text-gray-300'
+                        }`}>
+                          {isConnected ? 'متصل' : 'غير متصل'}
+                        </div>
+                      </div>
+
+                      {/* Player's selected club */}
+                      {isConnected && player.club && (
+                        <div className="text-center mb-4">
+                          <div className="w-16 h-16 mx-auto mb-2">
+                            <img 
+                              src={CLUB_THEMES[player.club as keyof typeof CLUB_THEMES]?.logo} 
+                              alt={player.club}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                          <p className="text-white/80 text-sm font-arabic capitalize">{player.club}</p>
+                        </div>
+                      )}
+
+                      {/* Video placeholder */}
+                      <div className="aspect-video bg-black/30 rounded-lg flex items-center justify-center">
+                        <VideoRoom />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </motion.div>
           </div>
 
@@ -208,7 +252,69 @@ export default function Lobby() {
     );
   }
 
-  // Player Mobile View
+  // Player Mobile View - Only show if NOT auto-joined
+  const autoJoin = searchParams.get('autoJoin');
+  if (autoJoin === 'true') {
+    // Player has been auto-joined, show them they're in the lobby
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 p-4">
+        <div className="max-w-md mx-auto">
+          <motion.div
+            className="text-center mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <h1 className="text-3xl font-bold text-white mb-2 font-arabic">في الانتظار</h1>
+            <p className="text-accent2 font-arabic">رمز الجلسة: <span className="font-mono">{gameId}</span></p>
+          </motion.div>
+
+          {/* Player Info Display */}
+          <motion.div
+            className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 text-center"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <h2 className="text-xl font-bold text-white mb-4 font-arabic">معلوماتك</h2>
+            
+            {/* Show player's flag */}
+            <div className="mb-4">
+              <span className={`fi fi-${searchParams.get('flag')} text-3xl mb-2 block`}></span>
+              <p className="text-white font-arabic">{state.players[userRole].name}</p>
+            </div>
+
+            {/* Show selected club */}
+            {selectedClub && (
+              <div>
+                <div className="w-20 h-20 mx-auto mb-2">
+                  <img 
+                    src={CLUB_THEMES[selectedClub as keyof typeof CLUB_THEMES]?.logo} 
+                    alt={selectedClub}
+                    className="w-full h-full object-contain" 
+                  />
+                </div>
+                <p className="text-accent2 font-bold font-arabic capitalize">{selectedClub}</p>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Status */}
+          <motion.div
+            className="text-center text-white/70"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            <div className="bg-green-500/20 rounded-xl p-4 mb-4">
+              <p className="text-green-300 font-bold font-arabic">✓ تم الانضمام بنجاح!</p>
+            </div>
+            <p className="font-arabic">انتظار بدء اللعبة من المقدم...</p>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // Original Player Mobile View (for manual club selection - shouldn't be reached now)
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 p-4">
       <div className="max-w-md mx-auto">

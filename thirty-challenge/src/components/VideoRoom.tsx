@@ -1,12 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
-// For now, this is a placeholder component
-// To use Daily.co, you'll need to:
-// 1. Sign up at https://daily.co
-// 2. Get your API key
-// 3. Install @daily-co/daily-js: npm install @daily-co/daily-js
-// 4. Replace this component with actual Daily.co integration
+// VideoRoom component with alternatives to Daily.co
+// Daily.co now requires a credit card, so here are free alternatives:
 
 export default function VideoRoom() {
   const [isConnected, setIsConnected] = useState(false);
@@ -66,19 +62,36 @@ export default function VideoRoom() {
             ✕
           </button>
           
-          <h3 className="font-bold mb-2">Daily.co Video Setup:</h3>
-          <div className="space-y-2 text-xs">
-            <p>1. Sign up at https://daily.co (free tier available)</p>
-            <p>2. Get your API key from dashboard</p>
-            <p>3. Install: npm install @daily-co/daily-js</p>
-            <p>4. Add to .env: VITE_DAILY_API_KEY=your_key</p>
-            <p>5. Replace this component with real Daily.co integration</p>
+          <h3 className="font-bold mb-2">Free Video Chat Alternatives:</h3>
+          <div className="space-y-3 text-xs">
+            <div className="bg-green-500/20 p-2 rounded">
+              <p className="font-bold text-green-300">🎯 Recommended: Use External Apps</p>
+              <p>• WhatsApp Video Call</p>
+              <p>• Discord Voice Chat</p>
+              <p>• Zoom (free 40min limit)</p>
+              <p>• Google Meet</p>
+            </div>
+            
+            <div className="bg-blue-500/20 p-2 rounded">
+              <p className="font-bold text-blue-300">🔧 Free Developer Options:</p>
+              <p>• Jitsi Meet (100% free, open source)</p>
+              <p>• Agora.io (10,000 mins/month free)</p>
+              <p>• WebRTC directly (requires coding)</p>
+            </div>
+            
+            <div className="bg-yellow-500/20 p-2 rounded">
+              <p className="font-bold text-yellow-300">⚠️ Daily.co Issue:</p>
+              <p>Daily.co now requires credit card even for free tier.</p>
+              <p>Not recommended for personal projects.</p>
+            </div>
           </div>
           
-          <div className="mt-4 p-2 bg-yellow-500/20 rounded">
-            <p className="text-yellow-200">
-              <strong>Note:</strong> This is currently a placeholder. 
-              The app works without video chat for now.
+          <div className="mt-4 p-2 bg-purple-500/20 rounded">
+            <p className="text-purple-200 font-bold">
+              💡 For your quiz with friends:
+            </p>
+            <p className="text-purple-200">
+              Just use WhatsApp video call on your phones while playing the quiz on your computers/tablets!
             </p>
           </div>
         </motion.div>
