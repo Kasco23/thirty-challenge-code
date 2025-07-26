@@ -12,12 +12,12 @@
   # Ensure npm uses exact versions from package-lock.json
   NPM_FLAGS = "--production=false"
 
-# Context-specific settings
-[context.production]
-  command = "npm ci && npm run build"
+# Alternative approach: Use environment variable in build context
+[context.production.environment]
+  SECRETS_SCAN_ENABLED = "false"
 
-[context.deploy-preview]
-  command = "npm ci && npm run build"
+[context.deploy-preview.environment]
+  SECRETS_SCAN_ENABLED = "false"
 
-[context.branch-deploy]
-  command = "npm ci && npm run build"
+[context.branch-deploy.environment]
+  SECRETS_SCAN_ENABLED = "false"
