@@ -27,8 +27,9 @@ export default function Join() {
     e.preventDefault();
     if (gameId.trim()) {
       if (joinType === 'host') {
-        // Host joins with mobile device for video
-        navigate(`/lobby/${gameId.toUpperCase()}?role=host-mobile&name=${encodeURIComponent(name)}`);
+        // Check if it's a host code (ends with -HOST)
+        const actualGameId = gameId.toUpperCase().replace('-HOST', '');
+        navigate(`/lobby/${actualGameId}?role=host-mobile&name=${encodeURIComponent(name)}`);
       } else {
         setStep(3);
       }
