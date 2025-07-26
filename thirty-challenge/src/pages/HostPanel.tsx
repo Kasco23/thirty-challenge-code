@@ -1,5 +1,5 @@
-import react from 'react';
+import React from 'react';
 
 export default function HostPanel() {
-  return (div className="p">Host Panel</div>);
+  return (<div className="p">Host Panel</div>);
 }
