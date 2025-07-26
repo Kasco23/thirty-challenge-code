@@ -2,22 +2,17 @@
   base = "thirty-challenge"
   command = "npm ci && npm run build"
   publish = "dist"
+  environment = { SECRETS_SCAN_ENABLED = "false" }
 
-[build.environment]
-  # Environment variables are set in Netlify UI
-  # Disable secrets scanning since VITE_ variables are meant to be public
-  SECRETS_SCAN_ENABLED = "false"
-  # Ensure Node.js version consistency
-  NODE_VERSION = "20"
-  # Ensure npm uses exact versions from package-lock.json
-  NPM_FLAGS = "--production=false"
+# Context-specific settings
+[context.production]
+  command = "npm ci && npm run build"
+  environment = { SECRETS_SCAN_ENABLED = "false" }
 
-# Alternative approach: Use environment variable in build context
-[context.production.environment]
-  SECRETS_SCAN_ENABLED = "false"
+[context.deploy-preview]
+  command = "npm ci && npm run build"
+  environment = { SECRETS_SCAN_ENABLED = "false" }
 
-[context.deploy-preview.environment]
-  SECRETS_SCAN_ENABLED = "false"
-
-[context.branch-deploy.environment]
-  SECRETS_SCAN_ENABLED = "false"
+[context.branch-deploy]
+  command = "npm ci && npm run build"
+  environment = { SECRETS_SCAN_ENABLED = "false" }
