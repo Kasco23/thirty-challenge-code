@@ -43,9 +43,10 @@ const initializeDaily = async () => {
 interface VideoRoomProps {
   roomName?: string;
   userName?: string;
+  isHost?: boolean; // New prop to determine if this is the host's video
 }
 
-export default function VideoRoom({ roomName = 'quiz-room', userName = 'User' }: VideoRoomProps) {
+export default function VideoRoom({ roomName = 'quiz-room', userName = 'User', isHost = false }: VideoRoomProps) {
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,15 +54,22 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User' }:
   const [dailyAvailable, setDailyAvailable] = useState(false);
   const callFrameRef = useRef<HTMLDivElement>(null);
   const callFrame = useRef<DailyCallFrame | null>(null);
+  const isInitialized = useRef(false);
 
   // Initialize Daily.co
   useEffect(() => {
+    // Prevent multiple initializations
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+
     const setup = async () => {
       setIsLoading(true);
+      setError(null);
+      
       const available = await initializeDaily();
       setDailyAvailable(available);
       
-      if (available && DailyIframe) {
+      if (available && DailyIframe && !callFrame.current) {
         try {
           // Create Daily call frame
           const frameOptions: DailyFrameOptions = {
@@ -81,6 +89,8 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User' }:
 
           // Attach to DOM
           if (callFrameRef.current && callFrame.current.iframe()) {
+            // Clear any existing content first
+            callFrameRef.current.innerHTML = '';
             callFrameRef.current.appendChild(callFrame.current.iframe());
           }
 
@@ -95,12 +105,16 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User' }:
               setIsConnected(false);
             })
             .on('error', (event: { error?: { msg: string } }) => {
-              setError(`Connection error: ${event.error?.msg || 'Unknown error'}`);
+              const errorMsg = event.error?.msg || 'Unknown error';
+              console.error('Daily.co error:', errorMsg);
+              setError(`Connection error: ${errorMsg}`);
               setIsLoading(false);
             });
 
-          // Join the room
+          // Join the room with proper room URL
           const roomUrl = `https://thirty-challenge.daily.co/${roomName}`;
+          console.log('Joining Daily.co room:', roomUrl, 'as', userName);
+          
           await callFrame.current.join({ 
             url: roomUrl,
             userName: userName
@@ -108,6 +122,7 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User' }:
 
         } catch (err: unknown) {
           const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+          console.error('Failed to initialize Daily.co:', errorMessage);
           setError(`Failed to initialize video: ${errorMessage}`);
           setIsLoading(false);
         }
@@ -118,13 +133,42 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User' }:
 
     setup();
 
-    // Cleanup
+    // Cleanup function
     return () => {
       if (callFrame.current) {
-        callFrame.current.destroy();
+        try {
+          callFrame.current.destroy();
+        } catch (error) {
+          console.warn('Error destroying Daily.co frame:', error);
+        }
+        callFrame.current = null;
       }
+      isInitialized.current = false;
     };
-  }, [roomName, userName]);
+  }, [roomName, userName]); // Only re-run if roomName or userName changes
+
+  // If this is a host video on PC, show placeholder
+  if (isHost) {
+    return (
+      <div className="relative w-full aspect-video bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <motion.div
+            className="text-center p-4"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <div className="w-16 h-16 bg-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+              </svg>
+            </div>
+            <p className="text-white text-sm font-arabic mb-2">جهاز التحكم - بدون كاميرا</p>
+            <p className="text-white/70 text-xs font-arabic">للمشاركة بالفيديو، انضم من هاتفك كمقدم</p>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   // If Daily.co is not available, show placeholder with instructions
   if (!dailyAvailable) {
@@ -218,6 +262,7 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User' }:
           <div className="text-center text-white">
             <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
             <p className="text-sm font-arabic">جاري الاتصال بالفيديو...</p>
+            <p className="text-xs text-white/70 font-arabic mt-1">{userName}</p>
           </div>
         </div>
       )}
@@ -241,6 +286,11 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User' }:
       {/* Connection status indicator */}
       <div className="absolute top-2 left-2">
         <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+      </div>
+
+      {/* User name indicator */}
+      <div className="absolute bottom-2 left-2 bg-black/70 px-2 py-1 rounded text-white text-xs font-arabic">
+        {userName}
       </div>
     </div>
   );

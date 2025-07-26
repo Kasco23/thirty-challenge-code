@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getAllTeams, searchTeams, COMMON_FLAGS, searchFlags, type Team } from '../utils/teamUtils';
+import { getAllTeams, searchTeams, searchFlags } from '../utils/teamUtils';
 
 export default function Join() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [joinType, setJoinType] = useState<'host' | 'player' | ''>('');
   const [gameId, setGameId] = useState('');
   const [name, setName] = useState('');
   const [selectedFlag, setSelectedFlag] = useState('');
@@ -17,17 +18,27 @@ export default function Join() {
   const filteredFlags = searchFlags(flagSearch);
   const filteredTeams = searchTeams(allTeams, teamSearch);
 
+  const handleJoinTypeSelect = (type: 'host' | 'player') => {
+    setJoinType(type);
+    setStep(2);
+  };
+
   const handleGameIdSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (gameId.trim()) {
-      setStep(2);
+      if (joinType === 'host') {
+        // Host joins with mobile device for video
+        navigate(`/lobby/${gameId.toUpperCase()}?role=host-mobile&hostName=${encodeURIComponent(name)}`);
+      } else {
+        setStep(3);
+      }
     }
   };
 
-  const handleJoinGame = (e: React.FormEvent) => {
+  const handlePlayerJoin = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() && selectedFlag && selectedTeam) {
-      const playerRole = 'playerA'; // You might want to make this dynamic
+      const playerRole = 'playerA'; // You might want to make this dynamic based on available slots
       navigate(`/lobby/${gameId.toUpperCase()}?role=${playerRole}&name=${encodeURIComponent(name)}&flag=${selectedFlag}&club=${selectedTeam}&autoJoin=true`);
     }
   };
@@ -43,92 +54,130 @@ export default function Join() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-white mb-2 font-arabic">انضم للعبة</h1>
           <p className="text-white/70 font-arabic">
-            {step === 1 ? 'أدخل رمز اللعبة' : 'أدخل معلوماتك'}
+            {step === 1 ? 'اختر نوع الانضمام' : 
+             step === 2 ? 'أدخل رمز اللعبة والاسم' : 
+             'اختر العلم والفريق'}
           </p>
         </div>
 
         {step === 1 ? (
+          // Step 1: Choose join type
+          <div className="space-y-4">
+            <motion.button
+              onClick={() => handleJoinTypeSelect('host')}
+              className="w-full p-6 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 rounded-2xl text-white transition-all"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="text-center">
+                <div className="text-3xl mb-2">🎤</div>
+                <h3 className="text-lg font-bold font-arabic mb-2">انضم كمقدم</h3>
+                <p className="text-sm text-blue-200 font-arabic">للمقدمين الذين يريدون المشاركة بالفيديو من الهاتف</p>
+                <p className="text-xs text-blue-300 font-arabic mt-1">تحتاج رمز المقدم (GAME-HOST)</p>
+              </div>
+            </motion.button>
+
+            <motion.button
+              onClick={() => handleJoinTypeSelect('player')}
+              className="w-full p-6 bg-green-500/20 hover:bg-green-500/30 border border-green-500/50 rounded-2xl text-white transition-all"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="text-center">
+                <div className="text-3xl mb-2">🎮</div>
+                <h3 className="text-lg font-bold font-arabic mb-2">انضم كلاعب</h3>
+                <p className="text-sm text-green-200 font-arabic">للاعبين المشاركين في المسابقة</p>
+                <p className="text-xs text-green-300 font-arabic mt-1">تحتاج رمز اللعبة العادي</p>
+              </div>
+            </motion.button>
+
+            <button
+              onClick={() => navigate('/')}
+              className="w-full mt-4 px-4 py-2 text-white/70 hover:text-white font-arabic transition-colors"
+            >
+              العودة للرئيسية
+            </button>
+          </div>
+
+        ) : step === 2 ? (
+          // Step 2: Game ID and Name
           <form onSubmit={handleGameIdSubmit} className="space-y-6">
             <div>
-              <label className="block text-white text-sm font-bold mb-2 font-arabic">
-                رمز اللعبة
+              <label className="block text-white/80 mb-2 font-arabic">
+                {joinType === 'host' ? 'رمز المقدم' : 'رمز اللعبة'}
               </label>
               <input
                 type="text"
                 value={gameId}
                 onChange={(e) => setGameId(e.target.value.toUpperCase())}
-                className="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/50 text-center text-2xl font-bold tracking-widest"
-                placeholder="ABC123"
-                maxLength={6}
+                placeholder={joinType === 'host' ? 'مثال: ABC123-HOST' : 'مثال: ABC123'}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-mono text-center text-lg"
                 required
               />
+              {joinType === 'host' && (
+                <p className="text-xs text-blue-300 mt-1 font-arabic text-center">
+                  ستجد رمز المقدم في صفحة إعداد الجلسة
+                </p>
+              )}
             </div>
 
-            <motion.button
-              type="submit"
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-300 font-arabic"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              التالي
-            </motion.button>
-          </form>
-        ) : (
-          <form onSubmit={handleJoinGame} className="space-y-6">
-            {/* Name Input */}
             <div>
-              <label className="block text-white text-sm font-bold mb-2 font-arabic">
-                اسمك
-              </label>
+              <label className="block text-white/80 mb-2 font-arabic">الاسم</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/50"
                 placeholder="أدخل اسمك"
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic text-center"
                 required
               />
             </div>
 
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-arabic transition-colors"
+              >
+                رجوع
+              </button>
+              <button
+                type="submit"
+                disabled={!gameId.trim() || !name.trim()}
+                className="flex-1 px-4 py-3 bg-accent2 hover:bg-accent text-white rounded-xl font-arabic transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {joinType === 'host' ? 'انضم كمقدم' : 'التالي'}
+              </button>
+            </div>
+          </form>
+
+        ) : (
+          // Step 3: Flag and Team Selection (for players only)
+          <form onSubmit={handlePlayerJoin} className="space-y-6">
             {/* Flag Selection */}
             <div>
-              <label className="block text-white text-sm font-bold mb-2 font-arabic">
-                اختر علمك
-              </label>
-              
-              {/* Flag Search */}
+              <label className="block text-white/80 mb-2 font-arabic">اختر العلم</label>
               <input
                 type="text"
                 value={flagSearch}
                 onChange={(e) => setFlagSearch(e.target.value)}
-                className="w-full px-4 py-2 mb-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/50 text-sm"
-                placeholder="ابحث عن بلدك..."
+                placeholder="ابحث عن بلد..."
+                className="w-full px-4 py-2 mb-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic"
               />
-
-              {/* Selected Flag Display */}
-              {selectedFlag && (
-                <div className="mb-3 p-2 bg-white/20 rounded-lg flex items-center gap-2">
-                  <span className={`fi fi-${selectedFlag} text-2xl`}></span>
-                  <span className="text-white font-arabic">
-                    {COMMON_FLAGS.find(f => f.code === selectedFlag)?.name}
-                  </span>
-                </div>
-              )}
-
-              {/* Flag Grid */}
               <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto">
                 {filteredFlags.map((flag) => (
                   <button
                     key={flag.code}
                     type="button"
                     onClick={() => setSelectedFlag(flag.code)}
-                    className={`p-2 rounded-lg transition-all ${
+                    className={`p-2 rounded-lg border-2 transition-all ${
                       selectedFlag === flag.code
-                        ? 'bg-blue-500 ring-2 ring-blue-300'
-                        : 'bg-white/10 hover:bg-white/20'
+                        ? 'border-accent2 bg-accent2/20'
+                        : 'border-white/20 bg-white/5 hover:border-white/40'
                     }`}
                   >
                     <span className={`fi fi-${flag.code} text-2xl`}></span>
+                    <p className="text-xs text-white/80 mt-1 font-arabic">{flag.name}</p>
                   </button>
                 ))}
               </div>
@@ -136,83 +185,52 @@ export default function Join() {
 
             {/* Team Selection */}
             <div>
-              <label className="block text-white text-sm font-bold mb-2 font-arabic">
-                اختر فريقك
-              </label>
-              
-              {/* Team Search */}
+              <label className="block text-white/80 mb-2 font-arabic">اختر الفريق</label>
               <input
                 type="text"
                 value={teamSearch}
                 onChange={(e) => setTeamSearch(e.target.value)}
-                className="w-full px-4 py-2 mb-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/50 text-sm"
-                placeholder="ابحث عن فريقك..."
+                placeholder="ابحث عن فريق..."
+                className="w-full px-4 py-2 mb-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic"
               />
-
-              {/* Selected Team Display */}
-              {selectedTeam && (
-                <div className="mb-3 p-2 bg-white/20 rounded-lg flex items-center gap-2">
-                  <img 
-                    src={allTeams.find(t => t.name === selectedTeam)?.logoPath} 
-                    alt={selectedTeam}
-                    className="w-8 h-8 object-contain"
-                  />
-                  <span className="text-white font-arabic">
-                    {allTeams.find(t => t.name === selectedTeam)?.displayName}
-                  </span>
-                </div>
-              )}
-
-              {/* Team Grid */}
-              <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto">
-                {filteredTeams.length > 0 ? (
-                  filteredTeams.map((team: Team) => (
-                    <button
-                      key={team.name}
-                      type="button"
-                      onClick={() => setSelectedTeam(team.name)}
-                      className={`p-3 rounded-lg transition-all ${
-                        selectedTeam === team.name
-                          ? 'bg-blue-500 ring-2 ring-blue-300'
-                          : 'bg-white/10 hover:bg-white/20'
-                      }`}
-                    >
-                      <img 
-                        src={team.logoPath} 
-                        alt={team.displayName}
-                        className="w-12 h-12 object-contain mx-auto"
-                      />
-                      <p className="text-xs text-white mt-1 font-arabic truncate">
-                        {team.displayName}
-                      </p>
-                    </button>
-                  ))
-                ) : (
-                  <div className="col-span-3 text-center text-white/70 py-4 font-arabic">
-                    لم يتم العثور على فرق
-                  </div>
-                )}
+              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                {filteredTeams.map((team) => (
+                  <button
+                    key={team.name}
+                    type="button"
+                    onClick={() => setSelectedTeam(team.name)}
+                    className={`p-3 rounded-lg border-2 transition-all flex items-center gap-2 ${
+                      selectedTeam === team.name
+                        ? 'border-accent2 bg-accent2/20'
+                        : 'border-white/20 bg-white/5 hover:border-white/40'
+                    }`}
+                  >
+                    <img 
+                      src={team.logoPath} 
+                      alt={team.name}
+                      className="w-8 h-8 object-contain"
+                    />
+                    <span className="text-white font-arabic text-sm">{team.displayName}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setStep(1)}
-                className="flex-1 bg-gray-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-gray-700 transition-all duration-300 font-arabic"
+                onClick={() => setStep(2)}
+                className="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-arabic transition-colors"
               >
                 رجوع
               </button>
-              
-              <motion.button
+              <button
                 type="submit"
-                disabled={!name.trim() || !selectedFlag || !selectedTeam}
-                className="flex-1 bg-gradient-to-r from-green-500 to-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-600 hover:to-blue-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed font-arabic"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
+                disabled={!selectedFlag || !selectedTeam}
+                className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-arabic transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 انضم للعبة
-              </motion.button>
+              </button>
             </div>
           </form>
         )}
