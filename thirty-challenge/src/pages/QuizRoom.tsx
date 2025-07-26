@@ -1,176 +1,233 @@
-import React, { useState } from 'react';
+import { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CLUB_THEMES } from '../themes/clubs';
-
-const DAILY_ROOM_URL = 'https://thirty.daily.co/Test';
-
-type PlayerId = 'host' | 'playerA' | 'playerB';
-type Club = 'liverpool' | 'madrid';
-
-type Player = {
-  id: PlayerId;
-  name: string;
-};
-
-type ThemeContextType = {
-  playerThemes: Record<PlayerId, Club | undefined>;
-  setPlayerTheme: (player: PlayerId, club: Club) => void;
-};
-
-const ThemeContext = React.createContext<ThemeContextType>({
-  playerThemes: { host: undefined, playerA: undefined, playerB: undefined },
-  setPlayerTheme: () => {},
-});
+import { useGame } from '../context/GameContext';
+import { getQuestionsForSegment } from '../data/questions';
+import Scoreboard from '../components/Scoreboard';
+import Timer from '../components/Timer';
+import Buzzer from '../components/Buzzer';
+import VideoRoom from '../components/VideoRoom';
 
 export default function QuizRoom() {
-  const [players] = useState<Player[]>([
-    { id: 'host', name: 'المقدم' },
-    { id: 'playerA', name: 'لاعب أ' },
-    { id: 'playerB', name: 'لاعب ب' }
-  ]);
-  const [playerThemes, setPlayerThemes] = useState<Record<PlayerId, Club | undefined>>({
-    host: undefined,
-    playerA: undefined,
-    playerB: undefined
-  });
-  const [showThemePicker, setShowThemePicker] = useState(true);
+  const { roomId } = useParams<{ roomId: string }>();
+  const { state, actions } = useGame();
 
-  // Sample quiz/segment state (replace with real logic)
-  const [segment] = useState({ name: 'وش تعرف', code: 'WSHA', question: 1, total: 10 });
-  const [scores] = useState<Record<PlayerId, number>>({ host: 0, playerA: 0, playerB: 0 });
-  const [strikes] = useState<Record<PlayerId, number>>({ host: 0, playerA: 0, playerB: 0 });
+  useEffect(() => {
+    if (roomId && !state.gameId) {
+      actions.startGame(roomId);
+    }
+  }, [roomId, state.gameId, actions]);
 
-  // Choose club for player (simulate per-join, later sync with backend)
-  const handlePickTheme = (playerId: PlayerId, club: Club) => {
-    const updatedThemes = { ...playerThemes, [playerId]: club };
-    setPlayerThemes(updatedThemes);
-
-    // Hide picker if all players have picked a theme
-    const allPicked = players.every((p) => updatedThemes[p.id]);
-    if (allPicked) setShowThemePicker(false);
+  const handleNextQuestion = () => {
+    if (!state.currentSegment) return;
+    
+    const questions = getQuestionsForSegment(state.currentSegment, 1);
+    if (questions.length > 0) {
+      actions.nextQuestion(questions[0]);
+    }
   };
 
-  // Daily.co video per camera frame (all join same room, different devices)
-  const CameraFrame = ({ user }: { user: PlayerId }) => (
-    <div className="relative flex flex-col items-center p-2">
-      {playerThemes[user] && (
-        <img src={CLUB_THEMES[playerThemes[user] as Club].logo} alt={playerThemes[user]} className="h-12 mb-2" />
-      )}
-      <div className={`rounded-2xl shadow-md w-full aspect-video overflow-hidden flex items-center justify-center ${playerThemes[user] ? CLUB_THEMES[playerThemes[user] as Club].primary : ''}`}>
-        <iframe
-          src={DAILY_ROOM_URL + `?user=${user}`}
-          title={`Daily Video for ${user}`}
-          allow="camera; microphone; fullscreen; speaker; display-capture"
-          className="w-full h-full border-0 rounded-2xl"
-        ></iframe>
-      </div>
-    </div>
-  );
+  const handleNextSegment = () => {
+    actions.nextSegment();
+  };
 
-  // Segment banner (Arabic, animated)
-  const SegmentBanner = () => (
-    <motion.div
-      className="mx-auto my-4 text-center py-3 px-6 rounded-2xl shadow-lg bg-gradient-to-r from-red-100 to-yellow-100 dark:from-neutral-800 dark:to-neutral-700"
-      initial={{ opacity: 0, y: -32 }} animate={{ opacity: 1, y: 0 }}
-    >
-      <h2 className="text-xl font-bold tracking-wider">
-        {segment.name} <span className="text-sm">({segment.code})</span>
-      </h2>
-      <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-        سؤال {segment.question} / {segment.total}
-      </div>
-    </motion.div>
-  );
+  const SegmentBanner = () => {
+    if (!state.currentSegment) return null;
+    
+    const segment = state.segments.find(s => s.code === state.currentSegment);
+    if (!segment) return null;
 
-  // Scoreboard (club themes, strikes)
-  const Scoreboard = () => (
-    <div className="grid grid-cols-3 gap-4 text-center mt-2 mb-4">
-      {players.map((p) => (
-        <div key={p.id} className={`rounded-xl p-2 ${playerThemes[p.id] ? CLUB_THEMES[playerThemes[p.id] as Club].primary : 'bg-gray-100'} shadow-md`}>
-          <div className="font-bold text-lg">{p.name}</div>
-          <div className="mt-1 text-md">
-            {scores[p.id] ?? 0} <span className="text-xs text-gray-500">نقاط</span>
-          </div>
-          {p.id !== 'host' && (
-            <div className="mt-1">
-              {Array(strikes[p.id] ?? 0).fill(0).map((_, idx) =>
-                <span key={idx} className="text-red-600 text-xl mx-0.5">✗</span>
-              )}
-            </div>
-          )}
+    return (
+      <motion.div
+        className="mx-auto my-4 text-center py-4 px-6 rounded-2xl shadow-lg bg-gradient-to-r from-purple-600 to-blue-600"
+        initial={{ opacity: 0, y: -32 }}
+        animate={{ opacity: 1, y: 0 }}
+        dir="rtl"
+      >
+        <h2 className="text-2xl font-bold text-white mb-2">
+          {segment.name}
+        </h2>
+        <p className="text-purple-100 text-sm mb-2">{segment.description}</p>
+        <div className="text-xs text-purple-200">
+          سؤال {state.currentQuestionIndex} / {state.settings.questionsPerSegment[state.currentSegment]}
         </div>
-      ))}
-    </div>
-  );
+      </motion.div>
+    );
+  };
 
-  // Question/Answer area (placeholder)
-  const QuestionPanel = () => (
-    <motion.div className="rounded-xl p-6 shadow-lg bg-white dark:bg-neutral-800 text-center my-4">
-      <div className="text-lg font-bold mb-2">هنا يظهر السؤال بالعربية</div>
-      <div className="flex gap-2 justify-center mt-4">
-        <span className="bg-green-100 text-green-800 rounded px-3 py-1">إجابة 1</span>
-        <span className="bg-blue-100 text-blue-800 rounded px-3 py-1">إجابة 2</span>
-      </div>
-    </motion.div>
-  );
+  const QuestionPanel = () => {
+    if (!state.currentQuestion) {
+      return (
+        <motion.div 
+          className="rounded-xl p-6 shadow-lg bg-white/10 backdrop-blur-sm text-center my-4"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <div className="text-lg text-white/80" dir="rtl">
+            {state.phase === 'lobby' && 'انتظر بدء اللعبة...'}
+            {state.phase === 'segment-intro' && 'استعد للفقرة القادمة'}
+            {state.phase === 'playing' && 'جاري تحميل السؤال...'}
+            {state.phase === 'final' && '🎉 انتهت اللعبة!'}
+          </div>
+        </motion.div>
+      );
+    }
 
-  // Host-only controls (advance, reveal, bell)
-  const HostControls = () => (
-    <div className="mt-4 flex gap-4 justify-center">
-      <button className="rounded-xl bg-blue-600 text-white px-6 py-2 shadow hover:bg-blue-700 transition">التالي</button>
-      <button className="rounded-xl bg-yellow-400 text-black px-6 py-2 shadow hover:bg-yellow-500 transition">إظهار الإجابة</button>
-      <button className="rounded-xl bg-red-500 text-white px-6 py-2 shadow hover:bg-red-600 transition">الجرس</button>
-    </div>
-  );
-
-  // Theme picker modal/dialog (per player, on join)
-  const ThemePicker = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col gap-4 min-w-[300px]">
-        <h3 className="font-bold text-xl text-center mb-2">اختر فريقك</h3>
-        {players.map((p) => (
-          <div key={p.id} className="flex gap-2 items-center justify-between">
-            <span>{p.name}</span>
-            <div className="flex gap-2">
-              <button
-                className={`rounded-full w-12 h-12 border-4 ${playerThemes[p.id]==='liverpool' ? 'border-black' : 'border-transparent'}`}
-                style={{ background: '#c8102e' }}
-                onClick={() => handlePickTheme(p.id, 'liverpool')}
+    return (
+      <motion.div
+        className="rounded-xl p-6 shadow-lg bg-white/10 backdrop-blur-sm text-center my-4"
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        key={state.currentQuestion.id}
+      >
+        <div className="text-xl font-bold mb-4 text-white" dir="rtl">
+          {state.currentQuestion.text}
+        </div>
+        
+        {/* Show answers for WSHA and AUCT segments */}
+        {(state.currentSegment === 'WSHA' || state.currentSegment === 'AUCT') && (
+          <div className="flex flex-wrap gap-2 justify-center mt-4">
+            {state.currentQuestion.answers.map((answer, index) => (
+              <motion.span
+                key={index}
+                className="bg-blue-100 text-blue-800 rounded-full px-3 py-1 text-sm"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
               >
-                <img src={CLUB_THEMES.liverpool.logo} alt="Liverpool" className="w-8 mx-auto" />
-              </button>
-              <button
-                className={`rounded-full w-12 h-12 border-4 ${playerThemes[p.id]==='madrid' ? 'border-black' : 'border-transparent'}`}
-                style={{ background: '#fff', borderColor: '#febd2f' }}
-                onClick={() => handlePickTheme(p.id, 'madrid')}
-              >
-                <img src={CLUB_THEMES.madrid.logo} alt="Madrid" className="w-8 mx-auto" />
-              </button>
+                {answer}
+              </motion.span>
+            ))}
+          </div>
+        )}
+
+        {/* Bell component for BELL segment */}
+        {state.currentSegment === 'BELL' && (
+          <div className="flex justify-center gap-8 mt-6">
+            <div className="text-center">
+              <p className="text-white/80 mb-2 text-sm">لاعب أ</p>
+              <Buzzer playerId="playerA" />
+            </div>
+            <div className="text-center">
+              <p className="text-white/80 mb-2 text-sm">لاعب ب</p>
+              <Buzzer playerId="playerB" />
             </div>
           </div>
-        ))}
-        <button
-          className="rounded-xl bg-neutral-700 text-white px-4 py-2 mt-4"
-          onClick={() => setShowThemePicker(false)}
-        >متابعة</button>
-      </div>
+        )}
+      </motion.div>
+    );
+  };
+
+  const HostControls = () => (
+    <div className="mt-6 flex gap-4 justify-center flex-wrap">
+      <motion.button
+        onClick={handleNextQuestion}
+        className="rounded-xl bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 shadow-lg font-bold transition-colors"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        disabled={state.phase !== 'playing' && state.phase !== 'segment-intro'}
+      >
+        السؤال التالي
+      </motion.button>
+
+      <motion.button
+        onClick={handleNextSegment}
+        className="rounded-xl bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 shadow-lg font-bold transition-colors"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        الفقرة التالية
+      </motion.button>
+
+      <motion.button
+        onClick={() => actions.addStrike('playerA')}
+        className="rounded-xl bg-red-500 hover:bg-red-600 text-white px-4 py-3 shadow-lg font-bold transition-colors"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        خطأ لاعب أ
+      </motion.button>
+
+      <motion.button
+        onClick={() => actions.addStrike('playerB')}
+        className="rounded-xl bg-red-500 hover:bg-red-600 text-white px-4 py-3 shadow-lg font-bold transition-colors"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        خطأ لاعب ب
+      </motion.button>
+
+      <motion.button
+        onClick={() => actions.updateScore('playerA', 1, 'إجابة صحيحة')}
+        className="rounded-xl bg-green-500 hover:bg-green-600 text-white px-4 py-3 shadow-lg font-bold transition-colors"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        +1 لاعب أ
+      </motion.button>
+
+      <motion.button
+        onClick={() => actions.updateScore('playerB', 1, 'إجابة صحيحة')}
+        className="rounded-xl bg-green-500 hover:bg-green-600 text-white px-4 py-3 shadow-lg font-bold transition-colors"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        +1 لاعب ب
+      </motion.button>
     </div>
   );
 
   return (
-    <ThemeContext.Provider value={{ playerThemes, setPlayerTheme: handlePickTheme }}>
-      <main dir="rtl" className="relative min-h-screen bg-gray-50 dark:bg-neutral-900 px-2 md:px-8">
+    <main className="relative min-h-screen px-4 py-6 bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900">
+      <div className="max-w-6xl mx-auto">
+        {/* Segment Banner */}
         <SegmentBanner />
-        <section className="grid md:grid-cols-3 gap-4 mt-2">
-          <CameraFrame user="host" />
-          <CameraFrame user="playerA" />
-          <CameraFrame user="playerB" />
+
+        {/* Video Chat Section */}
+        <section className="grid md:grid-cols-3 gap-6 mb-6">
+          <div className="relative">
+            <h3 className="text-white text-center mb-2 font-bold">المقدم</h3>
+            <VideoRoom />
+          </div>
+          <div className="relative">
+            <h3 className="text-white text-center mb-2 font-bold">لاعب أ</h3>
+            <VideoRoom />
+          </div>
+          <div className="relative">
+            <h3 className="text-white text-center mb-2 font-bold">لاعب ب</h3>
+            <VideoRoom />
+          </div>
         </section>
-        <Scoreboard />
+
+        {/* Timer */}
+        <div className="flex justify-center mb-6">
+          <Timer />
+        </div>
+
+        {/* Scoreboard */}
+        <Scoreboard className="mb-6" />
+
+        {/* Question Panel */}
         <QuestionPanel />
+
+        {/* Host Controls */}
         <HostControls />
-        {showThemePicker && <ThemePicker />}
-      </main>
-    </ThemeContext.Provider>
+
+        {/* Game State Debug Info (remove in production) */}
+        {process.env.NODE_ENV === 'development' && (
+          <motion.div
+            className="fixed bottom-4 right-4 bg-black/80 text-white p-4 rounded-lg text-xs max-w-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div>Phase: {state.phase}</div>
+            <div>Segment: {state.currentSegment}</div>
+            <div>Question: {state.currentQuestionIndex}</div>
+            <div>Bell Active: {state.bell.isActive ? 'Yes' : 'No'}</div>
+            <div>Clicked By: {state.bell.clickedBy || 'None'}</div>
+          </motion.div>
+        )}
+      </div>
+    </main>
   );
 }
