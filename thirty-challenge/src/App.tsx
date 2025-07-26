@@ -28,7 +28,7 @@ function App() {
     <div className="dark min-hscreen bg-gradient-to-tr from-black via-#10102a to-accent2">
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
-          <Route path="/" element={,Landing} />
+          <Route path="/" element={<Landing />} />
           <Route path="/join" element={Join} />
           <Route path="/room/:roomId" element={QuizRoom} />
           <Route path="/lobby" element={Lobby} />
