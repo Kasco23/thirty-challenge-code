@@ -9,8 +9,8 @@ interface DailyCallFrame {
   leave(): Promise<void>;
   destroy(): void;
   iframe(): HTMLIFrameElement;
-  on(event: string, handler: (event?: any) => void): void;
-  off(event: string, handler: (event?: any) => void): void;
+  on(event: string, handler: (event?: unknown) => void): void;
+  off(event: string, handler: (event?: unknown) => void): void;
 }
 
 interface DailyFrameOptions {
@@ -155,9 +155,10 @@ export default function VideoRoom({ roomName = 'quiz-room', userName = 'User', i
             setIsConnected(false);
           };
 
-          const handleError = (event: any) => {
+          const handleError = (event?: unknown) => {
+            const errorEvent = event as { errorMsg?: string } | undefined;
             console.error('Daily.co error:', event);
-            setError(`Video error: ${event.errorMsg || 'Unknown error'}`);
+            setError(`Video error: ${errorEvent?.errorMsg || 'Unknown error'}`);
             setIsLoading(false);
           };
 

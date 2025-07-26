@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGame } from '../context/GameContext';
+import type { SegmentCode } from '../types/game';
 
 export default function HostSetup() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -11,7 +12,7 @@ export default function HostSetup() {
   const [isCreating, setIsCreating] = useState(false);
 
   // Segment settings state
-  const [segmentSettings, setSegmentSettings] = useState({
+  const [segmentSettings, setSegmentSettings] = useState<Record<SegmentCode, number>>({
     WSHA: 10,
     AUCT: 8,
     BELL: 12,
@@ -27,8 +28,9 @@ export default function HostSetup() {
 
     setIsCreating(true);
     try {
-      // Update host name
+      // Update host name and segment settings
       actions.updateHostName(hostName);
+      actions.updateSegmentSettings(segmentSettings);
       
       // Navigate to lobby as host
       navigate(`/lobby/${gameId}?role=host&hostName=${encodeURIComponent(hostName)}`, { replace: true });
