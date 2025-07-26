@@ -294,7 +294,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (!state.isTimerRunning) return;
 
     const interval = setInterval(() => {
-      dispatch({ type: 'TICK_TIMER', payload: {} });
+              dispatch({ type: 'TICK_TIMER' });
     }, 1000);
 
     return () => clearInterval(interval);
@@ -311,10 +311,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'UPDATE_HOST_NAME', payload: { hostName } });
     },
     nextQuestion: () => {
-      dispatch({ type: 'NEXT_QUESTION', payload: {} });
+      dispatch({ type: 'NEXT_QUESTION' });
     },
     nextSegment: () => {
-      dispatch({ type: 'NEXT_SEGMENT', payload: {} });
+      dispatch({ type: 'NEXT_SEGMENT' });
     },
     updateScore: (playerId: PlayerId, points: number) => {
       dispatch({ type: 'UPDATE_SCORE', payload: { playerId, points } });
@@ -329,10 +329,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       dispatch({ type: 'START_TIMER', payload: { duration } });
     },
     stopTimer: () => {
-      dispatch({ type: 'STOP_TIMER', payload: {} });
+      dispatch({ type: 'STOP_TIMER' });
     },
     resetGame: () => {
-      dispatch({ type: 'RESET_GAME', payload: {} });
+      dispatch({ type: 'RESET_GAME' });
     },
   };
 

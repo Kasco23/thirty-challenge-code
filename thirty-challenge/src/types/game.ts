@@ -79,12 +79,10 @@ export interface UpdateHostNameAction {
 
 export interface NextQuestionAction {
   type: 'NEXT_QUESTION';
-  payload: {};
 }
 
 export interface NextSegmentAction {
   type: 'NEXT_SEGMENT';
-  payload: {};
 }
 
 export interface UpdateScoreAction {
@@ -119,17 +117,14 @@ export interface StartTimerAction {
 
 export interface StopTimerAction {
   type: 'STOP_TIMER';
-  payload: {};
 }
 
 export interface TickTimerAction {
   type: 'TICK_TIMER';
-  payload: {};
 }
 
 export interface ResetGameAction {
   type: 'RESET_GAME';
-  payload: {};
 }
 
 // Union type for all actions
