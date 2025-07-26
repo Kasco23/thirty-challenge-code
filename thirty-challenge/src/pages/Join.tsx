@@ -31,7 +31,8 @@ export default function Join() {
     // For now, assign playerA role (in real implementation, check available slots)
     const playerRole = 'playerA';
     
-    navigate(`/lobby/${gameId.toUpperCase()}?role=${playerRole}&name=${encodeURIComponent(name)}&flag=${selectedFlag}&club=${selectedTeam}`);
+    // Join directly to the game room instead of lobby
+    navigate(`/game/${gameId.toUpperCase()}?role=${playerRole}&name=${encodeURIComponent(name)}&flag=${selectedFlag}&club=${selectedTeam}`);
   };
 
   // Step 1: Enter Game ID
