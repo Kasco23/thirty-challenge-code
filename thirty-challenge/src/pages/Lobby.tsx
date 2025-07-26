@@ -20,17 +20,32 @@ export default function Lobby() {
   // Determine user role from URL parameters
   useEffect(() => {
     const role = searchParams.get('role') as UserRole;
+    const name = searchParams.get('name');
+    const flag = searchParams.get('flag');
+    const club = searchParams.get('club');
+    
     if (role && ['host', 'playerA', 'playerB'].includes(role)) {
       setUserRole(role);
+      
+      // If player data is in URL, join the game immediately
+      if (role !== 'host' && name && flag && club) {
+        actions.joinGame(role, { 
+          name: decodeURIComponent(name),
+          flag: flag,
+          club: club 
+        });
+        setSelectedClub(club);
+        setIsReady(true);
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, actions]);
 
-  // Initialize game if host
+  // Initialize game if host or if game doesn't exist
   useEffect(() => {
-    if (gameId && userRole === 'host' && state.gameId !== gameId) {
+    if (gameId && state.gameId !== gameId) {
       actions.startGame(gameId);
     }
-  }, [gameId, userRole, state.gameId, actions]);
+  }, [gameId, state.gameId, actions]);
 
   const handleClubSelection = (clubKey: string) => {
     setSelectedClub(clubKey);
@@ -60,6 +75,18 @@ export default function Lobby() {
 
   const connectedPlayers = Object.values(state.players).filter(p => p.isConnected && p.id !== 'host').length;
   const canStartGame = userRole === 'host' && connectedPlayers >= 1; // At least 1 player to start
+
+  // Show loading if game is not initialized
+  if (!gameId || !state.gameId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="font-arabic">جاري التحميل...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Host PC View
   if (userRole === 'host') {
@@ -151,7 +178,7 @@ export default function Lobby() {
                             className="w-full h-full object-contain"
                           />
                         </div>
-                        <p className="text-white/80 text-sm font-arabic">{player.club}</p>
+                        <p className="text-white/80 text-sm font-arabic capitalize">{player.club}</p>
                       </div>
                     )}
 
@@ -193,36 +220,58 @@ export default function Lobby() {
         >
           <h1 className="text-3xl font-bold text-white mb-2 font-arabic">انضمام للجلسة</h1>
           <p className="text-accent2 font-arabic">رمز الجلسة: <span className="font-mono">{gameId}</span></p>
+          <p className="text-white/70 text-sm font-arabic mt-2">مرحبا {state.players[userRole].name}</p>
         </motion.div>
 
-        {/* Club Selection */}
-        <motion.div
-          className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <h2 className="text-xl font-bold text-white mb-4 text-center font-arabic">اختر فريقك</h2>
-          
-          <div className="grid grid-cols-2 gap-4">
-            {Object.entries(CLUB_THEMES).map(([clubKey, theme]) => (
-              <button
-                key={clubKey}
-                onClick={() => handleClubSelection(clubKey)}
-                className={`p-4 rounded-xl border-2 transition-all ${
-                  selectedClub === clubKey
-                    ? 'border-accent2 bg-accent2/20'
-                    : 'border-white/20 hover:border-white/40'
-                }`}
-              >
-                <div className="w-12 h-12 mx-auto mb-2">
-                  <img src={theme.logo} alt={clubKey} className="w-full h-full object-contain" />
-                </div>
-                <p className="text-white text-sm font-arabic">{clubKey}</p>
-              </button>
-            ))}
-          </div>
-        </motion.div>
+        {/* Club Selection - only show if not already selected */}
+        {!selectedClub && (
+          <motion.div
+            className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h2 className="text-xl font-bold text-white mb-4 text-center font-arabic">اختر فريقك</h2>
+            
+            <div className="grid grid-cols-2 gap-4">
+              {Object.entries(CLUB_THEMES).map(([clubKey, theme]) => (
+                <button
+                  key={clubKey}
+                  onClick={() => handleClubSelection(clubKey)}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    selectedClub === clubKey
+                      ? 'border-accent2 bg-accent2/20'
+                      : 'border-white/20 hover:border-white/40'
+                  }`}
+                >
+                  <div className="w-12 h-12 mx-auto mb-2">
+                    <img src={theme.logo} alt={clubKey} className="w-full h-full object-contain" />
+                  </div>
+                  <p className="text-white text-sm font-arabic capitalize">{clubKey}</p>
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Selected Club Display */}
+        {selectedClub && (
+          <motion.div
+            className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 text-center"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+          >
+            <h2 className="text-xl font-bold text-white mb-4 font-arabic">فريقك المختار</h2>
+            <div className="w-20 h-20 mx-auto mb-2">
+              <img 
+                src={CLUB_THEMES[selectedClub as keyof typeof CLUB_THEMES]?.logo} 
+                alt={selectedClub}
+                className="w-full h-full object-contain" 
+              />
+            </div>
+            <p className="text-accent2 font-bold font-arabic capitalize">{selectedClub}</p>
+          </motion.div>
+        )}
 
         {/* Ready Button */}
         <motion.button

@@ -1,36 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CLUB_THEMES } from '../themes/clubs';
-
-// Common country flags for the quiz
-const COMMON_FLAGS = [
-  { code: 'sa', name: 'السعودية' },
-  { code: 'ae', name: 'الإمارات' },
-  { code: 'kw', name: 'الكويت' },
-  { code: 'qa', name: 'قطر' },
-  { code: 'bh', name: 'البحرين' },
-  { code: 'om', name: 'عمان' },
-  { code: 'jo', name: 'الأردن' },
-  { code: 'lb', name: 'لبنان' },
-  { code: 'sy', name: 'سوريا' },
-  { code: 'iq', name: 'العراق' },
-  { code: 'eg', name: 'مصر' },
-  { code: 'ma', name: 'المغرب' },
-  { code: 'dz', name: 'الجزائر' },
-  { code: 'tn', name: 'تونس' },
-  { code: 'ly', name: 'ليبيا' },
-  { code: 'sd', name: 'السودان' },
-  { code: 'ye', name: 'اليمن' },
-];
+import { getAllTeams, searchTeams, COMMON_FLAGS, searchFlags } from '../utils/teamUtils';
 
 export default function Join() {
   const navigate = useNavigate();
   const [name, setName] = useState('');
   const [gameId, setGameId] = useState('');
   const [selectedFlag, setSelectedFlag] = useState('');
-  const [selectedClub, setSelectedClub] = useState('');
+  const [selectedTeam, setSelectedTeam] = useState('');
   const [step, setStep] = useState(1); // 1: Game ID, 2: Player Info
+  const [flagSearch, setFlagSearch] = useState('');
+  const [teamSearch, setTeamSearch] = useState('');
+
+  // Get all available teams
+  const allTeams = getAllTeams();
+  const filteredFlags = searchFlags(flagSearch);
+  const filteredTeams = searchTeams(allTeams, teamSearch);
 
   const handleGameIdSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,12 +26,12 @@ export default function Join() {
 
   const handleJoinGame = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !selectedFlag || !selectedClub) return;
+    if (!name.trim() || !selectedFlag || !selectedTeam) return;
 
     // For now, assign playerA role (in real implementation, check available slots)
     const playerRole = 'playerA';
     
-    navigate(`/lobby/${gameId.toUpperCase()}?role=${playerRole}&name=${encodeURIComponent(name)}&flag=${selectedFlag}&club=${selectedClub}`);
+    navigate(`/lobby/${gameId.toUpperCase()}?role=${playerRole}&name=${encodeURIComponent(name)}&flag=${selectedFlag}&club=${selectedTeam}`);
   };
 
   // Step 1: Enter Game ID
@@ -98,7 +84,7 @@ export default function Join() {
   // Step 2: Player Information
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 p-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         <motion.div
           className="text-center mb-8"
           initial={{ opacity: 0, y: -20 }}
@@ -135,12 +121,27 @@ export default function Join() {
             transition={{ delay: 0.2 }}
           >
             <label className="block text-white/80 mb-4 font-arabic text-lg">اختر علم بلدك</label>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 max-h-64 overflow-y-auto">
-              {COMMON_FLAGS.map((flag) => (
+            
+            {/* Flag Search */}
+            <div className="mb-4">
+              <input
+                type="text"
+                value={flagSearch}
+                onChange={(e) => setFlagSearch(e.target.value)}
+                placeholder="ابحث عن البلد..."
+                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-64 overflow-y-auto">
+              {filteredFlags.map((flag) => (
                 <button
                   key={flag.code}
                   type="button"
-                  onClick={() => setSelectedFlag(flag.code)}
+                  onClick={() => {
+                    setSelectedFlag(flag.code);
+                    setFlagSearch('');
+                  }}
                   className={`p-3 rounded-xl border-2 transition-all hover:scale-105 ${
                     selectedFlag === flag.code
                       ? 'border-accent2 bg-accent2/20'
@@ -154,9 +155,19 @@ export default function Join() {
                 </button>
               ))}
             </div>
+
+            {selectedFlag && (
+              <div className="mt-4 text-center">
+                <span className="text-accent2 font-arabic">البلد المختار: </span>
+                <span className={`fi fi-${selectedFlag} text-lg mr-2`}></span>
+                <span className="text-white font-arabic">
+                  {COMMON_FLAGS.find(f => f.code === selectedFlag)?.name}
+                </span>
+              </div>
+            )}
           </motion.div>
 
-          {/* Club Selection */}
+          {/* Team Selection */}
           <motion.div
             className="bg-white/10 backdrop-blur-sm rounded-2xl p-6"
             initial={{ opacity: 0, y: 20 }}
@@ -164,27 +175,65 @@ export default function Join() {
             transition={{ delay: 0.3 }}
           >
             <label className="block text-white/80 mb-4 font-arabic text-lg">اختر فريقك المفضل</label>
-            <div className="grid grid-cols-2 gap-4">
-              {Object.entries(CLUB_THEMES).map(([clubKey, theme]) => (
+            
+            {/* Team Search */}
+            <div className="mb-4">
+              <input
+                type="text"
+                value={teamSearch}
+                onChange={(e) => setTeamSearch(e.target.value)}
+                placeholder="ابحث عن الفريق... (مثال: Real Madrid, Barcelona, Liverpool)"
+                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 max-h-96 overflow-y-auto">
+              {filteredTeams.map((team) => (
                 <button
-                  key={clubKey}
+                  key={team.id}
                   type="button"
-                  onClick={() => setSelectedClub(clubKey)}
-                  className={`p-4 rounded-xl border-2 transition-all hover:scale-105 ${
-                    selectedClub === clubKey
+                  onClick={() => {
+                    setSelectedTeam(team.id);
+                    setTeamSearch('');
+                  }}
+                  className={`p-3 rounded-xl border-2 transition-all hover:scale-105 ${
+                    selectedTeam === team.id
                       ? 'border-accent2 bg-accent2/20'
                       : 'border-white/20 hover:border-white/40'
                   }`}
+                  title={team.name}
                 >
                   <div className="text-center">
-                    <div className="w-16 h-16 mx-auto mb-2">
-                      <img src={theme.logo} alt={clubKey} className="w-full h-full object-contain" />
+                    <div className="w-12 h-12 mx-auto mb-1">
+                      <img src={team.logo} alt={team.name} className="w-full h-full object-contain" />
                     </div>
-                    <span className="text-white text-sm font-arabic capitalize">{clubKey}</span>
+                    <span className="text-white text-xs block truncate">{team.name}</span>
                   </div>
                 </button>
               ))}
             </div>
+
+            {filteredTeams.length === 0 && teamSearch && (
+              <div className="text-center text-white/70 py-8 font-arabic">
+                لم يتم العثور على فرق تطابق البحث "{teamSearch}"
+              </div>
+            )}
+
+            {selectedTeam && (
+              <div className="mt-4 text-center">
+                <span className="text-accent2 font-arabic">الفريق المختار: </span>
+                <div className="inline-flex items-center gap-2 mt-2">
+                  <img 
+                    src={allTeams.find(t => t.id === selectedTeam)?.logo} 
+                    alt={selectedTeam}
+                    className="w-8 h-8 object-contain"
+                  />
+                  <span className="text-white font-bold">
+                    {allTeams.find(t => t.id === selectedTeam)?.name}
+                  </span>
+                </div>
+              </div>
+            )}
           </motion.div>
 
           {/* Submit Button */}
@@ -203,7 +252,7 @@ export default function Join() {
             </button>
             <button
               type="submit"
-              disabled={!name.trim() || !selectedFlag || !selectedClub}
+              disabled={!name.trim() || !selectedFlag || !selectedTeam}
               className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors font-arabic"
             >
               انضمام للجلسة

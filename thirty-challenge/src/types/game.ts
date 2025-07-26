@@ -23,8 +23,8 @@ export interface Question {
   text: string;
   answers: string[];
   correctAnswer?: string;
-  segmentCode: SegmentCode;
   difficulty?: 'easy' | 'medium' | 'hard';
+  points?: number;
 }
 
 export interface SegmentConfig {
