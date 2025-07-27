@@ -1,127 +1,129 @@
 {
-  "App.tsx": [
-    "components/Buzzer.tsx",
-    "components/Timer.tsx",
-    "context/GameContext.tsx",
-    "pages/Admin.tsx",
-    "pages/FinalScores.tsx",
-    "pages/HostPanel.tsx",
-    "pages/HostQuestion.tsx",
-    "pages/HostSetup.tsx",
-    "pages/Join.tsx",
-    "pages/JudgePanel.tsx",
-    "pages/Landing.tsx",
-    "pages/Lobby.tsx",
-    "pages/NotFound.tsx",
-    "pages/QuizRoom.tsx",
-    "pages/Reconnect.tsx",
-    "pages/Room.tsx",
-    "pages/Scoreboard.tsx",
-    "pages/SegmentIntro.tsx",
-    "pages/TrueLobby.tsx",
-    "pages/segments/AUCT.tsx",
-    "pages/segments/BELL.tsx",
-    "pages/segments/REMO.tsx",
-    "pages/segments/SING.tsx",
-    "pages/segments/WSHA.tsx"
+  "netlify/functions/create-daily-room.ts": [],
+  "netlify/functions/create-daily-token.ts": [],
+  "src/App.tsx": [
+    "src/components/Buzzer.tsx",
+    "src/components/Timer.tsx",
+    "src/context/GameContext.tsx",
+    "src/pages/Admin.tsx",
+    "src/pages/FinalScores.tsx",
+    "src/pages/HostPanel.tsx",
+    "src/pages/HostQuestion.tsx",
+    "src/pages/HostSetup.tsx",
+    "src/pages/Join.tsx",
+    "src/pages/JudgePanel.tsx",
+    "src/pages/Landing.tsx",
+    "src/pages/Lobby.tsx",
+    "src/pages/NotFound.tsx",
+    "src/pages/QuizRoom.tsx",
+    "src/pages/Reconnect.tsx",
+    "src/pages/Room.tsx",
+    "src/pages/Scoreboard.tsx",
+    "src/pages/SegmentIntro.tsx",
+    "src/pages/TrueLobby.tsx",
+    "src/pages/segments/AUCT.tsx",
+    "src/pages/segments/BELL.tsx",
+    "src/pages/segments/REMO.tsx",
+    "src/pages/segments/SING.tsx",
+    "src/pages/segments/WSHA.tsx"
   ],
-  "__tests__/math.test.ts": [],
-  "components/Buzzer.tsx": [
-    "hooks/useGame.ts"
+  "src/__tests__/math.test.ts": [],
+  "src/components/Buzzer.tsx": [
+    "src/hooks/useGame.ts"
   ],
-  "components/Scoreboard.tsx": [
-    "hooks/useGame.ts",
-    "themes/clubs.ts",
-    "types/game.ts"
+  "src/components/Scoreboard.tsx": [
+    "src/hooks/useGame.ts",
+    "src/themes/clubs.ts",
+    "src/types/game.ts"
   ],
-  "components/Timer.tsx": [
-    "hooks/useGame.ts"
+  "src/components/Timer.tsx": [
+    "src/hooks/useGame.ts"
   ],
-  "components/VideoRoom.tsx": [
-    "hooks/useGame.ts"
+  "src/components/VideoRoom.tsx": [
+    "src/hooks/useGame.ts"
   ],
-  "constants/gameState.ts": [
-    "types/game.ts"
+  "src/constants/gameState.ts": [
+    "src/types/game.ts"
   ],
-  "context/GameContext.tsx": [
-    "constants/gameState.ts",
-    "context/GameContextDefinition.ts",
-    "lib/gameSync.ts",
-    "types/game.ts"
+  "src/context/GameContext.tsx": [
+    "src/constants/gameState.ts",
+    "src/context/GameContextDefinition.ts",
+    "src/lib/gameSync.ts",
+    "src/types/game.ts"
   ],
-  "context/GameContextDefinition.ts": [
-    "types/game.ts"
+  "src/context/GameContextDefinition.ts": [
+    "src/types/game.ts"
   ],
-  "data/questions.ts": [
-    "types/game.ts"
+  "src/data/questions.ts": [
+    "src/types/game.ts"
   ],
-  "hooks/useGame.ts": [
-    "context/GameContextDefinition.ts"
+  "src/hooks/useGame.ts": [
+    "src/context/GameContextDefinition.ts"
   ],
-  "index.css": [],
-  "lib/gameDatabase.ts": [
-    "lib/supabaseClient.ts"
+  "src/index.css": [],
+  "src/lib/gameDatabase.ts": [
+    "src/lib/supabaseClient.ts"
   ],
-  "lib/gameSync.ts": [
-    "lib/supabaseClient.ts",
-    "types/game.ts"
+  "src/lib/gameSync.ts": [
+    "src/lib/supabaseClient.ts",
+    "src/types/game.ts"
   ],
-  "lib/supabaseClient.ts": [],
-  "main.tsx": [
-    "App.tsx",
-    "index.css"
+  "src/lib/supabaseClient.ts": [],
+  "src/main.tsx": [
+    "src/App.tsx",
+    "src/index.css"
   ],
-  "pages/Admin.tsx": [],
-  "pages/Buzzer.tsx": [],
-  "pages/FinalScores.tsx": [],
-  "pages/HostPanel.tsx": [],
-  "pages/HostQuestion.tsx": [],
-  "pages/HostSetup.tsx": [
-    "hooks/useGame.ts",
-    "types/game.ts"
+  "src/pages/Admin.tsx": [],
+  "src/pages/Buzzer.tsx": [],
+  "src/pages/FinalScores.tsx": [],
+  "src/pages/HostPanel.tsx": [],
+  "src/pages/HostQuestion.tsx": [],
+  "src/pages/HostSetup.tsx": [
+    "src/hooks/useGame.ts",
+    "src/types/game.ts"
   ],
-  "pages/Join.tsx": [
-    "utils/teamUtils.ts"
+  "src/pages/Join.tsx": [
+    "src/utils/teamUtils.ts"
   ],
-  "pages/JudgePanel.tsx": [],
-  "pages/Landing.tsx": [
-    "hooks/useGame.ts"
+  "src/pages/JudgePanel.tsx": [],
+  "src/pages/Landing.tsx": [
+    "src/hooks/useGame.ts"
   ],
-  "pages/Lobby.tsx": [
-    "hooks/useGame.ts",
-    "themes/clubs.ts"
+  "src/pages/Lobby.tsx": [
+    "src/hooks/useGame.ts",
+    "src/themes/clubs.ts"
   ],
-  "pages/NotFound.tsx": [],
-  "pages/PCHost.tsx": [],
-  "pages/QuizRoom.tsx": [
-    "components/Buzzer.tsx",
-    "components/Scoreboard.tsx",
-    "components/Timer.tsx",
-    "data/questions.ts",
-    "hooks/useGame.ts"
+  "src/pages/NotFound.tsx": [],
+  "src/pages/PCHost.tsx": [],
+  "src/pages/QuizRoom.tsx": [
+    "src/components/Buzzer.tsx",
+    "src/components/Scoreboard.tsx",
+    "src/components/Timer.tsx",
+    "src/data/questions.ts",
+    "src/hooks/useGame.ts"
   ],
-  "pages/Reconnect.tsx": [],
-  "pages/Room.tsx": [],
-  "pages/Scoreboard.tsx": [],
-  "pages/SegmentControl.tsx": [],
-  "pages/SegmentIntro.tsx": [],
-  "pages/Timer.tsx": [],
-  "pages/TrueLobby.tsx": [
-    "components/VideoRoom.tsx",
-    "hooks/useGame.ts",
-    "themes/clubs.ts"
+  "src/pages/Reconnect.tsx": [],
+  "src/pages/Room.tsx": [],
+  "src/pages/Scoreboard.tsx": [],
+  "src/pages/SegmentControl.tsx": [],
+  "src/pages/SegmentIntro.tsx": [],
+  "src/pages/Timer.tsx": [],
+  "src/pages/TrueLobby.tsx": [
+    "src/components/VideoRoom.tsx",
+    "src/hooks/useGame.ts",
+    "src/themes/clubs.ts"
   ],
-  "pages/UnifiedLobby.tsx": [
-    "hooks/useGame.ts",
-    "themes/clubs.ts"
+  "src/pages/UnifiedLobby.tsx": [
+    "src/hooks/useGame.ts",
+    "src/themes/clubs.ts"
   ],
-  "pages/segments/AUCT.tsx": [],
-  "pages/segments/BELL.tsx": [],
-  "pages/segments/REMO.tsx": [],
-  "pages/segments/SING.tsx": [],
-  "pages/segments/WSHA.tsx": [],
-  "themes/clubs.ts": [],
-  "types/game.ts": [],
-  "utils/teamUtils.ts": [],
-  "vite-env.d.ts": []
+  "src/pages/segments/AUCT.tsx": [],
+  "src/pages/segments/BELL.tsx": [],
+  "src/pages/segments/REMO.tsx": [],
+  "src/pages/segments/SING.tsx": [],
+  "src/pages/segments/WSHA.tsx": [],
+  "src/themes/clubs.ts": [],
+  "src/types/game.ts": [],
+  "src/utils/teamUtils.ts": [],
+  "src/vite-env.d.ts": []
 }
