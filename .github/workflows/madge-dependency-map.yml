@@ -8,7 +8,6 @@ on:
       - "vite.config.ts"
       - "netlify/functions/**"
       - "thirty-challenge/src/**"
-      - "thirty-challenge/netlify/**"
       - ".github/workflows/madge-dependency-map.yml"
 
 permissions:
@@ -44,7 +43,8 @@ jobs:
 
       - name: Run Madge and generate JSON
         run: |
-          npx madge src netlify/functions \
+          # Include functions from the repo root
+          npx madge src ../netlify/functions \
             --extensions ts,tsx \
             --exclude "^node_modules" \
             --json > full-dependency-map.json
