@@ -1,7 +1,7 @@
 # File usage
-Use this file to understand the project. Update as we go along. Turn old info into comments, never delete text.
-Treat ️ "Approved Changes" at the end of the note As a checklist list. 
-Put a "✅" next to completed tasks.
+- Use this file to understand the project. Update as we go along. Turn old info into comments, never delete text.
+- Treat ️ "Approved Changes" at the end of the note As a checklist list. 
+- Put a "✅" next to completed tasks.
 ---
 
 ## 1 Purpose
