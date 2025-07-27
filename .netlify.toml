@@ -6,6 +6,8 @@
   environment = { VITE_COMMIT_REF = "$COMMIT_REF" }
 
 [functions]
+  # Use shared Netlify functions stored at the repo root
+  directory = "../netlify/functions"
   node_bundler = "esbuild"
 
 # Redirects for SPA routing

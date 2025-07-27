@@ -28,71 +28,39 @@
     "src/pages/segments/WSHA.tsx"
   ],
   "src/__tests__/math.test.ts": [],
-  "src/components/Buzzer.tsx": [
-    "src/hooks/useGame.ts"
-  ],
+  "src/components/Buzzer.tsx": ["src/hooks/useGame.ts"],
   "src/components/Scoreboard.tsx": [
     "src/hooks/useGame.ts",
     "src/themes/clubs.ts",
     "src/types/game.ts"
   ],
-  "src/components/Timer.tsx": [
-    "src/hooks/useGame.ts"
-  ],
-  "src/components/VideoRoom.tsx": [
-    "src/hooks/useGame.ts"
-  ],
-  "src/constants/gameState.ts": [
-    "src/types/game.ts"
-  ],
+  "src/components/Timer.tsx": ["src/hooks/useGame.ts"],
+  "src/components/VideoRoom.tsx": ["src/hooks/useGame.ts"],
+  "src/constants/gameState.ts": ["src/types/game.ts"],
   "src/context/GameContext.tsx": [
     "src/constants/gameState.ts",
     "src/context/GameContextDefinition.ts",
     "src/lib/gameSync.ts",
     "src/types/game.ts"
   ],
-  "src/context/GameContextDefinition.ts": [
-    "src/types/game.ts"
-  ],
-  "src/data/questions.ts": [
-    "src/types/game.ts"
-  ],
-  "src/hooks/useGame.ts": [
-    "src/context/GameContextDefinition.ts"
-  ],
+  "src/context/GameContextDefinition.ts": ["src/types/game.ts"],
+  "src/data/questions.ts": ["src/types/game.ts"],
+  "src/hooks/useGame.ts": ["src/context/GameContextDefinition.ts"],
   "src/index.css": [],
-  "src/lib/gameDatabase.ts": [
-    "src/lib/supabaseClient.ts"
-  ],
-  "src/lib/gameSync.ts": [
-    "src/lib/supabaseClient.ts",
-    "src/types/game.ts"
-  ],
+  "src/lib/gameDatabase.ts": ["src/lib/supabaseClient.ts"],
+  "src/lib/gameSync.ts": ["src/lib/supabaseClient.ts", "src/types/game.ts"],
   "src/lib/supabaseClient.ts": [],
-  "src/main.tsx": [
-    "src/App.tsx",
-    "src/index.css"
-  ],
+  "src/main.tsx": ["src/App.tsx", "src/index.css"],
   "src/pages/Admin.tsx": [],
   "src/pages/Buzzer.tsx": [],
   "src/pages/FinalScores.tsx": [],
   "src/pages/HostPanel.tsx": [],
   "src/pages/HostQuestion.tsx": [],
-  "src/pages/HostSetup.tsx": [
-    "src/hooks/useGame.ts",
-    "src/types/game.ts"
-  ],
-  "src/pages/Join.tsx": [
-    "src/utils/teamUtils.ts"
-  ],
+  "src/pages/HostSetup.tsx": ["src/hooks/useGame.ts", "src/types/game.ts"],
+  "src/pages/Join.tsx": ["src/utils/teamUtils.ts"],
   "src/pages/JudgePanel.tsx": [],
-  "src/pages/Landing.tsx": [
-    "src/hooks/useGame.ts"
-  ],
-  "src/pages/Lobby.tsx": [
-    "src/hooks/useGame.ts",
-    "src/themes/clubs.ts"
-  ],
+  "src/pages/Landing.tsx": ["src/hooks/useGame.ts"],
+  "src/pages/Lobby.tsx": ["src/hooks/useGame.ts", "src/themes/clubs.ts"],
   "src/pages/NotFound.tsx": [],
   "src/pages/PCHost.tsx": [],
   "src/pages/QuizRoom.tsx": [
@@ -113,10 +81,7 @@
     "src/hooks/useGame.ts",
     "src/themes/clubs.ts"
   ],
-  "src/pages/UnifiedLobby.tsx": [
-    "src/hooks/useGame.ts",
-    "src/themes/clubs.ts"
-  ],
+  "src/pages/UnifiedLobby.tsx": ["src/hooks/useGame.ts", "src/themes/clubs.ts"],
   "src/pages/segments/AUCT.tsx": [],
   "src/pages/segments/BELL.tsx": [],
   "src/pages/segments/REMO.tsx": [],
