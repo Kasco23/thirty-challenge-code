@@ -4,13 +4,12 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'src/**'
-      - 'package.json'
-      - 'vite.config.ts'
-      - 'netlify/functions/**'
-      - 'thirty-challenge/src/**'
-      - 'thirty-challenge/netlify/**'
-      - '.github/workflows/madge-dependency-map.yml'
+      - "src/**"
+      - "package.json"
+      - "vite.config.ts"
+      - "netlify/functions/**"
+      - "thirty-challenge/src/**"
+      - ".github/workflows/madge-dependency-map.yml"
 
 permissions:
   contents: write
@@ -35,7 +34,7 @@ jobs:
 
       - name: Clean up old map
         run: rm -f full-dependency-map.json
-        
+
       - name: Show directory structure
         run: |
           echo "Current path:"
@@ -45,7 +44,8 @@ jobs:
 
       - name: Run Madge and generate JSON
         run: |
-          npx madge src netlify/functions \
+          # Include functions from the repo root
+          npx madge src ../netlify/functions \
             --extensions ts,tsx \
             --exclude "^node_modules" \
             --json > full-dependency-map.json
