@@ -33,10 +33,23 @@ jobs:
       - name: Run Madge and generate JSON
         run: npx madge src --extensions ts,tsx --json > full-dependency-map.json
 
-      - name: Commit and push dependency map
+      - name: Commit and push dependency map (if changed)
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      
+          # Ensure full history (fix for shallow clone issues)
+          git fetch --unshallow || true
+      
+          # Stage the updated file
           git add full-dependency-map.json
-          git commit -m "chore: update dependency map"
-          git push
+      
+          # Check if anything has changed
+          if git diff --cached --quiet; then
+            echo "✅ No changes to commit."
+          else
+            echo "🔄 Changes detected. Committing..."
+            git commit -m "chore: update dependency map"
+            git push
+          fi
+
