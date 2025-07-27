@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "src/**"
       - "package.json"
       - "vite.config.ts"
       - "netlify/functions/**"
