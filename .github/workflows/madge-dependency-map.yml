@@ -1,20 +1,20 @@
 name: Generate Dependency Map
 
 on:
-  workflow_dispatch:  # Enables "Run workflow" button
+  workflow_dispatch:
   push:
     paths:
       - 'src/**'
       - 'package.json'
       - 'vite.config.ts'
-      - 'netlify/functions/**'        # Include your Netlify serverless functions
-      - 'thirty-challenge/src/**'     # If your src is nested inside this folder
-      - 'thirty-challenge/netlify/**' # Any other custom folder you want to track
-      - '.github/workflows/madge-dependency-map.yml' # To regenerate if workflow is changed
-      
+      - 'netlify/functions/**'
+      - 'thirty-challenge/src/**'
+      - 'thirty-challenge/netlify/**'
+      - '.github/workflows/madge-dependency-map.yml'
+
 permissions:
   contents: write
-  
+
 jobs:
   madge:
     runs-on: ubuntu-latest
@@ -32,18 +32,23 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        
-      - name: clean up
-        run: rm -f full-dependency-map.json
 
-      
+      - name: Clean up old map
+        run: rm -f full-dependency-map.json
+        
+      - name: Show directory structure
+        run: |
+          echo "Current path:"
+          pwd
+          echo "Files:"
+          ls -R
+
       - name: Run Madge and generate JSON
         run: |
-          npx madge . \
+          npx madge src netlify/functions \
             --extensions ts,tsx \
             --exclude "^node_modules" \
             --json > full-dependency-map.json
-
 
       - name: Commit and push dependency map (if changed)
         env:
@@ -58,4 +63,3 @@ jobs:
             git commit -m "chore: update dependency map"
             git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:${{ github.ref }}
           fi
-
