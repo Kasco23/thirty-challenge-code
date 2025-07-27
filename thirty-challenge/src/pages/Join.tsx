@@ -1,265 +1,241 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getAllTeams, searchTeams, COMMON_FLAGS, searchFlags } from '../utils/teamUtils';
+import { getAllTeams, searchTeams, searchFlags } from '../utils/teamUtils';
 
 export default function Join() {
   const navigate = useNavigate();
-  const [name, setName] = useState('');
+  const [step, setStep] = useState(1);
+  const [joinType, setJoinType] = useState<'host' | 'player' | ''>('');
   const [gameId, setGameId] = useState('');
+  const [name, setName] = useState('');
   const [selectedFlag, setSelectedFlag] = useState('');
   const [selectedTeam, setSelectedTeam] = useState('');
-  const [step, setStep] = useState(1); // 1: Game ID, 2: Player Info
   const [flagSearch, setFlagSearch] = useState('');
   const [teamSearch, setTeamSearch] = useState('');
 
-  // Get all available teams
   const allTeams = getAllTeams();
   const filteredFlags = searchFlags(flagSearch);
   const filteredTeams = searchTeams(allTeams, teamSearch);
 
-  const handleGameIdSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!gameId.trim()) return;
+  const handleJoinTypeSelect = (type: 'host' | 'player') => {
+    setJoinType(type);
     setStep(2);
   };
 
-  const handleJoinGame = (e: React.FormEvent) => {
+  const handleGameIdSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim() || !selectedFlag || !selectedTeam) return;
-
-    // For now, assign playerA role (in real implementation, check available slots)
-    const playerRole = 'playerA';
-    
-    navigate(`/lobby/${gameId.toUpperCase()}?role=${playerRole}&name=${encodeURIComponent(name)}&flag=${selectedFlag}&club=${selectedTeam}`);
+    if (gameId.trim()) {
+      if (joinType === 'host') {
+        // Check if it's a host code (ends with -HOST)
+        const actualGameId = gameId.toUpperCase().replace('-HOST', '');
+        navigate(`/lobby/${actualGameId}?role=host-mobile&name=${encodeURIComponent(name)}`);
+      } else {
+        setStep(3);
+      }
+    }
   };
 
-  // Step 1: Enter Game ID
-  if (step === 1) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center p-4">
-        <motion.div
-          className="w-full max-w-md bg-white/10 backdrop-blur-sm rounded-2xl p-8"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-        >
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2 font-arabic">الانضمام لجلسة</h1>
-            <p className="text-white/70 font-arabic">أدخل رمز الجلسة للانضمام</p>
+  const handlePlayerJoin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (name.trim() && selectedFlag && selectedTeam) {
+      const playerRole = 'playerA'; // You might want to make this dynamic based on available slots
+      navigate(`/lobby/${gameId.toUpperCase()}?role=${playerRole}&name=${encodeURIComponent(name)}&flag=${selectedFlag}&club=${selectedTeam}&autoJoin=true`);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 flex items-center justify-center p-4">
+      <motion.div
+        className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 w-full max-w-md"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2 font-arabic">انضم للعبة</h1>
+          <p className="text-white/70 font-arabic">
+            {step === 1 ? 'اختر نوع الانضمام' : 
+             step === 2 ? 'أدخل رمز اللعبة والاسم' : 
+             'اختر العلم والفريق'}
+          </p>
+        </div>
+
+        {step === 1 ? (
+          // Step 1: Choose join type
+          <div className="space-y-4">
+            <motion.button
+              onClick={() => handleJoinTypeSelect('host')}
+              className="w-full p-6 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 rounded-2xl text-white transition-all"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="text-center">
+                <div className="text-3xl mb-2">🎤</div>
+                <h3 className="text-lg font-bold font-arabic mb-2">انضم كمقدم</h3>
+                <p className="text-sm text-blue-200 font-arabic">للمقدمين الذين يريدون المشاركة بالفيديو من الهاتف</p>
+                <p className="text-xs text-blue-300 font-arabic mt-1">تحتاج رمز المقدم (GAME-HOST)</p>
+              </div>
+            </motion.button>
+
+            <motion.button
+              onClick={() => handleJoinTypeSelect('player')}
+              className="w-full p-6 bg-green-500/20 hover:bg-green-500/30 border border-green-500/50 rounded-2xl text-white transition-all"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="text-center">
+                <div className="text-3xl mb-2">🎮</div>
+                <h3 className="text-lg font-bold font-arabic mb-2">انضم كلاعب</h3>
+                <p className="text-sm text-green-200 font-arabic">للاعبين المشاركين في المسابقة</p>
+                <p className="text-xs text-green-300 font-arabic mt-1">تحتاج رمز اللعبة العادي</p>
+              </div>
+            </motion.button>
+
+            <button
+              onClick={() => navigate('/')}
+              className="w-full mt-4 px-4 py-2 text-white/70 hover:text-white font-arabic transition-colors"
+            >
+              العودة للرئيسية
+            </button>
           </div>
 
+        ) : step === 2 ? (
+          // Step 2: Game ID and Name
           <form onSubmit={handleGameIdSubmit} className="space-y-6">
             <div>
-              <label className="block text-white/80 mb-2 font-arabic">رمز الجلسة</label>
+              <label className="block text-white/80 mb-2 font-arabic">
+                {joinType === 'host' ? 'رمز المقدم' : 'رمز اللعبة'}
+              </label>
               <input
                 type="text"
                 value={gameId}
                 onChange={(e) => setGameId(e.target.value.toUpperCase())}
-                placeholder="مثال: ABC123"
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 font-mono text-center text-xl tracking-wider focus:outline-none focus:border-accent2"
-                maxLength={6}
+                placeholder={joinType === 'host' ? 'مثال: ABC123-HOST' : 'مثال: ABC123'}
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-mono text-center text-lg"
+                required
+              />
+              {joinType === 'host' && (
+                <p className="text-xs text-blue-300 mt-1 font-arabic text-center">
+                  ستجد رمز المقدم في صفحة إعداد الجلسة
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-white/80 mb-2 font-arabic">الاسم</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="أدخل اسمك"
+                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic text-center"
                 required
               />
             </div>
 
-            <button
-              type="submit"
-              className="w-full py-3 bg-accent2 hover:bg-accent text-white font-bold rounded-xl transition-colors font-arabic"
-            >
-              متابعة
-            </button>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-arabic transition-colors"
+              >
+                رجوع
+              </button>
+              <button
+                type="submit"
+                disabled={!gameId.trim() || !name.trim()}
+                className="flex-1 px-4 py-3 bg-accent2 hover:bg-accent text-white rounded-xl font-arabic transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {joinType === 'host' ? 'انضم كمقدم' : 'التالي'}
+              </button>
+            </div>
           </form>
 
-          <button
-            onClick={() => navigate('/')}
-            className="w-full mt-4 py-2 text-white/60 hover:text-white transition-colors font-arabic"
-          >
-            العودة للرئيسية
-          </button>
-        </motion.div>
-      </div>
-    );
-  }
-
-  // Step 2: Player Information
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 p-4">
-      <div className="max-w-4xl mx-auto">
-        <motion.div
-          className="text-center mb-8"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          <h1 className="text-3xl font-bold text-white mb-2 font-arabic">معلومات اللاعب</h1>
-          <p className="text-accent2 font-arabic">الانضمام للجلسة: <span className="font-mono">{gameId}</span></p>
-        </motion.div>
-
-        <form onSubmit={handleJoinGame} className="space-y-8">
-          {/* Name Input */}
-          <motion.div
-            className="bg-white/10 backdrop-blur-sm rounded-2xl p-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <label className="block text-white/80 mb-4 font-arabic text-lg">اسم اللاعب</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="أدخل اسمك"
-              className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic"
-              required
-            />
-          </motion.div>
-
-          {/* Flag Selection */}
-          <motion.div
-            className="bg-white/10 backdrop-blur-sm rounded-2xl p-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <label className="block text-white/80 mb-4 font-arabic text-lg">اختر علم بلدك</label>
-            
-            {/* Flag Search */}
-            <div className="mb-4">
+        ) : (
+          // Step 3: Flag and Team Selection (for players only)
+          <form onSubmit={handlePlayerJoin} className="space-y-6">
+            {/* Flag Selection */}
+            <div>
+              <label className="block text-white/80 mb-2 font-arabic">اختر العلم</label>
               <input
                 type="text"
                 value={flagSearch}
                 onChange={(e) => setFlagSearch(e.target.value)}
-                placeholder="ابحث عن البلد..."
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic text-sm"
+                placeholder="ابحث عن بلد..."
+                className="w-full px-4 py-2 mb-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic"
               />
-            </div>
-
-            <div className="grid grid-cols-4 sm:grid-cols-6 gap-3 max-h-64 overflow-y-auto">
-              {filteredFlags.map((flag) => (
-                <button
-                  key={flag.code}
-                  type="button"
-                  onClick={() => {
-                    setSelectedFlag(flag.code);
-                    setFlagSearch('');
-                  }}
-                  className={`p-3 rounded-xl border-2 transition-all hover:scale-105 ${
-                    selectedFlag === flag.code
-                      ? 'border-accent2 bg-accent2/20'
-                      : 'border-white/20 hover:border-white/40'
-                  }`}
-                >
-                  <div className="text-center">
-                    <span className={`fi fi-${flag.code} text-2xl mb-1 block`}></span>
-                    <span className="text-white text-xs font-arabic">{flag.name}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-
-            {selectedFlag && (
-              <div className="mt-4 text-center">
-                <span className="text-accent2 font-arabic">البلد المختار: </span>
-                <span className={`fi fi-${selectedFlag} text-lg mr-2`}></span>
-                <span className="text-white font-arabic">
-                  {COMMON_FLAGS.find(f => f.code === selectedFlag)?.name}
-                </span>
+              <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto">
+                {filteredFlags.map((flag) => (
+                  <button
+                    key={flag.code}
+                    type="button"
+                    onClick={() => setSelectedFlag(flag.code)}
+                    className={`p-2 rounded-lg border-2 transition-all ${
+                      selectedFlag === flag.code
+                        ? 'border-accent2 bg-accent2/20'
+                        : 'border-white/20 bg-white/5 hover:border-white/40'
+                    }`}
+                  >
+                    <span className={`fi fi-${flag.code} text-2xl`}></span>
+                    <p className="text-xs text-white/80 mt-1 font-arabic">{flag.name}</p>
+                  </button>
+                ))}
               </div>
-            )}
-          </motion.div>
+            </div>
 
-          {/* Team Selection */}
-          <motion.div
-            className="bg-white/10 backdrop-blur-sm rounded-2xl p-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <label className="block text-white/80 mb-4 font-arabic text-lg">اختر فريقك المفضل</label>
-            
-            {/* Team Search */}
-            <div className="mb-4">
+            {/* Team Selection */}
+            <div>
+              <label className="block text-white/80 mb-2 font-arabic">اختر الفريق</label>
               <input
                 type="text"
                 value={teamSearch}
                 onChange={(e) => setTeamSearch(e.target.value)}
-                placeholder="ابحث عن الفريق... (مثال: Real Madrid, Barcelona, Liverpool)"
-                className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 text-sm"
+                placeholder="ابحث عن فريق..."
+                className="w-full px-4 py-2 mb-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic"
               />
+              <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                {filteredTeams.map((team) => (
+                  <button
+                    key={team.name}
+                    type="button"
+                    onClick={() => setSelectedTeam(team.name)}
+                    className={`p-3 rounded-lg border-2 transition-all flex items-center gap-2 ${
+                      selectedTeam === team.name
+                        ? 'border-accent2 bg-accent2/20'
+                        : 'border-white/20 bg-white/5 hover:border-white/40'
+                    }`}
+                  >
+                    <img 
+                      src={team.logoPath} 
+                      alt={team.name}
+                      className="w-8 h-8 object-contain"
+                    />
+                    <span className="text-white font-arabic text-sm">{team.displayName}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3 max-h-96 overflow-y-auto">
-              {filteredTeams.map((team) => (
-                <button
-                  key={team.id}
-                  type="button"
-                  onClick={() => {
-                    setSelectedTeam(team.id);
-                    setTeamSearch('');
-                  }}
-                  className={`p-3 rounded-xl border-2 transition-all hover:scale-105 ${
-                    selectedTeam === team.id
-                      ? 'border-accent2 bg-accent2/20'
-                      : 'border-white/20 hover:border-white/40'
-                  }`}
-                  title={team.name}
-                >
-                  <div className="text-center">
-                    <div className="w-12 h-12 mx-auto mb-1">
-                      <img src={team.logo} alt={team.name} className="w-full h-full object-contain" />
-                    </div>
-                    <span className="text-white text-xs block truncate">{team.name}</span>
-                  </div>
-                </button>
-              ))}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setStep(2)}
+                className="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-arabic transition-colors"
+              >
+                رجوع
+              </button>
+              <button
+                type="submit"
+                disabled={!selectedFlag || !selectedTeam}
+                className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-arabic transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                انضم للعبة
+              </button>
             </div>
-
-            {filteredTeams.length === 0 && teamSearch && (
-              <div className="text-center text-white/70 py-8 font-arabic">
-                لم يتم العثور على فرق تطابق البحث "{teamSearch}"
-              </div>
-            )}
-
-            {selectedTeam && (
-              <div className="mt-4 text-center">
-                <span className="text-accent2 font-arabic">الفريق المختار: </span>
-                <div className="inline-flex items-center gap-2 mt-2">
-                  <img 
-                    src={allTeams.find(t => t.id === selectedTeam)?.logo} 
-                    alt={selectedTeam}
-                    className="w-8 h-8 object-contain"
-                  />
-                  <span className="text-white font-bold">
-                    {allTeams.find(t => t.id === selectedTeam)?.name}
-                  </span>
-                </div>
-              </div>
-            )}
-          </motion.div>
-
-          {/* Submit Button */}
-          <motion.div
-            className="flex gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="flex-1 py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-xl transition-colors font-arabic"
-            >
-              رجوع
-            </button>
-            <button
-              type="submit"
-              disabled={!name.trim() || !selectedFlag || !selectedTeam}
-              className="flex-1 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors font-arabic"
-            >
-              انضمام للجلسة
-            </button>
-          </motion.div>
-        </form>
-      </div>
+          </form>
+        )}
+      </motion.div>
     </div>
   );
 }

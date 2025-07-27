@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2025-07-26
+
+- Removed unused GameState and PlayerId imports from `gameDatabase.ts` to fix ESLint errors
+
 ## 2025-07-23
 
 - Initial project repo created for "Thirty Challenge" (تحدي الثلاثين)
@@ -15,4 +19,5 @@
 - Will use Daily.co for first video chat integration (simple, reliable, easy to switch to LiveKit later)
 
 ---
+
 All further project changes will be documented in this file.

@@ -1,89 +1,137 @@
 // src/pages/Lobby.tsx
-import { useEffect, useState } from "react";
-import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useGame } from "../context/GameContext";
-import VideoRoom from "../components/VideoRoom";
-import { CLUB_THEMES } from "../themes/clubs";
+import { useEffect, useState } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useGame } from '../hooks/useGame';
+// VideoRoom import removed - using TrueLobby instead
+import { CLUB_THEMES } from '../themes/clubs';
 
-type UserRole = 'host' | 'playerA' | 'playerB';
+type UserRole = 'host' | 'host-mobile' | 'playerA' | 'playerB';
 
 export default function Lobby() {
   const { gameId } = useParams<{ gameId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { state, actions } = useGame();
-  const [userRole, setUserRole] = useState<UserRole>('host');
-  const [selectedClub, setSelectedClub] = useState<string>('');
-  const [isReady, setIsReady] = useState(false);
 
-  // Determine user role from URL parameters
+  const [userRole, setUserRole] = useState<UserRole>('host');
+
+  // Extract URL parameters
   useEffect(() => {
     const role = searchParams.get('role') as UserRole;
     const name = searchParams.get('name');
     const flag = searchParams.get('flag');
     const club = searchParams.get('club');
-    
-    if (role && ['host', 'playerA', 'playerB'].includes(role)) {
+    const autoJoin = searchParams.get('autoJoin') === 'true';
+    const hostName = searchParams.get('hostName');
+
+    if (role) {
       setUserRole(role);
-      
-      // If player data is in URL, join the game immediately
-      if (role !== 'host' && name && flag && club) {
-        actions.joinGame(role, { 
-          name: decodeURIComponent(name),
-          flag: flag,
-          club: club 
-        });
-        setSelectedClub(club);
-        setIsReady(true);
-      }
+    }
+
+    // Handle host-mobile role - join as host with video capability
+    if (role === 'host-mobile' && name) {
+      actions.updateHostName(name);
+    }
+
+    // Auto-join players directly
+    if (role && ['playerA', 'playerB'].includes(role) && autoJoin && name && flag && club) {
+      actions.joinGame(role as 'playerA' | 'playerB', {
+        name,
+        flag,
+        club,
+        isConnected: true,
+      });
+    }
+
+    // Update host name if provided
+    if (hostName) {
+      actions.updateHostName(hostName);
     }
   }, [searchParams, actions]);
 
-  // Initialize game if host or if game doesn't exist
+  // Initialize game if needed
   useEffect(() => {
     if (gameId && state.gameId !== gameId) {
       actions.startGame(gameId);
     }
   }, [gameId, state.gameId, actions]);
 
-  const handleClubSelection = (clubKey: string) => {
-    setSelectedClub(clubKey);
-    if (userRole !== 'host') {
-      actions.joinGame(userRole, { 
-        name: state.players[userRole].name,
-        club: clubKey 
-      });
+  // Update host name when it changes
+  useEffect(() => {
+    const hostName = searchParams.get('hostName');
+    if ((userRole === 'host' || userRole === 'host-mobile') && hostName && hostName !== state.hostName) {
+      actions.updateHostName(hostName);
     }
-  };
+  }, [searchParams, userRole, state.hostName, actions]);
 
   const handleStartGame = () => {
-    if (userRole === 'host') {
-      navigate(`/game/${gameId}?role=host`);
+    if (gameId) {
+      navigate(`/game/${gameId}?role=${userRole === 'host-mobile' ? 'host' : userRole}`);
     }
   };
 
-  const handlePlayerReady = () => {
-    setIsReady(!isReady);
-    // Update player ready status
-    actions.joinGame(userRole, { 
-      name: state.players[userRole].name,
-      club: selectedClub,
-      isConnected: !isReady 
-    });
-  };
+  const connectedPlayers = Object.values(state.players).filter(p => p.isConnected).length;
 
-  const connectedPlayers = Object.values(state.players).filter(p => p.isConnected && p.id !== 'host').length;
-  const canStartGame = userRole === 'host' && connectedPlayers >= 1; // At least 1 player to start
-
-  // Show loading if game is not initialized
   if (!gameId || !state.gameId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
-        <div className="text-white text-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 flex items-center justify-center">
+        <div className="text-white text-center font-arabic">
           <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="font-arabic">جاري التحميل...</p>
+          <h1 className="text-2xl mb-4">جاري التحميل...</h1>
         </div>
+      </div>
+    );
+  }
+
+  // Host Mobile View (when host joins from mobile for video)
+  if (userRole === 'host-mobile') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 flex items-center justify-center p-4">
+        <motion.div
+          className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 w-full max-w-md text-center"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-white mb-2 font-arabic">المقدم - الهاتف</h1>
+            <p className="text-accent2 font-arabic">رمز الجلسة: {gameId}</p>
+          </div>
+
+          {/* Host Info */}
+          <div className="mb-6">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="text-3xl">🎤</div>
+              <h2 className="text-xl font-bold text-white font-arabic">{state.hostName}</h2>
+            </div>
+            <div className="inline-block px-3 py-1 rounded-full text-sm font-bold bg-blue-500 text-white">
+              مقدم متصل
+            </div>
+          </div>
+
+          {/* Video Chat */}
+          <div className="mb-6">
+            {/* <VideoRoom gameId={gameId} userName={state.hostName} userRole="host-mobile" /> */}
+            <div className="bg-gray-800 rounded-lg p-4 text-center text-white/50 font-arabic">
+              استخدم TrueLobby للفيديو
+            </div>
+          </div>
+
+          {/* Game Status */}
+          <div className="bg-white/5 rounded-xl p-4 mb-6">
+            <p className="text-white/80 font-arabic mb-2">حالة اللعبة:</p>
+            <p className="text-accent2 font-arabic">اللاعبون المتصلون: {connectedPlayers}/2</p>
+            {connectedPlayers >= 2 && (
+              <p className="text-green-400 font-arabic mt-2">جاهز للبدء! تحكم من الكمبيوتر</p>
+            )}
+          </div>
+
+          {/* Instructions */}
+          <div className="text-sm text-white/70 font-arabic">
+            <p>• تحكم في اللعبة من جهاز الكمبيوتر</p>
+            <p>• هذا الجهاز للفيديو فقط</p>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -91,214 +139,199 @@ export default function Lobby() {
   // Host PC View
   if (userRole === 'host') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 p-6">
-        <div className="max-w-6xl mx-auto">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 p-6">
+        <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <motion.div
-            className="text-center mb-8"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <h1 className="text-4xl font-bold text-white mb-2 font-arabic">غرفة الانتظار</h1>
-            <p className="text-accent2 font-arabic">رمز الجلسة: <span className="font-mono text-2xl">{gameId}</span></p>
-          </motion.div>
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-white mb-2 font-arabic">صالة الانتظار</h1>
+            <div className="space-y-2">
+              <p className="text-accent2 font-arabic">رمز الجلسة: <span className="font-mono text-2xl">{gameId}</span></p>
+              <p className="text-blue-300 font-arabic">رمز المقدم: <span className="font-mono text-lg">{gameId}-HOST</span></p>
+              <p className="text-white/70 font-arabic mt-2">اللاعبون المتصلون: {connectedPlayers}/2</p>
+            </div>
+          </div>
 
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Host Controls */}
-            <motion.div
-              className="lg:col-span-1 bg-white/10 backdrop-blur-sm rounded-2xl p-6"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <h2 className="text-2xl font-bold text-white mb-6 font-arabic">إعدادات المقدم</h2>
-              
-              {/* Game Settings */}
-              <div className="space-y-4 mb-6">
-                <div>
-                  <label className="block text-white/80 mb-2 font-arabic">عدد الأسئلة لكل فقرة</label>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    {state.segments.map((segment) => (
-                      <div key={segment.code} className="bg-white/5 rounded-lg p-2">
-                        <span className="text-white/70 font-arabic">{segment.name}</span>
-                        <input
-                          type="number"
-                          min="1"
-                          max="20"
-                          defaultValue={state.settings.questionsPerSegment[segment.code]}
-                          className="w-full mt-1 bg-white/10 border border-white/20 rounded px-2 py-1 text-white"
-                        />
-                      </div>
-                    ))}
+            {/* Game Settings Panel */}
+            <div className="lg:col-span-1 space-y-6">
+              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                <h2 className="text-xl font-bold text-white mb-4 font-arabic">إعدادات اللعبة</h2>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-white/80 mb-2 font-arabic">عدد الأسئلة لكل فقرة:</label>
+                    <div className="space-y-2">
+                      {Object.entries(state.segments).map(([segmentCode, segmentData]) => (
+                        <div key={segmentCode} className="flex justify-between items-center">
+                          <span className="text-white font-arabic">{segmentCode}</span>
+                          <input
+                            type="number"
+                            min="1"
+                            max="20"
+                            value={segmentData.questionsPerSegment}
+                            className="w-16 px-2 py-1 bg-white/20 border border-white/30 rounded text-white text-center"
+                            readOnly
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Start Game Button */}
-              <button
+              <motion.button
                 onClick={handleStartGame}
-                disabled={!canStartGame}
-                className="w-full py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold rounded-xl transition-colors font-arabic"
+                disabled={connectedPlayers < 2}
+                className={`w-full py-4 px-6 rounded-2xl font-bold text-xl font-arabic transition-all ${
+                  connectedPlayers >= 2
+                    ? 'bg-gradient-to-r from-green-500 to-blue-600 text-white hover:from-green-600 hover:to-blue-700'
+                    : 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                }`}
+                whileHover={connectedPlayers >= 2 ? { scale: 1.02 } : {}}
+                whileTap={connectedPlayers >= 2 ? { scale: 0.98 } : {}}
               >
-                {canStartGame ? 'بدء اللعبة' : `انتظار اللاعبين (${connectedPlayers}/2)`}
-              </button>
-            </motion.div>
+                {connectedPlayers >= 2 ? 'بدء اللعبة' : `انتظار اللاعبين (${connectedPlayers}/2)`}
+              </motion.button>
+            </div>
 
             {/* Players Status */}
-            <motion.div
-              className="lg:col-span-2 grid md:grid-cols-2 gap-6"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              {(['playerA', 'playerB'] as const).map((playerId, index) => {
-                const player = state.players[playerId];
-                const isConnected = player.isConnected;
-                
-                return (
-                  <div key={playerId} className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-                    <div className="text-center mb-4">
-                      <h3 className="text-xl font-bold text-white font-arabic">
-                        {isConnected ? player.name : `لاعب ${index + 1}`}
-                      </h3>
-                      <div className={`inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 ${
-                        isConnected ? 'bg-green-500 text-white' : 'bg-gray-500 text-gray-300'
-                      }`}>
-                        {isConnected ? 'متصل' : 'غير متصل'}
-                      </div>
-                    </div>
-
-                    {/* Player's selected club */}
-                    {isConnected && player.club && (
-                      <div className="text-center">
-                        <div className="w-16 h-16 mx-auto mb-2">
-                          <img 
-                            src={CLUB_THEMES[player.club as keyof typeof CLUB_THEMES]?.logo} 
-                            alt={player.club}
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                        <p className="text-white/80 text-sm font-arabic capitalize">{player.club}</p>
-                      </div>
-                    )}
-
-                    {/* Video placeholder */}
-                    <div className="mt-4 aspect-video bg-black/30 rounded-lg flex items-center justify-center">
-                      <VideoRoom />
+            <div className="lg:col-span-2 space-y-6">
+              <div className="grid gap-6">
+                {/* Host Card */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                  <div className="text-center mb-4">
+                    <h3 className="text-xl font-bold text-white font-arabic">المقدم</h3>
+                    <p className="text-accent2 font-arabic">{state.hostName}</p>
+                    <div className="inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 bg-blue-500 text-white">
+                      متصل (تحكم)
                     </div>
                   </div>
-                );
-              })}
-            </motion.div>
-          </div>
+                  <div className="aspect-video bg-black/30 rounded-lg flex items-center justify-center">
+                    {/* <VideoRoom gameId={gameId} userName={state.hostName} userRole="host-mobile" /> */}
+                    <div className="bg-gray-800 rounded-lg p-4 text-center text-white/50 font-arabic">
+                      استخدم TrueLobby للفيديو
+                    </div>
+                  </div>
+                </div>
 
-          {/* Instructions for players */}
-          <motion.div
-            className="mt-8 text-center bg-blue-500/20 rounded-xl p-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6 }}
-          >
-            <p className="text-white font-arabic">
-              شارك رمز الجلسة <span className="font-mono font-bold">{gameId}</span> مع اللاعبين للانضمام
-            </p>
-          </motion.div>
+                {/* Players Grid */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  {(['playerA', 'playerB'] as const).map((playerId, index) => {
+                    const player = state.players[playerId];
+                    const isConnected = player.isConnected;
+                    
+                    return (
+                      <div key={playerId} className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                        <div className="text-center mb-4">
+                          <h3 className="text-xl font-bold text-white font-arabic">
+                            {isConnected ? player.name : `لاعب ${index + 1}`}
+                          </h3>
+                          <div className={`inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 ${
+                            isConnected ? 'bg-green-500 text-white' : 'bg-gray-500 text-gray-300'
+                          }`}>
+                            {isConnected ? 'متصل' : 'غير متصل'}
+                          </div>
+                        </div>
+
+                        {/* Player's selected club */}
+                        {isConnected && player.club && (
+                          <div className="text-center mb-4">
+                            <div className="w-16 h-16 mx-auto mb-2">
+                              <img 
+                                src={CLUB_THEMES[player.club as keyof typeof CLUB_THEMES]?.logo} 
+                                alt={player.club}
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                            <p className="text-white/80 text-sm font-arabic capitalize">{player.club}</p>
+                          </div>
+                        )}
+
+                        {/* Video placeholder */}
+                        <div className="aspect-video bg-black/30 rounded-lg flex items-center justify-center">
+                          <div className="bg-gray-800 rounded-lg p-4 text-center text-white/50 font-arabic">
+                            استخدم TrueLobby للفيديو
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Player Mobile View
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 p-4">
-      <div className="max-w-md mx-auto">
-        {/* Header */}
+  // Player Mobile View - Auto-joined
+  const autoJoin = searchParams.get('autoJoin') === 'true';
+  if (autoJoin) {
+    const player = state.players[userRole as 'playerA' | 'playerB'];
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 flex items-center justify-center p-4">
         <motion.div
-          className="text-center mb-6"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+          className="bg-white/10 backdrop-blur-sm rounded-3xl p-8 w-full max-w-md text-center"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
         >
-          <h1 className="text-3xl font-bold text-white mb-2 font-arabic">انضمام للجلسة</h1>
-          <p className="text-accent2 font-arabic">رمز الجلسة: <span className="font-mono">{gameId}</span></p>
-          <p className="text-white/70 text-sm font-arabic mt-2">مرحبا {state.players[userRole].name}</p>
-        </motion.div>
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-white mb-2 font-arabic">في الصالة</h1>
+            <p className="text-accent2 font-arabic">رمز الجلسة: {gameId}</p>
+          </div>
 
-        {/* Club Selection - only show if not already selected */}
-        {!selectedClub && (
-          <motion.div
-            className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h2 className="text-xl font-bold text-white mb-4 text-center font-arabic">اختر فريقك</h2>
-            
-            <div className="grid grid-cols-2 gap-4">
-              {Object.entries(CLUB_THEMES).map(([clubKey, theme]) => (
-                <button
-                  key={clubKey}
-                  onClick={() => handleClubSelection(clubKey)}
-                  className={`p-4 rounded-xl border-2 transition-all ${
-                    selectedClub === clubKey
-                      ? 'border-accent2 bg-accent2/20'
-                      : 'border-white/20 hover:border-white/40'
-                  }`}
-                >
-                  <div className="w-12 h-12 mx-auto mb-2">
-                    <img src={theme.logo} alt={clubKey} className="w-full h-full object-contain" />
-                  </div>
-                  <p className="text-white text-sm font-arabic capitalize">{clubKey}</p>
-                </button>
-              ))}
+          {/* Player Info */}
+          <div className="mb-6">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              {player.flag && (
+                <span className={`fi fi-${player.flag} text-3xl`}></span>
+              )}
+              <h2 className="text-xl font-bold text-white font-arabic">{player.name}</h2>
             </div>
-          </motion.div>
-        )}
 
-        {/* Selected Club Display */}
-        {selectedClub && (
-          <motion.div
-            className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 mb-6 text-center"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-          >
-            <h2 className="text-xl font-bold text-white mb-4 font-arabic">فريقك المختار</h2>
-            <div className="w-20 h-20 mx-auto mb-2">
-              <img 
-                src={CLUB_THEMES[selectedClub as keyof typeof CLUB_THEMES]?.logo} 
-                alt={selectedClub}
-                className="w-full h-full object-contain" 
-              />
+            {player.club && (
+              <div className="flex flex-col items-center mb-4">
+                <div className="w-20 h-20 mb-2">
+                  <img 
+                    src={CLUB_THEMES[player.club as keyof typeof CLUB_THEMES]?.logo} 
+                    alt={player.club}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <p className="text-white/80 font-arabic capitalize">{player.club}</p>
+              </div>
+            )}
+
+            <div className="inline-block px-3 py-1 rounded-full text-sm font-bold bg-green-500 text-white">
+              متصل
             </div>
-            <p className="text-accent2 font-bold font-arabic capitalize">{selectedClub}</p>
-          </motion.div>
-        )}
+          </div>
 
-        {/* Ready Button */}
-        <motion.button
-          onClick={handlePlayerReady}
-          disabled={!selectedClub}
-          className={`w-full py-4 rounded-xl font-bold text-lg transition-all font-arabic ${
-            isReady
-              ? 'bg-green-600 hover:bg-green-700 text-white'
-              : 'bg-accent2 hover:bg-accent text-white'
-          } disabled:bg-gray-600 disabled:cursor-not-allowed`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          {isReady ? 'جاهز ✓' : 'أنا جاهز'}
-        </motion.button>
+          {/* Video Chat */}
+          <div className="mb-6">
+            {/* <VideoRoom gameId={gameId} userName={player.name} userRole="playerA" /> */}
+            <div className="bg-gray-800 rounded-lg p-4 text-center text-white/50 font-arabic">
+              استخدم TrueLobby للفيديو
+            </div>
+          </div>
 
-        {/* Status */}
-        <motion.div
-          className="mt-6 text-center text-white/70"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.6 }}
-        >
-          <p className="font-arabic">انتظار بدء اللعبة من المقدم...</p>
+          {/* Waiting Status */}
+          <div className="bg-white/5 rounded-xl p-4">
+            <p className="text-white/80 font-arabic mb-2">في انتظار بدء اللعبة...</p>
+            <p className="text-accent2 font-arabic">اللاعبون المتصلون: {connectedPlayers}/2</p>
+          </div>
         </motion.div>
       </div>
+    );
+  }
+
+  // Default fallback
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 flex items-center justify-center">
+      <div className="text-white text-center font-arabic">خطأ في تحميل الصفحة</div>
     </div>
   );
 }

@@ -1,70 +1,79 @@
-// Utility to get all available team logos
-const logoModules = import.meta.glob('/src/assets/logos/*.svg', { eager: true });
+// Get all logo files from the assets/logos directory
+const logoModules = import.meta.glob<{ default: string }>('../assets/logos/*.svg', { eager: true });
 
-// Extract team names from file paths and create team objects
-export const getAllTeams = () => {
-  const teams = Object.keys(logoModules).map((path) => {
+export interface Team {
+  name: string;
+  displayName: string;
+  logoPath: string;
+  searchTerms: string[];
+}
+
+export function getAllTeams(): Team[] {
+  const teams: Team[] = [];
+  
+  for (const path in logoModules) {
+    const module = logoModules[path];
+    // Extract team name from file path (e.g., "../assets/logos/real-madrid.svg" -> "real-madrid")
     const fileName = path.split('/').pop()?.replace('.svg', '') || '';
-    const teamName = fileName
+    
+    // Convert kebab-case to Title Case (e.g., "real-madrid" -> "Real Madrid")
+    const displayName = fileName
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
     
-    return {
-      id: fileName,
-      name: teamName,
-      logo: (logoModules[path] as any).default,
-      searchTerms: [
-        teamName.toLowerCase(),
-        fileName.toLowerCase().replace(/-/g, ' '),
-        fileName.toLowerCase()
-      ]
-    };
-  });
+    teams.push({
+      name: fileName,
+      displayName,
+      logoPath: module.default,
+      searchTerms: [fileName, displayName.toLowerCase(), ...fileName.split('-')]
+    });
+  }
+  
+  // Sort teams alphabetically by display name
+  return teams.sort((a, b) => a.displayName.localeCompare(b.displayName));
+}
 
-  return teams.sort((a, b) => a.name.localeCompare(b.name));
-};
-
-// Search teams by name
-export const searchTeams = (teams: ReturnType<typeof getAllTeams>, query: string) => {
+export function searchTeams(teams: Team[], query: string): Team[] {
   if (!query.trim()) return teams;
   
-  const searchQuery = query.toLowerCase();
+  const searchTerm = query.toLowerCase();
   return teams.filter(team => 
-    team.searchTerms.some(term => term.includes(searchQuery))
+    team.searchTerms.some(term => term.includes(searchTerm))
   );
-};
+}
 
-// Common country flags for the quiz
+// Common Arab country flags for the join page
 export const COMMON_FLAGS = [
   { code: 'sa', name: 'السعودية' },
   { code: 'ae', name: 'الإمارات' },
-  { code: 'kw', name: 'الكويت' },
-  { code: 'qa', name: 'قطر' },
-  { code: 'bh', name: 'البحرين' },
-  { code: 'om', name: 'عمان' },
+  { code: 'eg', name: 'مصر' },
   { code: 'jo', name: 'الأردن' },
   { code: 'lb', name: 'لبنان' },
   { code: 'sy', name: 'سوريا' },
   { code: 'iq', name: 'العراق' },
-  { code: 'eg', name: 'مصر' },
-  { code: 'ma', name: 'المغرب' },
-  { code: 'dz', name: 'الجزائر' },
-  { code: 'tn', name: 'تونس' },
-  { code: 'ly', name: 'ليبيا' },
-  { code: 'sd', name: 'السودان' },
+  { code: 'kw', name: 'الكويت' },
+  { code: 'qa', name: 'قطر' },
+  { code: 'bh', name: 'البحرين' },
+  { code: 'om', name: 'عمان' },
   { code: 'ye', name: 'اليمن' },
   { code: 'ps', name: 'فلسطين' },
-  { code: 'tr', name: 'تركيا' },
-  { code: 'ir', name: 'إيران' },
+  { code: 'ma', name: 'المغرب' },
+  { code: 'tn', name: 'تونس' },
+  { code: 'dz', name: 'الجزائر' },
+  { code: 'ly', name: 'ليبيا' },
+  { code: 'sd', name: 'السودان' },
+  { code: 'so', name: 'الصومال' },
+  { code: 'dj', name: 'جيبوتي' },
+  { code: 'km', name: 'جزر القمر' },
+  { code: 'mr', name: 'موريتانيا' },
 ];
 
-// Search flags by name
-export const searchFlags = (query: string) => {
+export function searchFlags(query: string) {
   if (!query.trim()) return COMMON_FLAGS;
   
-  const searchQuery = query.toLowerCase();
+  const searchTerm = query.toLowerCase();
   return COMMON_FLAGS.filter(flag => 
-    flag.name.includes(searchQuery) || flag.code.includes(searchQuery)
+    flag.name.includes(searchTerm) || flag.code.includes(searchTerm)
   );
-};
+}

@@ -1,24 +1,28 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useGame } from "../context/GameContext";
+import { useGame } from "../hooks/useGame";
 import { useState } from "react";
 
 export default function Landing() {
   const navigate = useNavigate();
   const { actions } = useGame();
   const [isCreating, setIsCreating] = useState(false);
+  const [customGameId, setCustomGameId] = useState('');
+  const [useCustomId, setUseCustomId] = useState(false);
 
-  const handleStartSession = async () => {
+  const handleCreateSession = async () => {
     setIsCreating(true);
     try {
-      // Generate a unique game ID
-      const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
+      // Use custom game ID or generate a random one
+      const gameId = useCustomId && customGameId.trim() 
+        ? customGameId.trim().toUpperCase()
+        : Math.random().toString(36).substring(2, 8).toUpperCase();
       
       // Initialize the game
       actions.startGame(gameId);
       
-      // Navigate to lobby as host
-      navigate(`/lobby/${gameId}?role=host`, { replace: true });
+      // Navigate to host setup page
+      navigate(`/host-setup/${gameId}`, { replace: true });
     } catch (error) {
       console.error('Failed to start session:', error);
       setIsCreating(false);
@@ -58,18 +62,44 @@ export default function Landing() {
       </motion.p>
       
       <motion.div
-        className="flex flex-col gap-4 items-center"
+        className="flex flex-col gap-6 items-center w-full max-w-md"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.6 }}
       >
+        {/* Custom Game ID Option */}
+        <div className="w-full">
+          <label className="flex items-center gap-2 text-white/80 text-sm font-arabic mb-3">
+            <input
+              type="checkbox"
+              checked={useCustomId}
+              onChange={(e) => setUseCustomId(e.target.checked)}
+              className="rounded"
+            />
+            استخدام رمز جلسة مخصص
+          </label>
+          
+          {useCustomId && (
+            <motion.input
+              type="text"
+              value={customGameId}
+              onChange={(e) => setCustomGameId(e.target.value.replace(/[^A-Za-z0-9]/g, '').substring(0, 8))}
+              placeholder="ادخل رمز الجلسة (حروف وأرقام فقط)"
+              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 font-mono text-center uppercase"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              maxLength={8}
+            />
+          )}
+        </div>
+
         <button
-          onClick={handleStartSession}
-          disabled={isCreating}
-          className="px-10 py-4 text-xl rounded-2xl font-bold bg-accent2 hover:bg-accent shadow-lg transition-all border border-accent glow disabled:opacity-50 disabled:cursor-not-allowed"
+          onClick={handleCreateSession}
+          disabled={isCreating || (useCustomId && !customGameId.trim())}
+          className="w-full px-10 py-4 text-xl rounded-2xl font-bold bg-accent2 hover:bg-accent shadow-lg transition-all border border-accent glow disabled:opacity-50 disabled:cursor-not-allowed font-arabic"
         >
           {isCreating ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               إنشاء الجلسة...
             </div>
@@ -80,7 +110,7 @@ export default function Landing() {
         
         <button
           onClick={handleJoinGame}
-          className="mt-2 px-6 py-3 text-lg rounded-xl font-bold bg-transparent hover:bg-white/10 text-white/80 hover:text-accent2 border border-white/20 hover:border-accent2 transition-all"
+          className="w-full px-6 py-3 text-lg rounded-xl font-bold bg-transparent hover:bg-white/10 text-white/80 hover:text-accent2 border border-white/20 hover:border-accent2 transition-all font-arabic"
         >
           الانضمام لجلسة
         </button>

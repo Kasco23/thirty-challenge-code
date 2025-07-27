@@ -1,4 +1,5 @@
 /* eslint-disable */
+import DOMPurify from 'dompurify';
 var addSorting = (function() {
     'use strict';
     var cols,
@@ -86,6 +87,9 @@ var addSorting = (function() {
             colNode = tableCols[i];
             col = cols[i];
             val = colNode.getAttribute('data-value');
+            if (val) {
+                val = DOMPurify.sanitize(val); // Sanitize the value
+            }
             if (col.type === 'number') {
                 val = Number(val);
             }

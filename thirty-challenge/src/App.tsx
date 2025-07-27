@@ -3,8 +3,10 @@ import { AnimatePresence } from 'framer-motion';
 import { GameProvider } from './context/GameContext';
 import Landing from './pages/Landing';
 import Join from './pages/Join';
+import HostSetup from './pages/HostSetup';
 import QuizRoom from './pages/QuizRoom';
 import Lobby from './pages/Lobby';
+import TrueLobby from './pages/TrueLobby';
 import Room from './pages/Room';
 import SegmentIntro from './pages/SegmentIntro';
 import HostPanel from './pages/HostPanel';
@@ -32,10 +34,11 @@ function App() {
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Landing />} />
             <Route path="/join" element={<Join />} />
+            <Route path="/host-setup/:gameId" element={<HostSetup />} />
             
-            {/* New proper routing structure */}
-            <Route path="/lobby/:gameId" element={<Lobby />} />
-            <Route path="/game/:gameId" element={<QuizRoom />} />
+                              {/* New proper routing structure */}
+                  <Route path="/lobby/:gameId" element={<TrueLobby />} />
+                  <Route path="/game/:gameId" element={<QuizRoom />} />
             
             {/* Legacy routes for backward compatibility */}
             <Route path="/room/:roomId" element={<QuizRoom />} />
@@ -52,7 +55,7 @@ function App() {
             
             {/* Component routes */}
             <Route path="/timer" element={<Timer />} />
-            <Route path="/buzzer" element={<Buzzer playerId="playerA" />} />
+            <Route path="/buzzer" element={<Buzzer />} />
             
             {/* Admin and utility routes */}
             <Route path="/admin" element={<Admin />} />
