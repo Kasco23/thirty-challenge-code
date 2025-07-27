@@ -1,18 +1,62 @@
-name: Build and Test
-on: [push, pull_request]
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: thirty-challenge
+
+      - name: Run ESLint
+        run: npm run lint
+        working-directory: thirty-challenge
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: thirty-challenge
+
+      - name: Run tests
+        run: npm test
+        working-directory: thirty-challenge
+
+  build:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -25,14 +69,6 @@ jobs:
         run: npx tsc --noEmit
         working-directory: thirty-challenge
 
-      - name: Lint
-        run: npm run lint
-        working-directory: thirty-challenge
-
       - name: Build
         run: npm run build
-        working-directory: thirty-challenge
-
-      - name: Run tests with coverage
-        run: npm test
         working-directory: thirty-challenge
