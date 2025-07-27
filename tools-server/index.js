@@ -7,15 +7,24 @@ const fs = require('fs-extra');
 const madge = require('madge');
 const os = require('os');
 const { v4: uuidv4 } = require('uuid');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 
+// Set up rate limiter: max 20 requests per 15 minutes per IP
+const dependenciesLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // limit each IP to 20 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the RateLimit-* headers
+  legacyHeaders: false, // Disable the X-RateLimit-* headers
+});
+
 const REPO_ZIP_URL = 'https://github.com/Kasco23/thirty-challenge/archive/refs/heads/main.zip';
 
-app.get('/dependencies', async (req, res) => {
+app.get('/dependencies', dependenciesLimiter, async (req, res) => {
   const file = req.query.path;
   if (!file) return res.status(400).json({ error: 'Missing ?path' });
 
