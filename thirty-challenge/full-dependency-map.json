@@ -43,7 +43,9 @@
     "thirty-challenge/src/types/game.ts"
   ],
   "thirty-challenge/src/lib/supabaseClient.ts": [],
-  "thirty-challenge/src/main.tsx": ["thirty-challenge/src/index.css"],
+  "thirty-challenge/src/main.tsx": [
+    "thirty-challenge/src/index.css"
+  ],
   "thirty-challenge/src/pages/Admin.tsx": [],
   "thirty-challenge/src/pages/Buzzer.tsx": [],
   "thirty-challenge/src/pages/FinalScores.tsx": [],
