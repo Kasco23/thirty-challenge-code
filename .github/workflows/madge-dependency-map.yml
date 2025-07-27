@@ -1,11 +1,16 @@
 name: Generate Dependency Map
 
 on:
+  workflow_dispatch:  # Enables "Run workflow" button
   push:
     paths:
       - 'src/**'
       - 'package.json'
       - 'vite.config.ts'
+      - 'netlify/functions/**'        # Include your Netlify serverless functions
+      - 'thirty-challenge/src/**'     # If your src is nested inside this folder
+      - 'thirty-challenge/netlify/**' # Any other custom folder you want to track
+      - '.github/workflows/madge-dependency-map.yml' # To regenerate if workflow is changed
 
 jobs:
   madge:
