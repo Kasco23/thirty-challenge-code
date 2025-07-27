@@ -29,7 +29,11 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        
+      - name: clean up
+        run: rm -f full-dependency-map.json
 
+      
       - name: Run Madge and generate JSON
         run: npx madge src --extensions ts,tsx --json > full-dependency-map.json
 
