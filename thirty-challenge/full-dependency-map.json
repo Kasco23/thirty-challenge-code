@@ -36,6 +36,7 @@
     "src/themes/clubs.ts",
     "src/types/game.ts"
   ],
+  "src/components/TeamLogo.tsx": [],
   "src/components/Timer.tsx": [
     "src/hooks/useGame.ts"
   ],
@@ -83,6 +84,7 @@
     "src/types/game.ts"
   ],
   "src/pages/Join.tsx": [
+    "src/components/TeamLogo.tsx",
     "src/utils/teamUtils.ts"
   ],
   "src/pages/JudgePanel.tsx": [],
@@ -109,11 +111,13 @@
   "src/pages/SegmentIntro.tsx": [],
   "src/pages/Timer.tsx": [],
   "src/pages/TrueLobby.tsx": [
+    "src/components/TeamLogo.tsx",
     "src/components/VideoRoom.tsx",
     "src/hooks/useGame.ts",
     "src/themes/clubs.ts"
   ],
   "src/pages/UnifiedLobby.tsx": [
+    "src/components/TeamLogo.tsx",
     "src/hooks/useGame.ts",
     "src/themes/clubs.ts"
   ],
