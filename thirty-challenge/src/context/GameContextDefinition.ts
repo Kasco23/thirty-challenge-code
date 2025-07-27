@@ -5,11 +5,26 @@ interface GameContextType {
   state: GameState;
   actions: {
     startGame: (gameId: string) => void;
-    joinGame: (playerId: PlayerId, playerData: Partial<GameState['players'][PlayerId]>) => void;
+    joinGame: (
+      playerId: PlayerId,
+      playerData: Partial<GameState['players'][PlayerId]>,
+    ) => void;
     updateHostName: (hostName: string) => void;
     updateSegmentSettings: (settings: Record<SegmentCode, number>) => void;
-    createVideoRoom: (gameId: string) => Promise<{ success: boolean; roomUrl?: string; error?: string }>;
-    generateDailyToken: (gameId: string, userName: string, userRole: string) => Promise<{ success: boolean; token?: string; error?: string }>;
+    createVideoRoom: (
+      gameId: string,
+    ) => Promise<{ success: boolean; roomUrl?: string; error?: string }>;
+    /**
+     * Request a Daily.co meeting token for a participant
+     * @param room - Daily.co room name
+     * @param user - Display name for the token
+     * @param isHost - Whether the user should have host privileges
+     */
+    generateDailyToken: (
+      room: string,
+      user: string,
+      isHost: boolean,
+    ) => Promise<{ success: boolean; token?: string; error?: string }>;
     trackPresence: (participantData: {
       id: string;
       name: string;
@@ -22,7 +37,10 @@ interface GameContextType {
     nextSegment: () => void;
     updateScore: (playerId: PlayerId, points: number) => void;
     addStrike: (playerId: PlayerId) => void;
-    useSpecialButton: (playerId: PlayerId, buttonType: keyof GameState['players'][PlayerId]['specialButtons']) => void;
+    useSpecialButton: (
+      playerId: PlayerId,
+      buttonType: keyof GameState['players'][PlayerId]['specialButtons'],
+    ) => void;
     startTimer: (duration: number) => void;
     stopTimer: () => void;
     tickTimer: () => void;
@@ -30,5 +48,7 @@ interface GameContextType {
   };
 }
 
-export const GameContext = createContext<GameContextType | undefined>(undefined);
+export const GameContext = createContext<GameContextType | undefined>(
+  undefined,
+);
 export type { GameContextType };

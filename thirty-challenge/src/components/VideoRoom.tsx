@@ -10,7 +10,12 @@ interface VideoRoomProps {
   className?: string;
 }
 
-export default function VideoRoom({ gameId, userName, userRole, className = '' }: VideoRoomProps) {
+export default function VideoRoom({
+  gameId,
+  userName,
+  userRole,
+  className = '',
+}: VideoRoomProps) {
   const { state, actions } = useGame();
   const callFrameRef = useRef<HTMLDivElement>(null);
   const callObjectRef = useRef<unknown>(null);
@@ -26,7 +31,11 @@ export default function VideoRoom({ gameId, userName, userRole, className = '' }
 
     try {
       // Get Daily.co token for this user
-      const tokenResult = await actions.generateDailyToken(gameId, userName, userRole);
+      const tokenResult = await actions.generateDailyToken(
+        gameId,
+        userName,
+        userRole === 'host-mobile',
+      );
       if (!tokenResult.success) {
         throw new Error(tokenResult.error || 'Failed to get access token');
       }
@@ -38,10 +47,10 @@ export default function VideoRoom({ gameId, userName, userRole, className = '' }
           width: '100%',
           height: '100%',
           border: 'none',
-          borderRadius: '12px'
-        }
+          borderRadius: '12px',
+        },
       });
-      
+
       callObjectRef.current = callObject;
 
       // Add event listeners
@@ -57,15 +66,22 @@ export default function VideoRoom({ gameId, userName, userRole, className = '' }
         })
         .on('error', (error: unknown) => {
           console.error('Daily.co error:', error);
-          const errorMsg = (error as { errorMsg?: string })?.errorMsg || 'Video call error';
+          const errorMsg =
+            (error as { errorMsg?: string })?.errorMsg || 'Video call error';
           setError(errorMsg);
           setIsJoining(false);
         })
         .on('participant-joined', (event: unknown) => {
-          console.log('Participant joined:', (event as { participant?: unknown })?.participant);
+          console.log(
+            'Participant joined:',
+            (event as { participant?: unknown })?.participant,
+          );
         })
         .on('participant-left', (event: unknown) => {
-          console.log('Participant left:', (event as { participant?: unknown })?.participant);
+          console.log(
+            'Participant left:',
+            (event as { participant?: unknown })?.participant,
+          );
         });
 
       // Join the meeting
@@ -74,14 +90,14 @@ export default function VideoRoom({ gameId, userName, userRole, className = '' }
         token: tokenResult.token,
         userName: userName,
         startVideoOff: false,
-        startAudioOff: false
+        startAudioOff: false,
       });
 
       // Append to DOM
       callFrameRef.current.appendChild((callObject as any).iframe());
-
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to join video call';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to join video call';
       console.error('Failed to join call:', error);
       setError(errorMessage);
       setIsJoining(false);
@@ -90,7 +106,11 @@ export default function VideoRoom({ gameId, userName, userRole, className = '' }
 
   // Join the video call when room is available
   useEffect(() => {
-    if (!state.videoRoomCreated || !state.videoRoomUrl || callObjectRef.current) {
+    if (
+      !state.videoRoomCreated ||
+      !state.videoRoomUrl ||
+      callObjectRef.current
+    ) {
       return;
     }
 
@@ -119,9 +139,13 @@ export default function VideoRoom({ gameId, userName, userRole, className = '' }
 
   if (error) {
     return (
-      <div className={`bg-red-500/20 border border-red-500/30 rounded-xl p-6 ${className}`}>
+      <div
+        className={`bg-red-500/20 border border-red-500/30 rounded-xl p-6 ${className}`}
+      >
         <div className="text-center">
-          <div className="text-red-400 text-lg font-bold mb-2 font-arabic">خطأ في الفيديو</div>
+          <div className="text-red-400 text-lg font-bold mb-2 font-arabic">
+            خطأ في الفيديو
+          </div>
           <div className="text-red-300 text-sm mb-4 font-arabic">{error}</div>
           <button
             onClick={joinCall}
@@ -136,10 +160,16 @@ export default function VideoRoom({ gameId, userName, userRole, className = '' }
 
   if (!state.videoRoomCreated) {
     return (
-      <div className={`bg-gray-500/20 border border-gray-500/30 rounded-xl p-6 ${className}`}>
+      <div
+        className={`bg-gray-500/20 border border-gray-500/30 rounded-xl p-6 ${className}`}
+      >
         <div className="text-center">
-          <div className="text-gray-400 text-lg font-bold mb-2 font-arabic">غرفة الفيديو غير متاحة</div>
-          <div className="text-gray-300 text-sm font-arabic">في انتظار إنشاء غرفة الفيديو...</div>
+          <div className="text-gray-400 text-lg font-bold mb-2 font-arabic">
+            غرفة الفيديو غير متاحة
+          </div>
+          <div className="text-gray-300 text-sm font-arabic">
+            في انتظار إنشاء غرفة الفيديو...
+          </div>
         </div>
       </div>
     );
@@ -147,11 +177,17 @@ export default function VideoRoom({ gameId, userName, userRole, className = '' }
 
   if (isJoining) {
     return (
-      <div className={`bg-blue-500/20 border border-blue-500/30 rounded-xl p-6 ${className}`}>
+      <div
+        className={`bg-blue-500/20 border border-blue-500/30 rounded-xl p-6 ${className}`}
+      >
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-blue-400 text-lg font-bold mb-2 font-arabic">الانضمام للفيديو</div>
-          <div className="text-blue-300 text-sm font-arabic">جاري الاتصال...</div>
+          <div className="text-blue-400 text-lg font-bold mb-2 font-arabic">
+            الانضمام للفيديو
+          </div>
+          <div className="text-blue-300 text-sm font-arabic">
+            جاري الاتصال...
+          </div>
         </div>
       </div>
     );
@@ -159,18 +195,18 @@ export default function VideoRoom({ gameId, userName, userRole, className = '' }
 
   return (
     <div className={`relative ${className}`}>
-      <div 
-        ref={callFrameRef} 
+      <div
+        ref={callFrameRef}
         className="w-full h-full min-h-[300px] bg-gray-800 rounded-xl overflow-hidden"
         style={{ aspectRatio: '16/9' }}
       />
-      
+
       {callState === 'joined' && (
         <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-arabic">
           متصل
         </div>
       )}
-      
+
       <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 rounded text-xs font-arabic">
         {userName}
       </div>
