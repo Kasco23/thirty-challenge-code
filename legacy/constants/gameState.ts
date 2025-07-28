@@ -1,4 +1,4 @@
-import type { GameState } from '../types/game';
+import type { GameState } from '../../thirty-challenge/src/types/game';
 
 export const INITIAL_GAME_STATE: GameState = {
   gameId: '',

@@ -1,11 +1,12 @@
-name: Deploy
+name: Test
 
 on:
+  pull_request:
   push:
     branches: [main]
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -16,10 +17,4 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      - run: npm run build
-      - uses: netlify/actions/cli@master
-        with:
-          args: deploy --prod
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+      - run: npm test -- --passWithNoTests

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useGame } from '../hooks/useGame';
-import VideoRoom from '../components/VideoRoom';
+import { useGame } from '../../../thirty-challenge/src/hooks/useGame';
+import VideoRoom from '../../../thirty-challenge/src/components/VideoRoom';
 import { CLUB_THEMES } from '../themes/clubs';
 
 interface LobbyParticipant {
