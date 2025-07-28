@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { useGame } from '../hooks/useGame';
-import { CLUB_THEMES } from '../themes/clubs';
 import type { PlayerId } from '../types/game';
 
 export default function Scoreboard() {
@@ -29,19 +28,12 @@ export default function Scoreboard() {
     const player = state.players[playerId];
     if (!player) return null;
 
-    const clubTheme = player.club
-      ? CLUB_THEMES[player.club as keyof typeof CLUB_THEMES]
-      : null;
     const playerIndex = playerId === 'playerA' ? 0 : 1;
 
     return (
       <motion.div
         key={playerId}
-        className={`relative bg-white/10 backdrop-blur-sm rounded-2xl p-4 border-2 ${
-          clubTheme
-            ? `border-[${clubTheme.primary}] bg-gradient-to-br from-[${clubTheme.primary}]/20 to-transparent`
-            : 'border-white/20'
-        }`}
+        className="relative bg-white/10 backdrop-blur-sm rounded-2xl p-4 border-2 border-white/20"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: playerIndex * 0.1 }}
@@ -70,18 +62,6 @@ export default function Scoreboard() {
               </div>
             </div>
           </div>
-
-          {/* Club Logo */}
-          {clubTheme && (
-            <div className="w-12 h-12 flex items-center justify-center">
-              <img
-                src={clubTheme.logo}
-                alt={player.club}
-                className="w-full h-full object-contain"
-                loading="lazy"
-              />
-            </div>
-          )}
         </div>
 
         {/* Score Display */}

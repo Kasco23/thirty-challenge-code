@@ -1,5 +1,3 @@
-import React from 'react';
-
 /**
  * Simple connection status banner for the Test_arena branch.  In the
  * original application this component reflected real‑time connectivity
