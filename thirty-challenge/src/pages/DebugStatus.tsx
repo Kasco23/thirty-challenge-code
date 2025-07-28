@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import ConnectionBanner from '../components/ConnectionBanner';
 import { useErrorLog } from '../hooks/useErrorLog';
 
