@@ -4,8 +4,13 @@ import type { GameState, PlayerId, SegmentCode } from '../types/game';
 interface GameContextType {
   state: GameState;
   actions: {
-    // Now accepts hostName to ensure correct persistence
-    startGame: (gameId: string, hostName: string) => Promise<void>;
+    /**
+     * Initialize a game and persist the record in Supabase.
+     *
+     * @param gameId - Unique ID for the game session
+     * @param hostName - Optional host name to store with the game
+     */
+    startGame: (gameId: string, hostName?: string) => Promise<void>;
     joinGame: (
       playerId: PlayerId,
       playerData: Partial<GameState['players'][PlayerId]>,
