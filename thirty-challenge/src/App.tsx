@@ -18,6 +18,8 @@ import Timer from "./components/Timer";
 import Buzzer from "./components/Buzzer";
 import Admin from "./pages/Admin";
 import Reconnect from "./pages/Reconnect";
+import DebugStatus from "./pages/DebugStatus";
+import ConnectionBanner from "./components/ConnectionBanner";
 import NotFound from "./pages/NotFound";
 import WSHA from "./pages/segments/WSHA";
 import AUCT from "./pages/segments/AUCT";
@@ -30,6 +32,7 @@ function App() {
   return (
     <GameProvider>
       <div className="dark min-h-screen bg-gradient-to-tr from-black via-[#10102a] to-accent2">
+        <ConnectionBanner />
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Landing />} />
@@ -60,6 +63,7 @@ function App() {
             {/* Admin and utility routes */}
             <Route path="/admin" element={<Admin />} />
             <Route path="/reconnect" element={<Reconnect />} />
+            <Route path="/debug" element={<DebugStatus />} />
 
             {/* Segment routes */}
             <Route path="/wsha" element={<WSHA />} />

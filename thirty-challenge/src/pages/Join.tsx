@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { getAllTeams, searchTeams, searchFlags } from "../utils/teamUtils";
+import { GameDatabase } from "../lib/gameDatabase";
 
 export default function Join() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function Join() {
   const [selectedTeam, setSelectedTeam] = useState("");
   const [flagSearch, setFlagSearch] = useState("");
   const [teamSearch, setTeamSearch] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const allTeams = getAllTeams();
   const filteredFlags = searchFlags(flagSearch);
@@ -23,18 +25,22 @@ export default function Join() {
     setStep(2);
   };
 
-  const handleGameIdSubmit = (e: React.FormEvent) => {
+  const handleGameIdSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (gameId.trim()) {
-      if (joinType === "host") {
-        // Check if it's a host code (ends with -HOST)
-        const actualGameId = gameId.toUpperCase().replace("-HOST", "");
-        navigate(
-          `/lobby/${actualGameId}?role=host-mobile&name=${encodeURIComponent(name)}`,
-        );
-      } else {
-        setStep(3);
-      }
+    setErrorMsg("");
+    if (!gameId.trim()) return;
+
+    const actualGameId = gameId.toUpperCase().replace("-HOST", "");
+    const existing = await GameDatabase.getGame(actualGameId);
+    if (!existing) {
+      setErrorMsg("لا توجد جلسة بهذا الرمز");
+      return;
+    }
+
+    if (joinType === "host") {
+      navigate(`/lobby/${actualGameId}?role=host-mobile`);
+    } else {
+      setStep(3);
     }
   };
 
@@ -141,21 +147,28 @@ export default function Join() {
                   ستجد رمز المقدم في صفحة إعداد الجلسة
                 </p>
               )}
+              {errorMsg && (
+                <p className="text-xs text-red-400 mt-1 font-arabic text-center">
+                  {errorMsg}
+                </p>
+              )}
             </div>
 
-            <div>
-              <label className="block text-white/80 mb-2 font-arabic">
-                الاسم
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="أدخل اسمك"
-                className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic text-center"
-                required
-              />
-            </div>
+            {joinType === "player" && (
+              <div>
+                <label className="block text-white/80 mb-2 font-arabic">
+                  الاسم
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="أدخل اسمك"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic text-center"
+                  required
+                />
+              </div>
+            )}
 
             <div className="flex gap-3">
               <button
@@ -167,7 +180,9 @@ export default function Join() {
               </button>
               <button
                 type="submit"
-                disabled={!gameId.trim() || !name.trim()}
+                disabled={
+                  !gameId.trim() || (joinType === "player" && !name.trim())
+                }
                 className="flex-1 px-4 py-3 bg-accent2 hover:bg-accent text-white rounded-xl font-arabic transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {joinType === "host" ? "انضم كمقدم" : "التالي"}
