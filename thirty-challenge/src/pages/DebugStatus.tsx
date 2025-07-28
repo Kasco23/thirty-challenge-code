@@ -1,20 +1,28 @@
+import React, { useState, useEffect } from 'react';
 import ConnectionBanner from '../components/ConnectionBanner';
-import { useErrorLog } from '../hooks/useErrorLog';
+import { useErrorLog } from '../hooks/useErrorLog
 
 /**
  * Displays live connection status and recent error logs for quick debugging.
  */
 export default function DebugStatus() {
   const logs = useErrorLog();
-  const [requests, setRequests] = React.useState<string[]>([]);
+  const [requests, setRequests] = useState<string[]>([]);
   // tap into window.fetch once
-  React.useEffect(() => {
+  useEffect(() => {
     const orig = window.fetch;
     window.fetch = async (...args) => {
       const [input] = args;
       const res = await orig(...args);
+      // Normalize URL from RequestInfo (string | Request | URL)
+      const urlString =
+        typeof input === 'string'
+          ? input
+          : input instanceof Request
+          ? input.url
+          : String(input);
       setRequests((prev) =>
-        [...prev, `${res.status} ${typeof input === "string" ? input : input.url}`].slice(-20),
+        [...prev, `${res.status} ${urlString}`].slice(-20)
       );
       return res;
     };
