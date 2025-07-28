@@ -4,7 +4,8 @@ import type { GameState, PlayerId, SegmentCode } from '../types/game';
 interface GameContextType {
   state: GameState;
   actions: {
-    startGame: (gameId: string) => void;
+    // Now accepts hostName to ensure correct persistence
+    startGame: (gameId: string, hostName: string) => Promise<void>;
     joinGame: (
       playerId: PlayerId,
       playerData: Partial<GameState['players'][PlayerId]>,
