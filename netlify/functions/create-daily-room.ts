@@ -9,6 +9,14 @@ export const handler: Handler = async (event) => {
     };
   }
 
+  if (!process.env.DAILY_API_KEY) {
+    console.error("DAILY_API_KEY environment variable is missing");
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Daily API key not configured" }),
+    };
+  }
+
   try {
     if (!process.env.DAILY_API_KEY) {
       console.error("DAILY_API_KEY environment variable is missing");
