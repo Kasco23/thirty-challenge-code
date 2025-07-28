@@ -72,6 +72,7 @@
   "thirty-challenge/src/hooks/useGame.ts": [
     "thirty-challenge/src/context/GameContextDefinition.ts"
   ],
+  "thirty-challenge/src/hooks/useSupabaseFetch.ts": [],
   "thirty-challenge/src/index.css": [],
   "thirty-challenge/src/lib/gameDatabase.ts": [
     "thirty-challenge/src/lib/supabaseClient.ts"
