@@ -29,6 +29,9 @@
     "thirty-challenge/src/pages/segments/SING.tsx",
     "thirty-challenge/src/pages/segments/WSHA.tsx"
   ],
+  "thirty-challenge/src/__tests__/DebugStatus.test.tsx": [
+    "thirty-challenge/src/pages/DebugStatus.tsx"
+  ],
   "thirty-challenge/src/__tests__/math.test.ts": [],
   "thirty-challenge/src/components/Buzzer.tsx": [
     "thirty-challenge/src/hooks/useGame.ts"
