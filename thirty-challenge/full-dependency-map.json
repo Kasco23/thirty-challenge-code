@@ -2,6 +2,7 @@
   "netlify/functions/create-daily-room.ts": [],
   "netlify/functions/create-daily-token.ts": [],
   "netlify/functions/delete-daily-room.ts": [],
+  "netlify/functions/game-event.ts": [],
   "thirty-challenge/src/App.tsx": [
     "thirty-challenge/src/components/Buzzer.tsx",
     "thirty-challenge/src/components/ConnectionBanner.tsx",
