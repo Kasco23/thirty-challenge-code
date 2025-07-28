@@ -58,6 +58,7 @@
   "thirty-challenge/src/context/GameContext.tsx": [
     "thirty-challenge/src/constants/gameState.ts",
     "thirty-challenge/src/context/GameContextDefinition.ts",
+    "thirty-challenge/src/lib/gameDatabase.ts",
     "thirty-challenge/src/lib/gameSync.ts",
     "thirty-challenge/src/types/game.ts"
   ],
