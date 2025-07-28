@@ -12,9 +12,9 @@ export interface Player {
   strikes: number;
   isConnected: boolean;
   specialButtons: {
-    LOCK_BUTTON: boolean;      // AUCT segment - available at 40 points
-    TRAVELER_BUTTON: boolean;  // BELL segment - one use per player
-    PIT_BUTTON: boolean;       // SING segment - one use per player
+    LOCK_BUTTON: boolean; // AUCT segment - available at 40 points
+    TRAVELER_BUTTON: boolean; // BELL segment - one use per player
+    PIT_BUTTON: boolean; // SING segment - one use per player
   };
 }
 
@@ -137,7 +137,7 @@ export interface ResetGameAction {
 }
 
 // Union type for all actions
-export type GameAction = 
+export type GameAction =
   | StartGameAction
   | JoinGameAction
   | UpdateHostNameAction

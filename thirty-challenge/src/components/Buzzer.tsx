@@ -31,11 +31,9 @@ export default function Buzzer() {
       >
         {isPressed ? 'تم!' : 'جرس'}
       </motion.button>
-      
+
       {state.currentSegment === 'BELL' && (
-        <p className="ml-4 text-white/70 font-arabic">
-          اضغط الجرس للإجابة!
-        </p>
+        <p className="ml-4 text-white/70 font-arabic">اضغط الجرس للإجابة!</p>
       )}
     </div>
   );

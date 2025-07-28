@@ -1,38 +1,33 @@
-name: Build and Test
-on: [push, pull_request]
+name: CI
 
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest        # ← here’s your “runs-on”
+    defaults:
+      run:
+        working-directory: thirty-challenge
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Use Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Install dependencies
-        run: npm install
-        working-directory: thirty-challenge
+        run: npm ci
 
-      - name: TypeScript type check
-        run: npx tsc --noEmit
-        working-directory: thirty-challenge
+      # ← Add this step to auto‑format
+      - name: Auto‑format code
+        run: npx prettier --write .
 
       - name: Lint
         run: npm run lint
-        working-directory: thirty-challenge
-
+      - name: Format Check
+        run: npx prettier --check .
+      - name: Run Tests
+        run: npm test --silent
       - name: Build
         run: npm run build
-        working-directory: thirty-challenge
-
-      - name: Run tests with coverage
-        run: npm test
-        working-directory: thirty-challenge

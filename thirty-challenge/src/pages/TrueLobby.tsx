@@ -21,9 +21,23 @@ export default function TrueLobby() {
   const navigate = useNavigate();
   const { state, actions } = useGame();
 
-  const [myParticipant, setMyParticipant] = useState<LobbyParticipant | null>(null);
+  const [myParticipant, setMyParticipant] = useState<LobbyParticipant | null>(
+    null,
+  );
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
-  
+
+  // Automatically create the video room when the host PC opens the lobby
+  useEffect(() => {
+    if (
+      myParticipant?.type === 'host-pc' &&
+      !state.videoRoomCreated &&
+      gameId
+    ) {
+      setIsCreatingRoom(true);
+      actions.createVideoRoom(gameId).finally(() => setIsCreatingRoom(false));
+    }
+  }, [myParticipant, state.videoRoomCreated, gameId, actions]);
+
   // Use global video room state
   const videoRoomCreated = state.videoRoomCreated || false;
 
@@ -52,7 +66,7 @@ export default function TrueLobby() {
         id: 'host-pc',
         name: hostName || state.hostName || 'المقدم',
         type: 'host-pc',
-        isConnected: true
+        isConnected: true,
       };
       if (hostName) actions.updateHostName(hostName);
     } else if (role === 'host-mobile') {
@@ -61,10 +75,15 @@ export default function TrueLobby() {
         id: 'host-mobile',
         name: name || state.hostName || 'المقدم',
         type: 'host-mobile',
-        isConnected: true
+        isConnected: true,
       };
       if (name) actions.updateHostName(name);
-    } else if ((role === 'playerA' || role === 'playerB') && name && flag && club) {
+    } else if (
+      (role === 'playerA' || role === 'playerB') &&
+      name &&
+      flag &&
+      club
+    ) {
       // Player
       participant = {
         id: role,
@@ -73,15 +92,15 @@ export default function TrueLobby() {
         playerId: role,
         flag,
         club,
-        isConnected: true
+        isConnected: true,
       };
-      
+
       if (autoJoin) {
         actions.joinGame(role, {
           name,
           flag,
           club,
-          isConnected: true
+          isConnected: true,
         });
       }
     }
@@ -97,7 +116,7 @@ export default function TrueLobby() {
   // Create video room when host PC clicks button
   const handleCreateVideoRoom = async () => {
     if (!gameId) return;
-    
+
     setIsCreatingRoom(true);
     try {
       const result = await actions.createVideoRoom(gameId);
@@ -110,6 +129,17 @@ export default function TrueLobby() {
       alert('خطأ في إنشاء غرفة الفيديو');
     } finally {
       setIsCreatingRoom(false);
+    }
+  };
+
+  const handleEndVideoRoom = async () => {
+    if (!gameId) return;
+
+    try {
+      await actions.endVideoRoom(gameId);
+    } catch (error) {
+      console.error('Error ending room:', error);
+      alert('خطأ في إنهاء غرفة الفيديو');
     }
   };
 
@@ -127,7 +157,9 @@ export default function TrueLobby() {
     );
   }
 
-  const connectedPlayers = Object.values(state.players).filter(p => p.isConnected).length;
+  const connectedPlayers = Object.values(state.players).filter(
+    (p) => p.isConnected,
+  ).length;
   const hostMobileConnected = myParticipant.type === 'host-mobile' || false; // TODO: Track this in global state
 
   return (
@@ -135,7 +167,9 @@ export default function TrueLobby() {
       <div className="max-w-7xl mx-auto">
         {/* Header - Same for everyone */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2 font-arabic">صالة الانتظار</h1>
+          <h1 className="text-4xl font-bold text-white mb-2 font-arabic">
+            صالة الانتظار
+          </h1>
           <div className="space-y-2">
             <p className="text-accent2 font-arabic">
               رمز الجلسة: <span className="font-mono text-2xl">{gameId}</span>
@@ -152,25 +186,35 @@ export default function TrueLobby() {
             <h3 className="text-xl font-bold text-blue-300 mb-4 font-arabic text-center">
               تحكم المقدم
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
                 <p className="text-white font-arabic mb-2">إعدادات الأسئلة:</p>
                 <div className="text-sm text-white/70 font-arabic space-y-1">
-                  {Object.entries(state.segments).map(([segmentCode, segment]) => (
-                    <div key={segmentCode} className="flex justify-between">
-                      <span>{segmentCode}:</span>
-                      <span>{segment.questionsPerSegment} سؤال</span>
-                    </div>
-                  ))}
+                  {Object.entries(state.segments).map(
+                    ([segmentCode, segment]) => (
+                      <div key={segmentCode} className="flex justify-between">
+                        <span>{segmentCode}:</span>
+                        <span>{segment.questionsPerSegment} سؤال</span>
+                      </div>
+                    ),
+                  )}
                 </div>
               </div>
-              
+
               <div>
                 <p className="text-white font-arabic mb-2">رموز الانضمام:</p>
                 <div className="text-sm text-white/70 font-arabic space-y-1">
-                  <p>رمز المقدم (للهاتف): <span className="font-mono text-blue-300">{gameId}-HOST</span></p>
-                  <p>رمز اللاعبين: <span className="font-mono text-blue-300">{gameId}</span></p>
+                  <p>
+                    رمز المقدم (للهاتف):{' '}
+                    <span className="font-mono text-blue-300">
+                      {gameId}-HOST
+                    </span>
+                  </p>
+                  <p>
+                    رمز اللاعبين:{' '}
+                    <span className="font-mono text-blue-300">{gameId}</span>
+                  </p>
                 </div>
               </div>
             </div>
@@ -182,14 +226,24 @@ export default function TrueLobby() {
                   disabled={isCreatingRoom}
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-arabic transition-colors"
                 >
-                  {isCreatingRoom ? 'جاري إنشاء غرفة الفيديو...' : 'إنشاء غرفة الفيديو'}
+                  {isCreatingRoom
+                    ? 'جاري إنشاء غرفة الفيديو...'
+                    : 'إنشاء غرفة الفيديو'}
                 </button>
               ) : (
-                <div className="px-6 py-3 bg-green-600 text-white rounded-lg font-arabic">
-                  ✓ غرفة الفيديو جاهزة
-                </div>
+                <>
+                  <div className="px-6 py-3 bg-green-600 text-white rounded-lg font-arabic">
+                    ✓ غرفة الفيديو جاهزة
+                  </div>
+                  <button
+                    onClick={handleEndVideoRoom}
+                    className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-arabic transition-colors"
+                  >
+                    إنهاء غرفة الفيديو
+                  </button>
+                </>
               )}
-              
+
               <button
                 onClick={handleStartGame}
                 disabled={connectedPlayers < 2 || !videoRoomCreated}
@@ -208,10 +262,10 @@ export default function TrueLobby() {
             <h3 className="text-xl font-bold text-blue-300 mb-4 font-arabic text-center">
               المقدم {myParticipant.type === 'host-mobile' && '(أنت)'}
             </h3>
-            
+
             <div className="aspect-video bg-black/30 rounded-lg mb-4 overflow-hidden">
               {videoRoomCreated && myParticipant.type === 'host-mobile' ? (
-                <VideoRoom 
+                <VideoRoom
                   gameId={gameId}
                   userName={state.hostName}
                   userRole="host-mobile"
@@ -222,25 +276,27 @@ export default function TrueLobby() {
                   <div className="text-center text-white/50">
                     <div className="text-4xl mb-2">📱</div>
                     <p className="text-sm font-arabic">
-                      {!videoRoomCreated 
-                        ? myParticipant.type === 'host-pc' 
-                          ? 'اضغط "إنشاء غرفة الفيديو" أولاً' 
+                      {!videoRoomCreated
+                        ? myParticipant.type === 'host-pc'
+                          ? 'اضغط "إنشاء غرفة الفيديو" أولاً'
                           : 'في انتظار إنشاء الغرفة...'
                         : myParticipant.type === 'host-pc'
-                        ? 'انضم من هاتفك للفيديو'
-                        : 'في انتظار المقدم...'}
+                          ? 'انضم من هاتفك للفيديو'
+                          : 'في انتظار المقدم...'}
                     </p>
                   </div>
                 </div>
               )}
             </div>
-            
+
             <div className="text-center">
               <p className="text-white font-arabic text-lg">{state.hostName}</p>
               <div className="flex items-center justify-center gap-2 mt-2">
-                <div className={`w-3 h-3 rounded-full ${
-                  hostMobileConnected ? 'bg-green-500' : 'bg-gray-500'
-                }`} />
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    hostMobileConnected ? 'bg-green-500' : 'bg-gray-500'
+                  }`}
+                />
                 <span className="text-white/70 text-sm font-arabic">
                   {hostMobileConnected ? 'متصل' : 'غير متصل'}
                 </span>
@@ -251,25 +307,32 @@ export default function TrueLobby() {
           {/* Player A Video */}
           {(['playerA', 'playerB'] as const).map((playerId, index) => {
             const player = state.players[playerId];
-            const isMe = myParticipant.type === 'player' && myParticipant.playerId === playerId;
-            const clubTheme = CLUB_THEMES[player.club as keyof typeof CLUB_THEMES] || CLUB_THEMES.liverpool;
+            const isMe =
+              myParticipant.type === 'player' &&
+              myParticipant.playerId === playerId;
+            const clubTheme =
+              CLUB_THEMES[player.club as keyof typeof CLUB_THEMES] ||
+              CLUB_THEMES.liverpool;
 
             return (
-              <div 
+              <div
                 key={playerId}
                 className={`bg-gradient-to-br rounded-xl p-6 border ${
-                  isMe 
-                    ? 'from-green-800/40 to-blue-800/40 border-green-500/50' 
+                  isMe
+                    ? 'from-green-800/40 to-blue-800/40 border-green-500/50'
                     : 'from-gray-800/30 to-gray-700/30 border-gray-500/30'
                 }`}
               >
-                <h3 className="text-xl font-bold text-center mb-4 font-arabic" style={{ color: clubTheme.primary }}>
+                <h3
+                  className="text-xl font-bold text-center mb-4 font-arabic"
+                  style={{ color: clubTheme.primary }}
+                >
                   لاعب {index + 1} {isMe && '(أنت)'}
                 </h3>
 
                 <div className="aspect-video bg-black/30 rounded-lg mb-4 overflow-hidden">
                   {player.isConnected && videoRoomCreated && isMe ? (
-                    <VideoRoom 
+                    <VideoRoom
                       gameId={gameId}
                       userName={player.name}
                       userRole={playerId}
@@ -280,13 +343,13 @@ export default function TrueLobby() {
                       <div className="text-center text-white/50">
                         <div className="text-4xl mb-2">👤</div>
                         <p className="text-sm font-arabic">
-                          {!player.isConnected 
-                            ? 'في انتظار الاتصال...' 
+                          {!player.isConnected
+                            ? 'في انتظار الاتصال...'
                             : !videoRoomCreated
-                            ? 'في انتظار إنشاء الغرفة...'
-                            : !isMe
-                            ? 'فيديو اللاعب الآخر'
-                            : 'في انتظار الفيديو...'}
+                              ? 'في انتظار إنشاء الغرفة...'
+                              : !isMe
+                                ? 'فيديو اللاعب الآخر'
+                                : 'في انتظار الفيديو...'}
                         </p>
                       </div>
                     </div>
@@ -296,15 +359,20 @@ export default function TrueLobby() {
                 {player.isConnected ? (
                   <div className="text-center space-y-2">
                     <div className="flex items-center justify-center gap-2">
-                      <span className={`fi fi-${player.flag} w-6 h-4 rounded`}></span>
-                      <p className="text-white font-arabic text-lg">{player.name}</p>
+                      <span
+                        className={`fi fi-${player.flag} w-6 h-4 rounded`}
+                      ></span>
+                      <p className="text-white font-arabic text-lg">
+                        {player.name}
+                      </p>
                     </div>
-                    
+
                     <div className="flex items-center justify-center gap-2">
-                      <img 
-                        src={`/src/assets/logos/${player.club}.svg`} 
+                      <img
+                        src={`/src/assets/logos/${player.club}.svg`}
                         alt={player.club}
                         className="w-6 h-6"
+                        loading="lazy"
                       />
                       <p className="text-white/70 text-sm font-arabic capitalize">
                         {player.club?.replace('-', ' ')}
@@ -313,7 +381,9 @@ export default function TrueLobby() {
 
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-green-500" />
-                      <span className="text-green-400 text-sm font-arabic">متصل</span>
+                      <span className="text-green-400 text-sm font-arabic">
+                        متصل
+                      </span>
                     </div>
 
                     <div className="text-white/60 text-sm font-arabic">
@@ -325,7 +395,9 @@ export default function TrueLobby() {
                     <p className="text-white/50 font-arabic">لم ينضم بعد</p>
                     <div className="flex items-center justify-center gap-2 mt-2">
                       <div className="w-3 h-3 rounded-full bg-gray-500" />
-                      <span className="text-gray-400 text-sm font-arabic">غير متصل</span>
+                      <span className="text-gray-400 text-sm font-arabic">
+                        غير متصل
+                      </span>
                     </div>
                   </div>
                 )}

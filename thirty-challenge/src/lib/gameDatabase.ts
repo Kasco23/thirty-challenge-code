@@ -211,6 +211,17 @@ export class GameDatabase {
       return null;
     }
   }
+  static async insertGameEvent(
+    gameId: string,
+    event_type: string,
+    event_data: Record<string, unknown> = {},
+  ) {
+    if (!this.isConfigured()) return;
+    const { error } = await supabase
+      .from("game_events")
+      .insert([{ game_id: gameId, event_type, event_data }]);
+    if (error) console.error("insertGameEvent error:", error);
+  }
 
   static async removePlayer(playerId: string): Promise<boolean> {
     if (!this.isConfigured()) return false;

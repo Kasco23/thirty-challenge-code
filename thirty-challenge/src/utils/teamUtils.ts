@@ -1,5 +1,8 @@
-// Get all logo files from the assets/logos directory
-const logoModules = import.meta.glob<{ default: string }>('../assets/logos/*.svg', { eager: true });
+// Get all logo files from the assets/logos directory as URLs
+const logoModules = import.meta.glob('../assets/logos/*.svg', {
+  eager: true,
+  as: 'url',
+}) as Record<string, string>;
 
 export interface Team {
   name: string;
@@ -10,36 +13,40 @@ export interface Team {
 
 export function getAllTeams(): Team[] {
   const teams: Team[] = [];
-  
+
   for (const path in logoModules) {
-    const module = logoModules[path];
+    const logoPath = logoModules[path];
     // Extract team name from file path (e.g., "../assets/logos/real-madrid.svg" -> "real-madrid")
     const fileName = path.split('/').pop()?.replace('.svg', '') || '';
-    
+
     // Convert kebab-case to Title Case (e.g., "real-madrid" -> "Real Madrid")
     const displayName = fileName
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
-    
+
     teams.push({
       name: fileName,
       displayName,
-      logoPath: module.default,
-      searchTerms: [fileName, displayName.toLowerCase(), ...fileName.split('-')]
+      logoPath,
+      searchTerms: [
+        fileName,
+        displayName.toLowerCase(),
+        ...fileName.split('-'),
+      ],
     });
   }
-  
+
   // Sort teams alphabetically by display name
   return teams.sort((a, b) => a.displayName.localeCompare(b.displayName));
 }
 
 export function searchTeams(teams: Team[], query: string): Team[] {
   if (!query.trim()) return teams;
-  
+
   const searchTerm = query.toLowerCase();
-  return teams.filter(team => 
-    team.searchTerms.some(term => term.includes(searchTerm))
+  return teams.filter((team) =>
+    team.searchTerms.some((term) => term.includes(searchTerm)),
   );
 }
 
@@ -71,9 +78,9 @@ export const COMMON_FLAGS = [
 
 export function searchFlags(query: string) {
   if (!query.trim()) return COMMON_FLAGS;
-  
+
   const searchTerm = query.toLowerCase();
-  return COMMON_FLAGS.filter(flag => 
-    flag.name.includes(searchTerm) || flag.code.includes(searchTerm)
+  return COMMON_FLAGS.filter(
+    (flag) => flag.name.includes(searchTerm) || flag.code.includes(searchTerm),
   );
 }

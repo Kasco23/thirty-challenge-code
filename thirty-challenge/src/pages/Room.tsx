@@ -20,6 +20,7 @@ export default function Room() {
             src={logoSrc.default}
             alt={club || 'club'}
             className="h-10"
+            loading="lazy"
           />
         )}
       </div>

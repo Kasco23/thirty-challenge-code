@@ -14,6 +14,9 @@ interface GameContextType {
     createVideoRoom: (
       gameId: string,
     ) => Promise<{ success: boolean; roomUrl?: string; error?: string }>;
+    endVideoRoom: (
+      gameId: string,
+    ) => Promise<{ success: boolean; error?: string }>;
     /**
      * Request a Daily.co meeting token for a participant
      * @param room - Daily.co room name

@@ -1,7 +1,10 @@
 import type { Handler } from "@netlify/functions";
 
+/**
+ * Delete a Daily.co video room by name.
+ * This is triggered via POST request with JSON body `{ roomName }`.
+ */
 export const handler: Handler = async (event) => {
-  // Only allow POST requests
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
@@ -18,15 +21,7 @@ export const handler: Handler = async (event) => {
   }
 
   try {
-    if (!process.env.DAILY_API_KEY) {
-      console.error("DAILY_API_KEY environment variable is missing");
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ error: "Server configuration error" }),
-      };
-    }
-    const { roomName, properties = {} } = JSON.parse(event.body || "{}");
-
+    const { roomName } = JSON.parse(event.body || "{}");
     if (!roomName) {
       return {
         statusCode: 400,
@@ -34,36 +29,21 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Create room using Daily.co API
-    const response = await fetch("https://api.daily.co/v1/rooms", {
-      method: "POST",
+    const response = await fetch(`https://api.daily.co/v1/rooms/${roomName}`, {
+      method: "DELETE",
       headers: {
         Authorization: `Bearer ${process.env.DAILY_API_KEY}`,
-        "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        name: roomName,
-        properties: {
-          max_participants: 10,
-          enable_screenshare: true,
-          enable_chat: true,
-          start_video_off: false,
-          start_audio_off: false,
-          ...properties,
-        },
-      }),
     });
 
     if (!response.ok) {
       const error = await response.text();
-      console.error("Daily.co API error:", error);
+      console.error("Daily.co API delete error:", error);
       return {
         statusCode: response.status,
-        body: JSON.stringify({ error: "Failed to create room" }),
+        body: JSON.stringify({ error: "Failed to delete room" }),
       };
     }
-
-    const room = await response.json();
 
     return {
       statusCode: 200,
@@ -71,11 +51,7 @@ export const handler: Handler = async (event) => {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
       },
-      body: JSON.stringify({
-        roomName: room.name,
-        url: room.url,
-        created: room.created_at,
-      }),
+      body: JSON.stringify({ success: true }),
     };
   } catch (error) {
     console.error("Function error:", error);

@@ -1,17 +1,17 @@
 [build]
-  base = "thirty-challenge"
-  command = "npm run build"
-  publish = "dist"
-  # Re-export read-only Netlify vars so they're visible to the client bundle
-  environment = { VITE_COMMIT_REF = "$COMMIT_REF" }
+  base       = "thirty-challenge"
+  command    = "npm run build"
+  publish    = "dist"
+  environment = {
+    VITE_COMMIT_REF = "$COMMIT_REF",
+    NODE_VERSION    = "18"
+  }
 
 [functions]
-  # Use shared Netlify functions stored at the repo root
-  directory = "../netlify/functions"
+  directory    = "netlify/functions"
   node_bundler = "esbuild"
 
-# Redirects for SPA routing
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
+  from   = "/*"
+  to     = "/index.html"
   status = 200

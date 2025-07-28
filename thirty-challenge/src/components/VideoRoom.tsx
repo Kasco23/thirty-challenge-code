@@ -117,6 +117,13 @@ export default function VideoRoom({
     joinCall();
   }, [state.videoRoomCreated, state.videoRoomUrl, joinCall]);
 
+  // Leave the call if the room is ended remotely
+  useEffect(() => {
+    if (!state.videoRoomCreated && callObjectRef.current) {
+      leaveCall();
+    }
+  }, [state.videoRoomCreated]);
+
   const leaveCall = async () => {
     if (callObjectRef.current) {
       try {
