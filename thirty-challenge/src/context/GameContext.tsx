@@ -328,14 +328,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const actions = useMemo(
     () => ({
-      startGame: async (gameId: string) => {
-        // 1) Update client state
+      startGame: async (gameId: string, hostName: string) => {
         dispatch({ type: "START_GAME", payload: { gameId } });
-        // 2) Persist in Supabase
         try {
-          await GameDatabase.createGame(gameId, state.hostName);
+          await GameDatabase.createGame(gameId, hostName);   // <- use arg
         } catch (err) {
-          console.error("⚠️ Failed to persist new game:", err);
+          console.error("createGame error", err);
         }
       },
       joinGame: async (
