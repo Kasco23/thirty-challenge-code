@@ -1,1 +1,3 @@
-export default function FinalScores() { return null; }
+export default function FinalScores() {
+  return null;
+}

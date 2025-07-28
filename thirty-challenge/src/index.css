@@ -13,6 +13,6 @@ body {
   filter: drop-shadow(0 0 18px #38bdf8) drop-shadow(0 0 8px #7c3aed);
 }
 .bg-glass {
-  background: rgba(30,32,60,0.7);
+  background: rgba(30, 32, 60, 0.7);
   backdrop-filter: blur(18px);
 }

@@ -1,7 +1,7 @@
 // Get all logo files from the assets/logos directory as URLs
-const logoModules = import.meta.glob("../assets/logos/*.svg", {
+const logoModules = import.meta.glob('../assets/logos/*.svg', {
   eager: true,
-  as: "url",
+  as: 'url',
 }) as Record<string, string>;
 
 export interface Team {
@@ -17,13 +17,13 @@ export function getAllTeams(): Team[] {
   for (const path in logoModules) {
     const logoPath = logoModules[path];
     // Extract team name from file path (e.g., "../assets/logos/real-madrid.svg" -> "real-madrid")
-    const fileName = path.split("/").pop()?.replace(".svg", "") || "";
+    const fileName = path.split('/').pop()?.replace('.svg', '') || '';
 
     // Convert kebab-case to Title Case (e.g., "real-madrid" -> "Real Madrid")
     const displayName = fileName
-      .split("-")
+      .split('-')
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+      .join(' ');
 
     teams.push({
       name: fileName,
@@ -32,7 +32,7 @@ export function getAllTeams(): Team[] {
       searchTerms: [
         fileName,
         displayName.toLowerCase(),
-        ...fileName.split("-"),
+        ...fileName.split('-'),
       ],
     });
   }
@@ -52,28 +52,28 @@ export function searchTeams(teams: Team[], query: string): Team[] {
 
 // Common Arab country flags for the join page
 export const COMMON_FLAGS = [
-  { code: "sa", name: "السعودية" },
-  { code: "ae", name: "الإمارات" },
-  { code: "eg", name: "مصر" },
-  { code: "jo", name: "الأردن" },
-  { code: "lb", name: "لبنان" },
-  { code: "sy", name: "سوريا" },
-  { code: "iq", name: "العراق" },
-  { code: "kw", name: "الكويت" },
-  { code: "qa", name: "قطر" },
-  { code: "bh", name: "البحرين" },
-  { code: "om", name: "عمان" },
-  { code: "ye", name: "اليمن" },
-  { code: "ps", name: "فلسطين" },
-  { code: "ma", name: "المغرب" },
-  { code: "tn", name: "تونس" },
-  { code: "dz", name: "الجزائر" },
-  { code: "ly", name: "ليبيا" },
-  { code: "sd", name: "السودان" },
-  { code: "so", name: "الصومال" },
-  { code: "dj", name: "جيبوتي" },
-  { code: "km", name: "جزر القمر" },
-  { code: "mr", name: "موريتانيا" },
+  { code: 'sa', name: 'السعودية' },
+  { code: 'ae', name: 'الإمارات' },
+  { code: 'eg', name: 'مصر' },
+  { code: 'jo', name: 'الأردن' },
+  { code: 'lb', name: 'لبنان' },
+  { code: 'sy', name: 'سوريا' },
+  { code: 'iq', name: 'العراق' },
+  { code: 'kw', name: 'الكويت' },
+  { code: 'qa', name: 'قطر' },
+  { code: 'bh', name: 'البحرين' },
+  { code: 'om', name: 'عمان' },
+  { code: 'ye', name: 'اليمن' },
+  { code: 'ps', name: 'فلسطين' },
+  { code: 'ma', name: 'المغرب' },
+  { code: 'tn', name: 'تونس' },
+  { code: 'dz', name: 'الجزائر' },
+  { code: 'ly', name: 'ليبيا' },
+  { code: 'sd', name: 'السودان' },
+  { code: 'so', name: 'الصومال' },
+  { code: 'dj', name: 'جيبوتي' },
+  { code: 'km', name: 'جزر القمر' },
+  { code: 'mr', name: 'موريتانيا' },
 ];
 
 export function searchFlags(query: string) {

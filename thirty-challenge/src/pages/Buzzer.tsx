@@ -1,1 +1,3 @@
-export default function Buzzer() { return null; }
+export default function Buzzer() {
+  return null;
+}

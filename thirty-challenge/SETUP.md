@@ -31,22 +31,24 @@ DAILY_API_KEY=your_daily_api_key_here
 
 In your Netlify dashboard, go to Site Settings → Environment Variables and add:
 
-| Variable | Value | Scopes |
-|----------|-------|---------|
-| `VITE_SUPABASE_URL` | Your Supabase URL | Builds |
-| `VITE_SUPABASE_ANON_KEY` | Your Supabase anon key | Builds |
-| `VITE_DAILY_DOMAIN` | Your Daily.co domain | Builds |
+| Variable                    | Value                          | Scopes    |
+| --------------------------- | ------------------------------ | --------- |
+| `VITE_SUPABASE_URL`         | Your Supabase URL              | Builds    |
+| `VITE_SUPABASE_ANON_KEY`    | Your Supabase anon key         | Builds    |
+| `VITE_DAILY_DOMAIN`         | Your Daily.co domain           | Builds    |
 | `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key | Functions |
-| `DAILY_API_KEY` | Your Daily.co API key | Functions |
+| `DAILY_API_KEY`             | Your Daily.co API key          | Functions |
 
 ### 3. Running the Development Server
 
 For local development with Netlify Functions:
+
 ```bash
 npm run dev:netlify
 ```
 
 For regular Vite development (without functions):
+
 ```bash
 npm run dev
 ```
@@ -61,6 +63,7 @@ npm run dev
 ## Daily.co Integration
 
 The app now uses proper Daily.co integration with:
+
 - Server-side room creation via Netlify Functions
 - Secure token generation for users
 - No API keys exposed to the browser

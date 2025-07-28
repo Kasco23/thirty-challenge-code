@@ -1,1 +1,3 @@
-export default function HostQuestion() { return null; }
+export default function HostQuestion() {
+  return null;
+}

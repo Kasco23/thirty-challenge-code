@@ -1,7 +1,7 @@
-import { motion } from "framer-motion";
-import { useGame } from "../hooks/useGame";
-import { CLUB_THEMES } from "../themes/clubs";
-import type { PlayerId } from "../types/game";
+import { motion } from 'framer-motion';
+import { useGame } from '../hooks/useGame';
+import { CLUB_THEMES } from '../themes/clubs';
+import type { PlayerId } from '../types/game';
 
 export default function Scoreboard() {
   const { state } = useGame();
@@ -9,19 +9,19 @@ export default function Scoreboard() {
   // Special button configurations
   const buttonConfig = {
     LOCK_BUTTON: {
-      name: "القفل",
-      color: "bg-yellow-500",
-      icon: "🔒",
+      name: 'القفل',
+      color: 'bg-yellow-500',
+      icon: '🔒',
     },
     TRAVELER_BUTTON: {
-      name: "المسافر",
-      color: "bg-blue-500",
-      icon: "✈️",
+      name: 'المسافر',
+      color: 'bg-blue-500',
+      icon: '✈️',
     },
     PIT_BUTTON: {
-      name: "الحفرة",
-      color: "bg-red-500",
-      icon: "🕳️",
+      name: 'الحفرة',
+      color: 'bg-red-500',
+      icon: '🕳️',
     },
   };
 
@@ -32,7 +32,7 @@ export default function Scoreboard() {
     const clubTheme = player.club
       ? CLUB_THEMES[player.club as keyof typeof CLUB_THEMES]
       : null;
-    const playerIndex = playerId === "playerA" ? 0 : 1;
+    const playerIndex = playerId === 'playerA' ? 0 : 1;
 
     return (
       <motion.div
@@ -40,7 +40,7 @@ export default function Scoreboard() {
         className={`relative bg-white/10 backdrop-blur-sm rounded-2xl p-4 border-2 ${
           clubTheme
             ? `border-[${clubTheme.primary}] bg-gradient-to-br from-[${clubTheme.primary}]/20 to-transparent`
-            : "border-white/20"
+            : 'border-white/20'
         }`}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -62,11 +62,11 @@ export default function Scoreboard() {
               <div
                 className={`text-xs px-2 py-1 rounded-full ${
                   player.isConnected
-                    ? "bg-green-500/20 text-green-300"
-                    : "bg-red-500/20 text-red-300"
+                    ? 'bg-green-500/20 text-green-300'
+                    : 'bg-red-500/20 text-red-300'
                 }`}
               >
-                {player.isConnected ? "متصل" : "غير متصل"}
+                {player.isConnected ? 'متصل' : 'غير متصل'}
               </div>
             </div>
           </div>
@@ -103,7 +103,7 @@ export default function Scoreboard() {
             <div
               key={index}
               className={`w-3 h-3 rounded-full ${
-                index < player.strikes ? "bg-red-500" : "bg-white/20"
+                index < player.strikes ? 'bg-red-500' : 'bg-white/20'
               }`}
             />
           ))}
@@ -121,14 +121,14 @@ export default function Scoreboard() {
                 <div
                   key={buttonType}
                   className={`flex items-center justify-between p-2 rounded-lg ${
-                    available ? config.color + "/20" : "bg-gray-500/20"
+                    available ? config.color + '/20' : 'bg-gray-500/20'
                   }`}
                 >
                   <span className="text-white/80 text-xs font-arabic">
                     {config.name}
                   </span>
                   <span
-                    className={`text-lg ${available ? "" : "grayscale opacity-50"}`}
+                    className={`text-lg ${available ? '' : 'grayscale opacity-50'}`}
                   >
                     {config.icon}
                   </span>
@@ -142,7 +142,7 @@ export default function Scoreboard() {
         <div className="absolute top-2 right-2">
           <div
             className={`w-3 h-3 rounded-full ${
-              player.isConnected ? "bg-green-500" : "bg-red-500"
+              player.isConnected ? 'bg-green-500' : 'bg-red-500'
             }`}
           />
         </div>
@@ -157,7 +157,7 @@ export default function Scoreboard() {
       </h2>
 
       <div className="grid gap-4">
-        {(["playerA", "playerB"] as const).map(renderPlayer)}
+        {(['playerA', 'playerB'] as const).map(renderPlayer)}
       </div>
 
       {/* Current Segment Info */}
@@ -169,7 +169,7 @@ export default function Scoreboard() {
           {state.currentSegment}
         </div>
         <div className="text-white/70 text-sm font-arabic">
-          السؤال {state.segments[state.currentSegment].currentQuestionIndex + 1}{" "}
+          السؤال {state.segments[state.currentSegment].currentQuestionIndex + 1}{' '}
           من {state.segments[state.currentSegment].questionsPerSegment}
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 /**
  * Hooks into console.error and keeps a rolling log of the most recent errors.
@@ -10,7 +10,7 @@ export function useErrorLog(limit = 20): string[] {
   useEffect(() => {
     const original = console.error;
     const handler = (...args: unknown[]) => {
-      setLogs((prev) => [...prev, args.map(String).join(" ")].slice(-limit));
+      setLogs((prev) => [...prev, args.map(String).join(' ')].slice(-limit));
       original(...args);
     };
     console.error = handler;

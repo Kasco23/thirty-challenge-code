@@ -1,12 +1,12 @@
 // src/pages/Lobby.tsx
-import { useEffect, useState } from "react";
-import { useParams, useSearchParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useGame } from "../hooks/useGame";
+import { useEffect, useState } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useGame } from '../hooks/useGame';
 // VideoRoom import removed - using TrueLobby instead
-import { CLUB_THEMES } from "../themes/clubs";
+import { CLUB_THEMES } from '../themes/clubs';
 
-type UserRole = "host" | "host-mobile" | "playerA" | "playerB";
+type UserRole = 'host' | 'host-mobile' | 'playerA' | 'playerB';
 
 export default function Lobby() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -14,36 +14,36 @@ export default function Lobby() {
   const navigate = useNavigate();
   const { state, actions } = useGame();
 
-  const [userRole, setUserRole] = useState<UserRole>("host");
+  const [userRole, setUserRole] = useState<UserRole>('host');
 
   // Extract URL parameters
   useEffect(() => {
-    const role = searchParams.get("role") as UserRole;
-    const name = searchParams.get("name");
-    const flag = searchParams.get("flag");
-    const club = searchParams.get("club");
-    const autoJoin = searchParams.get("autoJoin") === "true";
-    const hostName = searchParams.get("hostName");
+    const role = searchParams.get('role') as UserRole;
+    const name = searchParams.get('name');
+    const flag = searchParams.get('flag');
+    const club = searchParams.get('club');
+    const autoJoin = searchParams.get('autoJoin') === 'true';
+    const hostName = searchParams.get('hostName');
 
     if (role) {
       setUserRole(role);
     }
 
     // Handle host-mobile role - join as host with video capability
-    if (role === "host-mobile" && name) {
+    if (role === 'host-mobile' && name) {
       actions.updateHostName(name);
     }
 
     // Auto-join players directly
     if (
       role &&
-      ["playerA", "playerB"].includes(role) &&
+      ['playerA', 'playerB'].includes(role) &&
       autoJoin &&
       name &&
       flag &&
       club
     ) {
-      actions.joinGame(role as "playerA" | "playerB", {
+      actions.joinGame(role as 'playerA' | 'playerB', {
         name,
         flag,
         club,
@@ -66,9 +66,9 @@ export default function Lobby() {
 
   // Update host name when it changes
   useEffect(() => {
-    const hostName = searchParams.get("hostName");
+    const hostName = searchParams.get('hostName');
     if (
-      (userRole === "host" || userRole === "host-mobile") &&
+      (userRole === 'host' || userRole === 'host-mobile') &&
       hostName &&
       hostName !== state.hostName
     ) {
@@ -79,7 +79,7 @@ export default function Lobby() {
   const handleStartGame = () => {
     if (gameId) {
       navigate(
-        `/game/${gameId}?role=${userRole === "host-mobile" ? "host" : userRole}`,
+        `/game/${gameId}?role=${userRole === 'host-mobile' ? 'host' : userRole}`,
       );
     }
   };
@@ -100,7 +100,7 @@ export default function Lobby() {
   }
 
   // Host Mobile View (when host joins from mobile for video)
-  if (userRole === "host-mobile") {
+  if (userRole === 'host-mobile') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 flex items-center justify-center p-4">
         <motion.div
@@ -160,7 +160,7 @@ export default function Lobby() {
   }
 
   // Host PC View
-  if (userRole === "host") {
+  if (userRole === 'host') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 p-6">
         <div className="max-w-7xl mx-auto">
@@ -174,7 +174,7 @@ export default function Lobby() {
                 رمز الجلسة: <span className="font-mono text-2xl">{gameId}</span>
               </p>
               <p className="text-blue-300 font-arabic">
-                رمز المقدم:{" "}
+                رمز المقدم:{' '}
                 <span className="font-mono text-lg">{gameId}-HOST</span>
               </p>
               <p className="text-white/70 font-arabic mt-2">
@@ -228,14 +228,14 @@ export default function Lobby() {
                 disabled={connectedPlayers < 2}
                 className={`w-full py-4 px-6 rounded-2xl font-bold text-xl font-arabic transition-all ${
                   connectedPlayers >= 2
-                    ? "bg-gradient-to-r from-green-500 to-blue-600 text-white hover:from-green-600 hover:to-blue-700"
-                    : "bg-gray-600 text-gray-300 cursor-not-allowed"
+                    ? 'bg-gradient-to-r from-green-500 to-blue-600 text-white hover:from-green-600 hover:to-blue-700'
+                    : 'bg-gray-600 text-gray-300 cursor-not-allowed'
                 }`}
                 whileHover={connectedPlayers >= 2 ? { scale: 1.02 } : {}}
                 whileTap={connectedPlayers >= 2 ? { scale: 0.98 } : {}}
               >
                 {connectedPlayers >= 2
-                  ? "بدء اللعبة"
+                  ? 'بدء اللعبة'
                   : `انتظار اللاعبين (${connectedPlayers}/2)`}
               </motion.button>
             </div>
@@ -264,7 +264,7 @@ export default function Lobby() {
 
                 {/* Players Grid */}
                 <div className="grid md:grid-cols-2 gap-6">
-                  {(["playerA", "playerB"] as const).map((playerId, index) => {
+                  {(['playerA', 'playerB'] as const).map((playerId, index) => {
                     const player = state.players[playerId];
                     const isConnected = player.isConnected;
 
@@ -280,11 +280,11 @@ export default function Lobby() {
                           <div
                             className={`inline-block px-3 py-1 rounded-full text-sm font-bold mt-2 ${
                               isConnected
-                                ? "bg-green-500 text-white"
-                                : "bg-gray-500 text-gray-300"
+                                ? 'bg-green-500 text-white'
+                                : 'bg-gray-500 text-gray-300'
                             }`}
                           >
-                            {isConnected ? "متصل" : "غير متصل"}
+                            {isConnected ? 'متصل' : 'غير متصل'}
                           </div>
                         </div>
 
@@ -328,9 +328,9 @@ export default function Lobby() {
   }
 
   // Player Mobile View - Auto-joined
-  const autoJoin = searchParams.get("autoJoin") === "true";
+  const autoJoin = searchParams.get('autoJoin') === 'true';
   if (autoJoin) {
-    const player = state.players[userRole as "playerA" | "playerB"];
+    const player = state.players[userRole as 'playerA' | 'playerB'];
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 flex items-center justify-center p-4">
