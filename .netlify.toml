@@ -5,10 +5,18 @@
   environment = { NODE_VERSION = "18" }
 
 [functions]
-  directory    = "netlify/functions"
+  # point _one level above_ thirty‑challenge
+  directory    = "../netlify/functions"
   node_bundler = "esbuild"
 
 [[redirects]]
+  # send function calls to the true functions
+  from = "/.netlify/functions/*"
+  to   = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  # then your SPA catch‑all
   from   = "/*"
   to     = "/index.html"
   status = 200
