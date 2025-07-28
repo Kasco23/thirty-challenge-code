@@ -13,6 +13,10 @@
 - **Host:** Netlify (depoly site), Supabase (database), daily.co (video chat)
 
 ---
+Current repo:
+This repo and branch are used for testing. this repo was forked in order to facilitate easier editing.
+
+---
 
 ##  🧠 Dependency Awareness Section
 Always check `full-dependency-map.json` at repo root to understand real file relationships. — it is generated using `npx madge` and represents all `ts/tsx` dependencies across `src/`.
