@@ -1,33 +1,33 @@
-import React, { useReducer, useEffect, useMemo, useRef } from 'react';
+import React, { useReducer, useEffect, useMemo, useRef } from "react";
+import { GameDatabase } from "../lib/gameDatabase";
 import type {
   GameState,
   GameAction,
   PlayerId,
   SegmentCode,
-} from '../types/game';
+} from "../types/game";
 // Removed unused imports - using gameSync for real-time functionality
-import { INITIAL_GAME_STATE } from '../constants/gameState';
-import { GameContext } from './GameContextDefinition';
+import { INITIAL_GAME_STATE } from "../constants/gameState";
+import { GameContext } from "./GameContextDefinition";
 import {
   createGameSync,
   GameSync,
   type GameSyncCallbacks,
-} from '../lib/gameSync';
-
+} from "../lib/gameSync";
 // Using imported initial state
 
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
-    case 'START_GAME': {
+    case "START_GAME": {
       const { gameId } = action.payload;
       return {
         ...INITIAL_GAME_STATE,
         gameId,
-        phase: 'LOBBY',
+        phase: "LOBBY",
       };
     }
 
-    case 'JOIN_GAME': {
+    case "JOIN_GAME": {
       const { playerId, playerData } = action.payload;
       return {
         ...state,
@@ -43,7 +43,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case 'UPDATE_HOST_NAME': {
+    case "UPDATE_HOST_NAME": {
       const { hostName } = action.payload;
       return {
         ...state,
@@ -51,7 +51,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case 'UPDATE_SEGMENT_SETTINGS': {
+    case "UPDATE_SEGMENT_SETTINGS": {
       const { settings } = action.payload;
       const updatedSegments = { ...state.segments };
 
@@ -71,7 +71,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case 'NEXT_QUESTION': {
+    case "NEXT_QUESTION": {
       const currentSegmentState = state.segments[state.currentSegment];
       const nextQuestionIndex = currentSegmentState.currentQuestionIndex + 1;
 
@@ -100,13 +100,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case 'NEXT_SEGMENT': {
-      const segmentOrder: Array<keyof GameState['segments']> = [
-        'WSHA',
-        'AUCT',
-        'BELL',
-        'SING',
-        'REMO',
+    case "NEXT_SEGMENT": {
+      const segmentOrder: Array<keyof GameState["segments"]> = [
+        "WSHA",
+        "AUCT",
+        "BELL",
+        "SING",
+        "REMO",
       ];
       const currentIndex = segmentOrder.indexOf(state.currentSegment);
       const nextSegment = segmentOrder[currentIndex + 1];
@@ -114,7 +114,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       if (!nextSegment) {
         return {
           ...state,
-          phase: 'FINAL_SCORES',
+          phase: "FINAL_SCORES",
         };
       }
 
@@ -131,7 +131,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case 'UPDATE_SCORE': {
+    case "UPDATE_SCORE": {
       const { playerId, points } = action.payload;
       const newScore = Math.max(0, state.players[playerId].score + points);
 
@@ -158,7 +158,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case 'ADD_STRIKE': {
+    case "ADD_STRIKE": {
       const { playerId } = action.payload;
       const newStrikes = Math.min(3, state.players[playerId].strikes + 1);
 
@@ -174,7 +174,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case 'USE_SPECIAL_BUTTON': {
+    case "USE_SPECIAL_BUTTON": {
       const { playerId, buttonType } = action.payload;
       return {
         ...state,
@@ -191,7 +191,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case 'START_TIMER': {
+    case "START_TIMER": {
       const { duration } = action.payload;
       return {
         ...state,
@@ -200,13 +200,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
     }
 
-    case 'STOP_TIMER':
+    case "STOP_TIMER":
       return {
         ...state,
         isTimerRunning: false,
       };
 
-    case 'TICK_TIMER':
+    case "TICK_TIMER":
       if (!state.isTimerRunning || state.timer <= 0) {
         return state;
       }
@@ -215,7 +215,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         timer: state.timer - 1,
       };
 
-    case 'RESET_GAME':
+    case "RESET_GAME":
       return INITIAL_GAME_STATE;
 
     default:
@@ -226,7 +226,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, INITIAL_GAME_STATE);
   const gameSyncRef = useRef<GameSync | null>(null);
-  const [videoRoomUrl, setVideoRoomUrl] = React.useState<string>('');
+  const [videoRoomUrl, setVideoRoomUrl] = React.useState<string>("");
   const [videoRoomCreated, setVideoRoomCreated] =
     React.useState<boolean>(false);
 
@@ -238,7 +238,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           // Update local state with remote changes
           if (gameState.hostName) {
             dispatch({
-              type: 'UPDATE_HOST_NAME',
+              type: "UPDATE_HOST_NAME",
               payload: { hostName: gameState.hostName },
             });
           }
@@ -246,7 +246,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             Object.entries(gameState.players).forEach(
               ([playerId, playerData]) => {
                 dispatch({
-                  type: 'JOIN_GAME',
+                  type: "JOIN_GAME",
                   payload: { playerId: playerId as PlayerId, playerData },
                 });
               },
@@ -255,22 +255,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         },
         onPlayerJoin: (playerId, playerData) => {
           dispatch({
-            type: 'JOIN_GAME',
+            type: "JOIN_GAME",
             payload: {
               playerId,
-              playerData: playerData as Partial<GameState['players'][PlayerId]>,
+              playerData: playerData as Partial<GameState["players"][PlayerId]>,
             },
           });
         },
         onPlayerLeave: (playerId) => {
           // Mark player as disconnected instead of removing
           dispatch({
-            type: 'JOIN_GAME',
+            type: "JOIN_GAME",
             payload: { playerId, playerData: { isConnected: false } },
           });
         },
         onHostUpdate: (hostName) => {
-          dispatch({ type: 'UPDATE_HOST_NAME', payload: { hostName } });
+          dispatch({ type: "UPDATE_HOST_NAME", payload: { hostName } });
         },
         onVideoRoomUpdate: (roomUrl, roomCreated) => {
           setVideoRoomUrl(roomUrl);
@@ -285,14 +285,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           const connected = new Set<PlayerId>();
           Object.values(typedPresence).forEach((entry) => {
             entry.participants?.forEach((p) => {
-              if (p.playerId === 'playerA' || p.playerId === 'playerB') {
+              if (p.playerId === "playerA" || p.playerId === "playerB") {
                 connected.add(p.playerId as PlayerId);
               }
             });
           });
-          (['playerA', 'playerB'] as const).forEach((pid) => {
+          (["playerA", "playerB"] as const).forEach((pid) => {
             dispatch({
-              type: 'JOIN_GAME',
+              type: "JOIN_GAME",
               payload: {
                 playerId: pid,
                 playerData: { isConnected: connected.has(pid) },
@@ -320,7 +320,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (!state.isTimerRunning) return;
 
     const interval = setInterval(() => {
-      dispatch({ type: 'TICK_TIMER' });
+      dispatch({ type: "TICK_TIMER" });
     }, 1000);
 
     return () => clearInterval(interval);
@@ -328,34 +328,52 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const actions = useMemo(
     () => ({
-      startGame: (gameId: string) => {
-        dispatch({ type: 'START_GAME', payload: { gameId } });
+      startGame: async (gameId: string) => {
+        // 1) Update client state
+        dispatch({ type: "START_GAME", payload: { gameId } });
+        // 2) Persist in Supabase
+        try {
+          await GameDatabase.createGame(gameId, state.hostName);
+        } catch (err) {
+          console.error("⚠️ Failed to persist new game:", err);
+        }
       },
-      joinGame: (
+      joinGame: async (
         playerId: PlayerId,
-        playerData: Partial<GameState['players'][PlayerId]>,
+        playerData: Partial<GameState["players"][PlayerId]>,
       ) => {
-        dispatch({ type: 'JOIN_GAME', payload: { playerId, playerData } });
-        // Broadcast to other participants
+        // 1) Update client state & broadcast
+        dispatch({ type: "JOIN_GAME", payload: { playerId, playerData } });
         gameSyncRef.current?.broadcastPlayerJoin(playerId, playerData);
+
+        // 2) Persist player join in Supabase
+        try {
+          await GameDatabase.addPlayer(playerId, state.gameId!, {
+            name: playerData.name!,
+            flag: playerData.flag,
+            club: playerData.club,
+          });
+        } catch (err) {
+          console.error("⚠️ Failed to persist player join:", err);
+        }
       },
       updateHostName: (hostName: string) => {
-        dispatch({ type: 'UPDATE_HOST_NAME', payload: { hostName } });
+        dispatch({ type: "UPDATE_HOST_NAME", payload: { hostName } });
         // Broadcast to other participants
         gameSyncRef.current?.broadcastHostUpdate(hostName);
       },
       updateSegmentSettings: (settings: Record<SegmentCode, number>) => {
-        dispatch({ type: 'UPDATE_SEGMENT_SETTINGS', payload: { settings } });
+        dispatch({ type: "UPDATE_SEGMENT_SETTINGS", payload: { settings } });
         // Broadcast to other participants
         gameSyncRef.current?.broadcastGameState({ segments: state.segments });
       },
       createVideoRoom: async (gameId: string) => {
         try {
           const response = await fetch(
-            '/.netlify/functions/create-daily-room',
+            "/.netlify/functions/create-daily-room",
             {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ roomName: gameId }),
             },
           );
@@ -368,30 +386,44 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             setVideoRoomCreated(true);
             // Broadcast to other participants
             gameSyncRef.current?.broadcastVideoRoomUpdate(roomUrl, true);
+            // Persist the video_room_created event
+            try {
+              await fetch("/.netlify/functions/game-event", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  game_id: gameId,
+                  event_type: "video_room_created",
+                  event_data: { url: roomUrl },
+                }),
+              });
+            } catch (e) {
+              console.error("⚠️ Failed to record video_room_created:", e);
+            }
             return { success: true, roomUrl };
           } else {
-            console.error('Failed to create room');
-            return { success: false, error: 'Failed to create room' };
+            console.error("Failed to create room");
+            return { success: false, error: "Failed to create room" };
           }
         } catch (error) {
-          console.error('Error creating room:', error);
-          return { success: false, error: 'Network error' };
+          console.error("Error creating room:", error);
+          return { success: false, error: "Network error" };
         }
       },
       endVideoRoom: async (gameId: string) => {
         try {
-          await fetch('/.netlify/functions/delete-daily-room', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          await fetch("/.netlify/functions/delete-daily-room", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ roomName: gameId }),
           });
         } catch (error) {
-          console.error('Error deleting room:', error);
+          console.error("Error deleting room:", error);
         }
 
-        setVideoRoomUrl('');
+        setVideoRoomUrl("");
         setVideoRoomCreated(false);
-        gameSyncRef.current?.broadcastVideoRoomUpdate('', false);
+        gameSyncRef.current?.broadcastVideoRoomUpdate("", false);
         return { success: true };
       },
       // Request a Daily.co meeting token for a user
@@ -402,10 +434,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       ) => {
         try {
           const response = await fetch(
-            '/.netlify/functions/create-daily-token',
+            "/.netlify/functions/create-daily-token",
             {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               // Backend expects { room, user, isHost }
               body: JSON.stringify({ room, user, isHost }),
             },
@@ -415,18 +447,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             const data = await response.json();
             return { success: true, token: data.token };
           } else {
-            console.error('Failed to create token');
-            return { success: false, error: 'Failed to create token' };
+            console.error("Failed to create token");
+            return { success: false, error: "Failed to create token" };
           }
         } catch (error) {
-          console.error('Error creating token:', error);
-          return { success: false, error: 'Network error' };
+          console.error("Error creating token:", error);
+          return { success: false, error: "Network error" };
         }
       },
       trackPresence: (participantData: {
         id: string;
         name: string;
-        type: 'host-pc' | 'host-mobile' | 'player';
+        type: "host-pc" | "host-mobile" | "player";
         playerId?: PlayerId;
         flag?: string;
         club?: string;
@@ -434,37 +466,37 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         gameSyncRef.current?.trackPresence(participantData);
       },
       nextQuestion: () => {
-        dispatch({ type: 'NEXT_QUESTION' });
+        dispatch({ type: "NEXT_QUESTION" });
       },
       nextSegment: () => {
-        dispatch({ type: 'NEXT_SEGMENT' });
+        dispatch({ type: "NEXT_SEGMENT" });
       },
       updateScore: (playerId: PlayerId, points: number) => {
-        dispatch({ type: 'UPDATE_SCORE', payload: { playerId, points } });
+        dispatch({ type: "UPDATE_SCORE", payload: { playerId, points } });
       },
       addStrike: (playerId: PlayerId) => {
-        dispatch({ type: 'ADD_STRIKE', payload: { playerId } });
+        dispatch({ type: "ADD_STRIKE", payload: { playerId } });
       },
       useSpecialButton: (
         playerId: PlayerId,
-        buttonType: keyof GameState['players'][PlayerId]['specialButtons'],
+        buttonType: keyof GameState["players"][PlayerId]["specialButtons"],
       ) => {
         dispatch({
-          type: 'USE_SPECIAL_BUTTON',
+          type: "USE_SPECIAL_BUTTON",
           payload: { playerId, buttonType },
         });
       },
       startTimer: (duration: number) => {
-        dispatch({ type: 'START_TIMER', payload: { duration } });
+        dispatch({ type: "START_TIMER", payload: { duration } });
       },
       stopTimer: () => {
-        dispatch({ type: 'STOP_TIMER' });
+        dispatch({ type: "STOP_TIMER" });
       },
       tickTimer: () => {
-        dispatch({ type: 'TICK_TIMER' });
+        dispatch({ type: "TICK_TIMER" });
       },
       resetGame: () => {
-        dispatch({ type: 'RESET_GAME' });
+        dispatch({ type: "RESET_GAME" });
       },
     }),
     [gameSyncRef, state.segments],
