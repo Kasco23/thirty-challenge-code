@@ -26,6 +26,18 @@ export default function TrueLobby() {
   );
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
 
+  // Automatically create the video room when the host PC opens the lobby
+  useEffect(() => {
+    if (
+      myParticipant?.type === "host-pc" &&
+      !state.videoRoomCreated &&
+      gameId
+    ) {
+      setIsCreatingRoom(true);
+      actions.createVideoRoom(gameId).finally(() => setIsCreatingRoom(false));
+    }
+  }, [myParticipant, state.videoRoomCreated, gameId, actions]);
+
   // Use global video room state
   const videoRoomCreated = state.videoRoomCreated || false;
 

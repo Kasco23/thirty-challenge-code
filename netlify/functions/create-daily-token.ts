@@ -18,6 +18,13 @@ export const handler: Handler = async (event) => {
   }
 
   try {
+    if (!process.env.DAILY_API_KEY) {
+      console.error("DAILY_API_KEY environment variable is missing");
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: "Server configuration error" }),
+      };
+    }
     const { room, user, isHost = false } = JSON.parse(event.body || "{}");
 
     if (!room || !user) {
