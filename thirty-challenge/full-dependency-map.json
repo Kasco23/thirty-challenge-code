@@ -90,6 +90,7 @@
   "thirty-challenge/src/pages/HostQuestion.tsx": [],
   "thirty-challenge/src/pages/HostSetup.tsx": [
     "thirty-challenge/src/hooks/useGame.ts",
+    "thirty-challenge/src/lib/gameDatabase.ts",
     "thirty-challenge/src/types/game.ts"
   ],
   "thirty-challenge/src/pages/Join.tsx": [
