@@ -1,5 +1,4 @@
 {
-  "netlify/functions/create-daily-token.ts": [],
   "netlify/functions/delete-daily-room.ts": [],
   "netlify/functions/game-event.ts": [],
   "thirty-challenge/src/App.tsx": [
