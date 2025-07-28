@@ -1,74 +1,31 @@
-import { Routes, Route, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { Routes, Route } from 'react-router-dom';
 import { GameProvider } from './context/GameContext';
+import ConnectionBanner from './components/ConnectionBanner';
+
+// Only import the minimal set of pages needed for this test branch.
 import Landing from './pages/Landing';
 import Join from './pages/Join';
-import HostSetup from './pages/HostSetup';
-import QuizRoom from './pages/QuizRoom';
-import Lobby from './pages/Lobby';
-import TrueLobby from './pages/TrueLobby';
-import Room from './pages/Room';
-import HostPanel from './pages/HostPanel';
-import FinalScores from './pages/FinalScores';
-import Scoreboard from './pages/Scoreboard';
-import JudgePanel from './pages/JudgePanel';
-import HostQuestion from './pages/HostQuestion';
-import Timer from './components/Timer';
-import Buzzer from './components/Buzzer';
-import Admin from './pages/Admin';
-import Reconnect from './pages/Reconnect';
-import DebugStatus from './pages/DebugStatus';
-import ConnectionBanner from './components/ConnectionBanner';
+import TestAPI from './pages/TestAPI';
 import NotFound from './pages/NotFound';
 
-
-function App() {
-  const location = useLocation();
+/**
+ * Root application component.  The `Test_arena` branch aims to focus on
+ * API and state management logic without the distraction of full game
+ * flows.  To that end, the router exposes only the home page, join
+ * page, a `/test-api` page for backend testing, and a catch‑all 404.
+ */
+export default function App() {
   return (
     <GameProvider>
       <div className="dark min-h-screen bg-gradient-to-tr from-black via-[#10102a] to-accent2">
         <ConnectionBanner />
-        <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
-            <Route path="/" element={<Landing />} />
-            <Route path="/join" element={<Join />} />
-            <Route path="/host-setup/:gameId" element={<HostSetup />} />
-
-            {/* New proper routing structure */}
-            <Route path="/lobby/:gameId" element={<TrueLobby />} />
-            <Route path="/game/:gameId" element={<QuizRoom />} />
-
-            {/* Legacy routes for backward compatibility */}
-            <Route path="/room/:roomId" element={<QuizRoom />} />
-            <Route path="/lobby" element={<Lobby />} />
-            <Route path="/room" element={<Room />} />
-
-            {/* Game flow routes */}
-            <Route path="/host" element={<HostPanel />} />
-            <Route path="/final" element={<FinalScores />} />
-            <Route path="/scoreboard" element={<Scoreboard />} />
-            <Route path="/judge" element={<JudgePanel />} />
-            <Route path="/hostquestion" element={<HostQuestion />} />
-
-            {/* Component routes */}
-            <Route path="/timer" element={<Timer />} />
-            <Route path="/buzzer" element={<Buzzer />} />
-
-            {/* Admin and utility routes */}
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/reconnect" element={<Reconnect />} />
-            <Route path="/debug" element={<DebugStatus />} />
-
-            {/* API test route */}
-            <Route path="/test-api" element={<TestAPI />} />
-
-            {/* 404 route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AnimatePresence>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/join" element={<Join />} />
+          <Route path="/test-api" element={<TestAPI />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </div>
     </GameProvider>
   );
 }
-
-export default App;

@@ -1,31 +1,36 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Grab the environment variables once so we can reuse them
-const { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY } = import.meta.env;
+// Read environment variables injected by Vite.  When running locally
+// these should be provided in a `.env` file; in production Netlify
+// or another hosting platform can supply them via build settings.
+const { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY } = import.meta.env as {
+  VITE_SUPABASE_URL?: string;
+  VITE_SUPABASE_ANON_KEY?: string;
+};
 
-// Report missing variables clearly and warn when falling back in dev
 if (!VITE_SUPABASE_URL || !VITE_SUPABASE_ANON_KEY) {
-  console.error(
-    'Supabase env vars VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY are missing.',
-  );
-  if (import.meta.env.DEV) {
-    console.warn(
-      'Using placeholder Supabase credentials for local development.',
-    );
-  }
+  console.error('Supabase env vars VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY are missing.');
 }
 
+// Fallback values to avoid runtime crashes if environment variables are not set
 const supabaseUrl = VITE_SUPABASE_URL ?? 'https://example.supabase.co';
 const supabaseKey = VITE_SUPABASE_ANON_KEY ?? 'example-key-placeholder';
 
-// Create Supabase client with real or fallback credentials
+/**
+ * Singleton Supabase client.  The client uses either the provided
+ * environment variables or placeholder strings.  In development the
+ * placeholders will still allow method calls but will fail against
+ * the real API, which is useful to catch misconfiguration early.
+ */
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Check if real credentials are present
+/**
+ * Returns `true` if real Supabase credentials appear to be present.
+ */
 export const isSupabaseConfigured = () => {
   return (
-    VITE_SUPABASE_URL &&
-    VITE_SUPABASE_ANON_KEY &&
+    VITE_SUPABASE_URL !== undefined &&
+    VITE_SUPABASE_ANON_KEY !== undefined &&
     VITE_SUPABASE_URL !== 'https://example.supabase.co' &&
     VITE_SUPABASE_ANON_KEY !== 'example-key-placeholder'
   );

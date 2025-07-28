@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import ConnectionBanner from '../components/ConnectionBanner';
-import { useErrorLog } from '../hooks/useErrorLog';
+import ConnectionBanner from '../../../thirty-challenge/src/components/ConnectionBanner';
+import { useErrorLog } from '../../../thirty-challenge/src/hooks/useErrorLog';
 
 export default function DebugStatus() {
   const logs = useErrorLog();

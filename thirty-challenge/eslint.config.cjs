@@ -23,6 +23,7 @@ module.exports = tseslint.config([
         'warn',
         { allowConstantExport: true },
       ],
+      'no-unused-vars': ['warn', { varsIgnorePattern: '^React$' }]
     },
   },
 ]);
