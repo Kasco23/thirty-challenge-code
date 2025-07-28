@@ -378,6 +378,22 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           return { success: false, error: "Network error" };
         }
       },
+      endVideoRoom: async (gameId: string) => {
+        try {
+          await fetch("/.netlify/functions/delete-daily-room", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ roomName: gameId }),
+          });
+        } catch (error) {
+          console.error("Error deleting room:", error);
+        }
+
+        setVideoRoomUrl("");
+        setVideoRoomCreated(false);
+        gameSyncRef.current?.broadcastVideoRoomUpdate("", false);
+        return { success: true };
+      },
       // Request a Daily.co meeting token for a user
       generateDailyToken: async (
         room: string,

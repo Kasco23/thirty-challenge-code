@@ -132,6 +132,17 @@ export default function TrueLobby() {
     }
   };
 
+  const handleEndVideoRoom = async () => {
+    if (!gameId) return;
+
+    try {
+      await actions.endVideoRoom(gameId);
+    } catch (error) {
+      console.error("Error ending room:", error);
+      alert("خطأ في إنهاء غرفة الفيديو");
+    }
+  };
+
   const handleStartGame = () => {
     navigate(`/game/${gameId}?role=host`);
   };
@@ -220,9 +231,17 @@ export default function TrueLobby() {
                     : "إنشاء غرفة الفيديو"}
                 </button>
               ) : (
-                <div className="px-6 py-3 bg-green-600 text-white rounded-lg font-arabic">
-                  ✓ غرفة الفيديو جاهزة
-                </div>
+                <>
+                  <div className="px-6 py-3 bg-green-600 text-white rounded-lg font-arabic">
+                    ✓ غرفة الفيديو جاهزة
+                  </div>
+                  <button
+                    onClick={handleEndVideoRoom}
+                    className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-arabic transition-colors"
+                  >
+                    إنهاء غرفة الفيديو
+                  </button>
+                </>
               )}
 
               <button

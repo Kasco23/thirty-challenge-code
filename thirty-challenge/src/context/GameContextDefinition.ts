@@ -1,5 +1,5 @@
-import { createContext } from 'react';
-import type { GameState, PlayerId, SegmentCode } from '../types/game';
+import { createContext } from "react";
+import type { GameState, PlayerId, SegmentCode } from "../types/game";
 
 interface GameContextType {
   state: GameState;
@@ -7,13 +7,16 @@ interface GameContextType {
     startGame: (gameId: string) => void;
     joinGame: (
       playerId: PlayerId,
-      playerData: Partial<GameState['players'][PlayerId]>,
+      playerData: Partial<GameState["players"][PlayerId]>,
     ) => void;
     updateHostName: (hostName: string) => void;
     updateSegmentSettings: (settings: Record<SegmentCode, number>) => void;
     createVideoRoom: (
       gameId: string,
     ) => Promise<{ success: boolean; roomUrl?: string; error?: string }>;
+    endVideoRoom: (
+      gameId: string,
+    ) => Promise<{ success: boolean; error?: string }>;
     /**
      * Request a Daily.co meeting token for a participant
      * @param room - Daily.co room name
@@ -28,7 +31,7 @@ interface GameContextType {
     trackPresence: (participantData: {
       id: string;
       name: string;
-      type: 'host-pc' | 'host-mobile' | 'player';
+      type: "host-pc" | "host-mobile" | "player";
       playerId?: PlayerId;
       flag?: string;
       club?: string;
@@ -39,7 +42,7 @@ interface GameContextType {
     addStrike: (playerId: PlayerId) => void;
     useSpecialButton: (
       playerId: PlayerId,
-      buttonType: keyof GameState['players'][PlayerId]['specialButtons'],
+      buttonType: keyof GameState["players"][PlayerId]["specialButtons"],
     ) => void;
     startTimer: (duration: number) => void;
     stopTimer: () => void;
