@@ -1,22 +1,18 @@
 [build]
-  base       = "thirty-challenge"
+  # How to build your Vite app
   command    = "npm run build"
+  # Where Vite outputs the production files
   publish    = "dist"
+  # Pin Functions & build to Node 18
   environment = { NODE_VERSION = "18" }
 
 [functions]
-  # point _one level above_ thirty‑challenge
-  directory    = "../netlify/functions"
+  # Relative to the netlify.toml file (inside thirty-challenge/)
+  directory    = "netlify/functions"
   node_bundler = "esbuild"
 
 [[redirects]]
-  # send function calls to the true functions
-  from = "/.netlify/functions/*"
-  to   = "/.netlify/functions/:splat"
-  status = 200
-
-[[redirects]]
-  # then your SPA catch‑all
+  # Single‑page app fallback — serves index.html for all non‑function URLs
   from   = "/*"
   to     = "/index.html"
   status = 200
