@@ -1,30 +1,27 @@
-name: Deploy to Netlify
+name: Deploy
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+    paths:
+      - 'thirty-challenge/**'
 
 jobs:
-  build-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - name: Install dependencies
-        run: npm install
-        working-directory: thirty-challenge
-      - name: Build site
-        run: npm run build
-        working-directory: thirty-challenge
-      - name: Deploy to Netlify
-        uses: nwtgck/actions-netlify@v3
+          node-version: '20'
+      - name: Install
+        run: npm ci --prefix thirty-challenge
+      - name: Build
+        run: npm run build --prefix thirty-challenge
+      - name: Publish to Netlify
+        uses: nwtgck/actions-netlify@v2
         with:
           publish-dir: ./thirty-challenge/dist
-          production-deploy: true
+          production-branch: main
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}

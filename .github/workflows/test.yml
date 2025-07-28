@@ -1,0 +1,23 @@
+name: CI
+on:
+  push:
+    paths:
+      - 'thirty-challenge/**'
+  pull_request:
+    paths:
+      - 'thirty-challenge/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install deps
+        run: npm ci --prefix thirty-challenge
+      - name: Lint
+        run: npm run lint --prefix thirty-challenge
+      - name: Test
+        run: npm test --prefix thirty-challenge
