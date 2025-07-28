@@ -83,6 +83,7 @@
     "thirty-challenge/src/types/game.ts"
   ],
   "thirty-challenge/src/pages/Join.tsx": [
+    "thirty-challenge/src/lib/gameDatabase.ts",
     "thirty-challenge/src/utils/teamUtils.ts"
   ],
   "thirty-challenge/src/pages/JudgePanel.tsx": [],
