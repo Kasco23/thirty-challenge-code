@@ -88,7 +88,10 @@
   ],
   "thirty-challenge/src/pages/Admin.tsx": [],
   "thirty-challenge/src/pages/Buzzer.tsx": [],
-  "thirty-challenge/src/pages/DebugStatus.tsx": [],
+  "thirty-challenge/src/pages/DebugStatus.tsx": [
+    "thirty-challenge/src/components/ConnectionBanner.tsx",
+    "thirty-challenge/src/hooks/useErrorLog.ts"
+  ],
   "thirty-challenge/src/pages/FinalScores.tsx": [],
   "thirty-challenge/src/pages/HostPanel.tsx": [],
   "thirty-challenge/src/pages/HostQuestion.tsx": [],
