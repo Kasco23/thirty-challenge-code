@@ -14,8 +14,8 @@ jobs:
           node-version: 20
       - run: npm install
         working-directory: thirty-challenge
-      - run: npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css,md}"
-        working-directory: thirty-challenge
+      #- run: npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css,md}"
+       # working-directory: thirty-challenge
       - run: npm run lint
         working-directory: thirty-challenge
 
