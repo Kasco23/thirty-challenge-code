@@ -368,7 +368,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       createVideoRoom: async (gameId: string) => {
         try {
           const response = await fetch(
-            "/.netlify/functions/create-daily-room",
+            "/.netlify/functions/create‑daily‑room",
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
