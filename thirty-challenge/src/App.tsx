@@ -8,7 +8,6 @@ import QuizRoom from './pages/QuizRoom';
 import Lobby from './pages/Lobby';
 import TrueLobby from './pages/TrueLobby';
 import Room from './pages/Room';
-import SegmentIntro from './pages/SegmentIntro';
 import HostPanel from './pages/HostPanel';
 import FinalScores from './pages/FinalScores';
 import Scoreboard from './pages/Scoreboard';
@@ -21,11 +20,7 @@ import Reconnect from './pages/Reconnect';
 import DebugStatus from './pages/DebugStatus';
 import ConnectionBanner from './components/ConnectionBanner';
 import NotFound from './pages/NotFound';
-import WSHA from './pages/segments/WSHA';
-import AUCT from './pages/segments/AUCT';
-import BELL from './pages/segments/BELL';
-import SING from './pages/segments/SING';
-import REMO from './pages/segments/REMO';
+
 
 function App() {
   const location = useLocation();
@@ -49,7 +44,6 @@ function App() {
             <Route path="/room" element={<Room />} />
 
             {/* Game flow routes */}
-            <Route path="/segment" element={<SegmentIntro />} />
             <Route path="/host" element={<HostPanel />} />
             <Route path="/final" element={<FinalScores />} />
             <Route path="/scoreboard" element={<Scoreboard />} />
@@ -65,12 +59,8 @@ function App() {
             <Route path="/reconnect" element={<Reconnect />} />
             <Route path="/debug" element={<DebugStatus />} />
 
-            {/* Segment routes */}
-            <Route path="/wsha" element={<WSHA />} />
-            <Route path="/auct" element={<AUCT />} />
-            <Route path="/bell" element={<BELL />} />
-            <Route path="/sing" element={<SING />} />
-            <Route path="/remo" element={<REMO />} />
+            {/* API test route */}
+            <Route path="/test-api" element={<TestAPI />} />
 
             {/* 404 route */}
             <Route path="*" element={<NotFound />} />
