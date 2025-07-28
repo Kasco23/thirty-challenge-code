@@ -499,7 +499,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         dispatch({ type: "RESET_GAME" });
       },
     }),
-    [gameSyncRef, state.segments],
+    [gameSyncRef, state.segments, state.gameId, state.hostName],
   );
 
   return (
