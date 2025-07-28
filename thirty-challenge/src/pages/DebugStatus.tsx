@@ -11,7 +11,7 @@ export default function DebugStatus() {
   React.useEffect(() => {
     const orig = window.fetch;
     window.fetch = async (...args) => {
-      const [input, init] = args;
+      const [input] = args;
       const res = await orig(...args);
       setRequests((prev) =>
         [...prev, `${res.status} ${typeof input === "string" ? input : input.url}`].slice(-20),
