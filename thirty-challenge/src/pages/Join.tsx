@@ -1,43 +1,43 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { getAllTeams, searchTeams, searchFlags } from "../utils/teamUtils";
-import { GameDatabase } from "../lib/gameDatabase";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { getAllTeams, searchTeams, searchFlags } from '../utils/teamUtils';
+import { GameDatabase } from '../lib/gameDatabase';
 
 export default function Join() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [joinType, setJoinType] = useState<"host" | "player" | "">("");
-  const [gameId, setGameId] = useState("");
-  const [name, setName] = useState("");
-  const [selectedFlag, setSelectedFlag] = useState("");
-  const [selectedTeam, setSelectedTeam] = useState("");
-  const [flagSearch, setFlagSearch] = useState("");
-  const [teamSearch, setTeamSearch] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
+  const [joinType, setJoinType] = useState<'host' | 'player' | ''>('');
+  const [gameId, setGameId] = useState('');
+  const [name, setName] = useState('');
+  const [selectedFlag, setSelectedFlag] = useState('');
+  const [selectedTeam, setSelectedTeam] = useState('');
+  const [flagSearch, setFlagSearch] = useState('');
+  const [teamSearch, setTeamSearch] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const allTeams = getAllTeams();
   const filteredFlags = searchFlags(flagSearch);
   const filteredTeams = searchTeams(allTeams, teamSearch);
 
-  const handleJoinTypeSelect = (type: "host" | "player") => {
+  const handleJoinTypeSelect = (type: 'host' | 'player') => {
     setJoinType(type);
     setStep(2);
   };
 
   const handleGameIdSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg("");
+    setErrorMsg('');
     if (!gameId.trim()) return;
 
-    const actualGameId = gameId.toUpperCase().replace("-HOST", "");
+    const actualGameId = gameId.toUpperCase().replace('-HOST', '');
     const existing = await GameDatabase.getGame(actualGameId);
     if (!existing) {
-      setErrorMsg("لا توجد جلسة بهذا الرمز");
+      setErrorMsg('لا توجد جلسة بهذا الرمز');
       return;
     }
 
-    if (joinType === "host") {
+    if (joinType === 'host') {
       navigate(`/lobby/${actualGameId}?role=host-mobile`);
     } else {
       setStep(3);
@@ -47,7 +47,7 @@ export default function Join() {
   const handlePlayerJoin = (e: React.FormEvent) => {
     e.preventDefault();
     if (name.trim() && selectedFlag && selectedTeam) {
-      const playerRole = "playerA"; // You might want to make this dynamic based on available slots
+      const playerRole = 'playerA'; // You might want to make this dynamic based on available slots
       navigate(
         `/lobby/${gameId.toUpperCase()}?role=${playerRole}&name=${encodeURIComponent(name)}&flag=${selectedFlag}&club=${selectedTeam}&autoJoin=true`,
       );
@@ -68,10 +68,10 @@ export default function Join() {
           </h1>
           <p className="text-white/70 font-arabic">
             {step === 1
-              ? "اختر نوع الانضمام"
+              ? 'اختر نوع الانضمام'
               : step === 2
-                ? "أدخل رمز اللعبة والاسم"
-                : "اختر العلم والفريق"}
+                ? 'أدخل رمز اللعبة والاسم'
+                : 'اختر العلم والفريق'}
           </p>
         </div>
 
@@ -79,7 +79,7 @@ export default function Join() {
           // Step 1: Choose join type
           <div className="space-y-4">
             <motion.button
-              onClick={() => handleJoinTypeSelect("host")}
+              onClick={() => handleJoinTypeSelect('host')}
               className="w-full p-6 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/50 rounded-2xl text-white transition-all"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -99,7 +99,7 @@ export default function Join() {
             </motion.button>
 
             <motion.button
-              onClick={() => handleJoinTypeSelect("player")}
+              onClick={() => handleJoinTypeSelect('player')}
               className="w-full p-6 bg-green-500/20 hover:bg-green-500/30 border border-green-500/50 rounded-2xl text-white transition-all"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
@@ -119,7 +119,7 @@ export default function Join() {
             </motion.button>
 
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate('/')}
               className="w-full mt-4 px-4 py-2 text-white/70 hover:text-white font-arabic transition-colors"
             >
               العودة للرئيسية
@@ -130,19 +130,19 @@ export default function Join() {
           <form onSubmit={handleGameIdSubmit} className="space-y-6">
             <div>
               <label className="block text-white/80 mb-2 font-arabic">
-                {joinType === "host" ? "رمز المقدم" : "رمز اللعبة"}
+                {joinType === 'host' ? 'رمز المقدم' : 'رمز اللعبة'}
               </label>
               <input
                 type="text"
                 value={gameId}
                 onChange={(e) => setGameId(e.target.value.toUpperCase())}
                 placeholder={
-                  joinType === "host" ? "مثال: ABC123-HOST" : "مثال: ABC123"
+                  joinType === 'host' ? 'مثال: ABC123-HOST' : 'مثال: ABC123'
                 }
                 className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-mono text-center text-lg"
                 required
               />
-              {joinType === "host" && (
+              {joinType === 'host' && (
                 <p className="text-xs text-blue-300 mt-1 font-arabic text-center">
                   ستجد رمز المقدم في صفحة إعداد الجلسة
                 </p>
@@ -154,7 +154,7 @@ export default function Join() {
               )}
             </div>
 
-            {joinType === "player" && (
+            {joinType === 'player' && (
               <div>
                 <label className="block text-white/80 mb-2 font-arabic">
                   الاسم
@@ -181,11 +181,11 @@ export default function Join() {
               <button
                 type="submit"
                 disabled={
-                  !gameId.trim() || (joinType === "player" && !name.trim())
+                  !gameId.trim() || (joinType === 'player' && !name.trim())
                 }
                 className="flex-1 px-4 py-3 bg-accent2 hover:bg-accent text-white rounded-xl font-arabic transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {joinType === "host" ? "انضم كمقدم" : "التالي"}
+                {joinType === 'host' ? 'انضم كمقدم' : 'التالي'}
               </button>
             </div>
           </form>
@@ -212,8 +212,8 @@ export default function Join() {
                     onClick={() => setSelectedFlag(flag.code)}
                     className={`p-2 rounded-lg border-2 transition-all ${
                       selectedFlag === flag.code
-                        ? "border-accent2 bg-accent2/20"
-                        : "border-white/20 bg-white/5 hover:border-white/40"
+                        ? 'border-accent2 bg-accent2/20'
+                        : 'border-white/20 bg-white/5 hover:border-white/40'
                     }`}
                   >
                     <span className={`fi fi-${flag.code} text-2xl`}></span>
@@ -245,8 +245,8 @@ export default function Join() {
                     onClick={() => setSelectedTeam(team.name)}
                     className={`p-3 rounded-lg border-2 transition-all flex items-center gap-2 ${
                       selectedTeam === team.name
-                        ? "border-accent2 bg-accent2/20"
-                        : "border-white/20 bg-white/5 hover:border-white/40"
+                        ? 'border-accent2 bg-accent2/20'
+                        : 'border-white/20 bg-white/5 hover:border-white/40'
                     }`}
                   >
                     <img

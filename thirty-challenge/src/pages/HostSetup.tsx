@@ -1,17 +1,17 @@
-import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useGame } from "../hooks/useGame";
-import { GameDatabase } from "../lib/gameDatabase";
-import type { SegmentCode } from "../types/game";
+import { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useGame } from '../hooks/useGame';
+import { GameDatabase } from '../lib/gameDatabase';
+import type { SegmentCode } from '../types/game';
 
 export default function HostSetup() {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const { actions } = useGame();
-  const [hostName, setHostName] = useState("");
+  const [hostName, setHostName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState('');
 
   // Segment settings state
   const [segmentSettings, setSegmentSettings] = useState<
@@ -26,16 +26,16 @@ export default function HostSetup() {
 
   const handleCreateLobby = async () => {
     if (!hostName.trim()) {
-      alert("يرجى إدخال اسمك أولاً");
+      alert('يرجى إدخال اسمك أولاً');
       return;
     }
 
-    setErrorMsg("");
+    setErrorMsg('');
     setIsCreating(true);
     try {
       const created = await GameDatabase.createGame(String(gameId), hostName);
       if (!created) {
-        setErrorMsg("حدث خطأ أثناء إنشاء الجلسة. حاول مرة أخرى.");
+        setErrorMsg('حدث خطأ أثناء إنشاء الجلسة. حاول مرة أخرى.');
         setIsCreating(false);
         return;
       }
@@ -49,8 +49,8 @@ export default function HostSetup() {
         { replace: true },
       );
     } catch (error) {
-      console.error("Failed to create lobby:", error);
-      setErrorMsg("فشل إنشاء الصالة. حاول مرة أخرى.");
+      console.error('Failed to create lobby:', error);
+      setErrorMsg('فشل إنشاء الصالة. حاول مرة أخرى.');
       setIsCreating(false);
     }
   };
@@ -175,7 +175,7 @@ export default function HostSetup() {
               <p>• لن يظهر الكاميرا أو الصوت من هذا الجهاز</p>
               <p>• للمشاركة بالفيديو، انضم كلاعب من هاتفك المحمول</p>
               <p>
-                • رمز المقدم:{" "}
+                • رمز المقدم:{' '}
                 <span className="font-mono bg-blue-600 px-2 py-1 rounded">
                   {gameId}-HOST
                 </span>
@@ -197,7 +197,7 @@ export default function HostSetup() {
                 إنشاء الصالة...
               </div>
             ) : (
-              "إنشاء صالة الانتظار"
+              'إنشاء صالة الانتظار'
             )}
           </motion.button>
           {errorMsg && (

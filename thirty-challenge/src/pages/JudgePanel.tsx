@@ -1,1 +1,3 @@
-export default function JudgePanel() { return null; }
+export default function JudgePanel() {
+  return null;
+}

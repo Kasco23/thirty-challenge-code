@@ -1,1 +1,3 @@
-export default function Admin() { return null; }
+export default function Admin() {
+  return null;
+}

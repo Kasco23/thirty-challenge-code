@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useRef, useState, useCallback } from "react";
-import DailyIframe from "@daily-co/daily-js";
-import { useGame } from "../hooks/useGame";
+import { useEffect, useRef, useState, useCallback } from 'react';
+import DailyIframe from '@daily-co/daily-js';
+import { useGame } from '../hooks/useGame';
 
 interface VideoRoomProps {
   gameId: string;
   userName: string;
-  userRole: "host-mobile" | "playerA" | "playerB";
+  userRole: 'host-mobile' | 'playerA' | 'playerB';
   className?: string;
 }
 
@@ -14,40 +14,40 @@ export default function VideoRoom({
   gameId,
   userName,
   userRole,
-  className = "",
+  className = '',
 }: VideoRoomProps) {
   const { state, actions } = useGame();
   const callFrameRef = useRef<HTMLDivElement>(null);
   const callObjectRef = useRef<unknown>(null);
   const [isJoining, setIsJoining] = useState(false);
-  const [callState, setCallState] = useState<string>("new");
-  const [error, setError] = useState<string>("");
+  const [callState, setCallState] = useState<string>('new');
+  const [error, setError] = useState<string>('');
 
   const joinCall = useCallback(async () => {
     if (!callFrameRef.current) return;
 
     setIsJoining(true);
-    setError("");
+    setError('');
 
     try {
       // Get Daily.co token for this user
       const tokenResult = await actions.generateDailyToken(
         gameId,
         userName,
-        userRole === "host-mobile",
+        userRole === 'host-mobile',
       );
       if (!tokenResult.success) {
-        throw new Error(tokenResult.error || "Failed to get access token");
+        throw new Error(tokenResult.error || 'Failed to get access token');
       }
 
       // Create Daily call object
       const callObject = DailyIframe.createCallObject({
         iframeStyle: {
-          position: "relative",
-          width: "100%",
-          height: "100%",
-          border: "none",
-          borderRadius: "12px",
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          border: 'none',
+          borderRadius: '12px',
         },
       });
 
@@ -55,31 +55,31 @@ export default function VideoRoom({
 
       // Add event listeners
       (callObject as any)
-        .on("joined-meeting", () => {
-          console.log("Joined meeting successfully");
-          setCallState("joined");
+        .on('joined-meeting', () => {
+          console.log('Joined meeting successfully');
+          setCallState('joined');
           setIsJoining(false);
         })
-        .on("left-meeting", () => {
-          console.log("Left meeting");
-          setCallState("left");
+        .on('left-meeting', () => {
+          console.log('Left meeting');
+          setCallState('left');
         })
-        .on("error", (error: unknown) => {
-          console.error("Daily.co error:", error);
+        .on('error', (error: unknown) => {
+          console.error('Daily.co error:', error);
           const errorMsg =
-            (error as { errorMsg?: string })?.errorMsg || "Video call error";
+            (error as { errorMsg?: string })?.errorMsg || 'Video call error';
           setError(errorMsg);
           setIsJoining(false);
         })
-        .on("participant-joined", (event: unknown) => {
+        .on('participant-joined', (event: unknown) => {
           console.log(
-            "Participant joined:",
+            'Participant joined:',
             (event as { participant?: unknown })?.participant,
           );
         })
-        .on("participant-left", (event: unknown) => {
+        .on('participant-left', (event: unknown) => {
           console.log(
-            "Participant left:",
+            'Participant left:',
             (event as { participant?: unknown })?.participant,
           );
         });
@@ -97,8 +97,8 @@ export default function VideoRoom({
       callFrameRef.current.appendChild((callObject as any).iframe());
     } catch (error: unknown) {
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to join video call";
-      console.error("Failed to join call:", error);
+        error instanceof Error ? error.message : 'Failed to join video call';
+      console.error('Failed to join call:', error);
       setError(errorMessage);
       setIsJoining(false);
     }
@@ -130,9 +130,9 @@ export default function VideoRoom({
         await (callObjectRef.current as any).leave();
         await (callObjectRef.current as any).destroy();
         callObjectRef.current = null;
-        setCallState("left");
+        setCallState('left');
       } catch (error) {
-        console.error("Error leaving call:", error);
+        console.error('Error leaving call:', error);
       }
     }
   };
@@ -205,10 +205,10 @@ export default function VideoRoom({
       <div
         ref={callFrameRef}
         className="w-full h-full min-h-[300px] bg-gray-800 rounded-xl overflow-hidden"
-        style={{ aspectRatio: "16/9" }}
+        style={{ aspectRatio: '16/9' }}
       />
 
-      {callState === "joined" && (
+      {callState === 'joined' && (
         <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-arabic">
           متصل
         </div>

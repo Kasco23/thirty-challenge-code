@@ -1,47 +1,28 @@
 name: CI
+
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm install
-        working-directory: thirty-challenge
-      #- run: npx prettier --check "src/**/*.{ts,tsx,js,jsx,json,css,md}"
-       # working-directory: thirty-challenge
-      - run: npm run lint
-        working-directory: thirty-challenge
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm install
-        working-directory: thirty-challenge
-      - run: npx tsc --noEmit
-        working-directory: thirty-challenge
-      - run: npm test
-        working-directory: thirty-challenge
-
   build:
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    defaults:
+      run:
+        working-directory: thirty-challenge
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
-        working-directory: thirty-challenge
-      - run: npm run build
-        working-directory: thirty-challenge
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Format Check
+        run: npx prettier --check .
+      - name: Run Tests
+        run: npm test --silent
+      - name: Build
+        run: npm run build

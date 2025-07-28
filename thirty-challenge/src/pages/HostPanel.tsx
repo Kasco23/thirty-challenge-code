@@ -1,1 +1,3 @@
-export default function HostPanel() { return null; }
+export default function HostPanel() {
+  return null;
+}

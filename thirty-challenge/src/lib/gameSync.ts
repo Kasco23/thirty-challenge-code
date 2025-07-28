@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { supabase, isSupabaseConfigured } from "./supabaseClient";
-import type { GameState, PlayerId } from "../types/game";
+import { supabase, isSupabaseConfigured } from './supabaseClient';
+import type { GameState, PlayerId } from '../types/game';
 
 export interface GameSyncCallbacks {
   onGameStateUpdate: (gameState: Partial<GameState>) => void;
@@ -24,7 +24,7 @@ export class GameSync {
   // Initialize real-time subscription
   async connect() {
     if (!isSupabaseConfigured()) {
-      console.warn("Supabase not configured, using local state only");
+      console.warn('Supabase not configured, using local state only');
       return;
     }
 
@@ -33,14 +33,14 @@ export class GameSync {
       this.channel = supabase.channel(`game:${this.gameId}`, {
         config: {
           broadcast: { self: true },
-          presence: { key: "participants" },
+          presence: { key: 'participants' },
         },
       }) as unknown;
 
       // Listen for game state broadcasts
       (this.channel as any)?.on(
-        "broadcast",
-        { event: "game_state_update" },
+        'broadcast',
+        { event: 'game_state_update' },
         (payload: Record<string, unknown>) => {
           if (payload.gameState) {
             this.callbacks.onGameStateUpdate(
@@ -51,8 +51,8 @@ export class GameSync {
       );
 
       (this.channel as any)?.on(
-        "broadcast",
-        { event: "player_join" },
+        'broadcast',
+        { event: 'player_join' },
         (payload: Record<string, unknown>) => {
           if (payload.playerId && payload.playerData !== undefined) {
             this.callbacks.onPlayerJoin(
@@ -64,8 +64,8 @@ export class GameSync {
       );
 
       (this.channel as any)?.on(
-        "broadcast",
-        { event: "player_leave" },
+        'broadcast',
+        { event: 'player_leave' },
         (payload: Record<string, unknown>) => {
           if (payload.playerId) {
             this.callbacks.onPlayerLeave(payload.playerId as PlayerId);
@@ -74,8 +74,8 @@ export class GameSync {
       );
 
       (this.channel as any)?.on(
-        "broadcast",
-        { event: "host_update" },
+        'broadcast',
+        { event: 'host_update' },
         (payload: Record<string, unknown>) => {
           if (payload.hostName) {
             this.callbacks.onHostUpdate(payload.hostName as string);
@@ -84,8 +84,8 @@ export class GameSync {
       );
 
       (this.channel as any)?.on(
-        "broadcast",
-        { event: "video_room_update" },
+        'broadcast',
+        { event: 'video_room_update' },
         (payload: Record<string, unknown>) => {
           if (payload.roomUrl && payload.roomCreated !== undefined) {
             this.callbacks.onVideoRoomUpdate(
@@ -103,27 +103,27 @@ export class GameSync {
       };
 
       (this.channel as any)?.on(
-        "presence",
-        { event: "sync" },
+        'presence',
+        { event: 'sync' },
         handlePresenceUpdate,
       );
 
-      (this.channel as any)?.on("presence", { event: "join" }, () => {
+      (this.channel as any)?.on('presence', { event: 'join' }, () => {
         handlePresenceUpdate();
       });
 
-      (this.channel as any)?.on("presence", { event: "leave" }, () => {
+      (this.channel as any)?.on('presence', { event: 'leave' }, () => {
         handlePresenceUpdate();
       });
 
       // Subscribe to the channel
       await (this.channel as any)?.subscribe(async (status: string) => {
-        if (status === "SUBSCRIBED") {
+        if (status === 'SUBSCRIBED') {
           console.log(`Connected to game channel: ${this.gameId}`);
         }
       });
     } catch (error) {
-      console.error("Failed to connect to game sync:", error);
+      console.error('Failed to connect to game sync:', error);
     }
   }
 
@@ -133,12 +133,12 @@ export class GameSync {
 
     try {
       await (this.channel as any).send({
-        type: "broadcast",
-        event: "game_state_update",
+        type: 'broadcast',
+        event: 'game_state_update',
         gameState,
       });
     } catch (error) {
-      console.error("Failed to broadcast game state:", error);
+      console.error('Failed to broadcast game state:', error);
     }
   }
 
@@ -148,13 +148,13 @@ export class GameSync {
 
     try {
       await (this.channel as any).send({
-        type: "broadcast",
-        event: "player_join",
+        type: 'broadcast',
+        event: 'player_join',
         playerId,
         playerData,
       });
     } catch (error) {
-      console.error("Failed to broadcast player join:", error);
+      console.error('Failed to broadcast player join:', error);
     }
   }
 
@@ -164,12 +164,12 @@ export class GameSync {
 
     try {
       await (this.channel as any).send({
-        type: "broadcast",
-        event: "player_leave",
+        type: 'broadcast',
+        event: 'player_leave',
         playerId,
       });
     } catch (error) {
-      console.error("Failed to broadcast player leave:", error);
+      console.error('Failed to broadcast player leave:', error);
     }
   }
 
@@ -179,12 +179,12 @@ export class GameSync {
 
     try {
       await (this.channel as any).send({
-        type: "broadcast",
-        event: "host_update",
+        type: 'broadcast',
+        event: 'host_update',
         hostName,
       });
     } catch (error) {
-      console.error("Failed to broadcast host update:", error);
+      console.error('Failed to broadcast host update:', error);
     }
   }
 
@@ -194,13 +194,13 @@ export class GameSync {
 
     try {
       await (this.channel as any).send({
-        type: "broadcast",
-        event: "video_room_update",
+        type: 'broadcast',
+        event: 'video_room_update',
         roomUrl,
         roomCreated,
       });
     } catch (error) {
-      console.error("Failed to broadcast video room update:", error);
+      console.error('Failed to broadcast video room update:', error);
     }
   }
 
@@ -208,7 +208,7 @@ export class GameSync {
   async trackPresence(participantData: {
     id: string;
     name: string;
-    type: "host-pc" | "host-mobile" | "player";
+    type: 'host-pc' | 'host-mobile' | 'player';
     playerId?: PlayerId;
     flag?: string;
     club?: string;
@@ -218,7 +218,7 @@ export class GameSync {
     try {
       await (this.channel as any).track(participantData);
     } catch (error) {
-      console.error("Failed to track presence:", error);
+      console.error('Failed to track presence:', error);
     }
   }
 

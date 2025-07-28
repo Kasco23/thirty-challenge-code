@@ -12,10 +12,10 @@ export default function QuizRoom() {
   const { gameId } = useParams<{ gameId: string }>();
   const [searchParams] = useSearchParams();
   const { state, actions } = useGame();
-  
+
   const userRole = (searchParams.get('role') as UserRole) || 'playerA';
   const isMobile = window.innerWidth < 768;
-  
+
   // Initialize game if needed
   useState(() => {
     if (gameId && gameId !== state.gameId) {
@@ -38,7 +38,10 @@ export default function QuizRoom() {
     actions.addStrike(playerId);
   };
 
-  const handleUpdateScore = (playerId: 'playerA' | 'playerB', points: number) => {
+  const handleUpdateScore = (
+    playerId: 'playerA' | 'playerB',
+    points: number,
+  ) => {
     actions.updateScore(playerId, points);
   };
 
@@ -60,9 +63,12 @@ export default function QuizRoom() {
           {/* Header */}
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-white mb-2 font-arabic">
-              {state.currentSegment} - السؤال {state.segments[state.currentSegment].currentQuestionIndex + 1}
+              {state.currentSegment} - السؤال{' '}
+              {state.segments[state.currentSegment].currentQuestionIndex + 1}
             </h1>
-            <p className="text-accent2 font-arabic">رمز الجلسة: {currentGameId}</p>
+            <p className="text-accent2 font-arabic">
+              رمز الجلسة: {currentGameId}
+            </p>
           </div>
 
           {/* Host Controls */}
@@ -96,18 +102,24 @@ export default function QuizRoom() {
           <div className="grid lg:grid-cols-2 gap-6">
             {/* Question Area */}
             <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
-              <h2 className="text-xl font-bold text-white mb-4 font-arabic">منطقة الأسئلة</h2>
+              <h2 className="text-xl font-bold text-white mb-4 font-arabic">
+                منطقة الأسئلة
+              </h2>
               {questions.length > 0 && (
                 <div className="space-y-4">
                   <div className="bg-white/20 rounded-lg p-4">
                     <p className="text-white font-arabic mb-2">السؤال:</p>
-                    <p className="text-accent2 font-arabic text-lg">{questions[0]?.text}</p>
+                    <p className="text-accent2 font-arabic text-lg">
+                      {questions[0]?.text}
+                    </p>
                   </div>
                   <div className="bg-white/20 rounded-lg p-4">
                     <p className="text-white font-arabic mb-2">الإجابات:</p>
                     <ul className="space-y-1">
                       {questions[0]?.answers.map((answer, index) => (
-                        <li key={index} className="text-accent2 font-arabic">• {answer}</li>
+                        <li key={index} className="text-accent2 font-arabic">
+                          • {answer}
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -164,7 +176,8 @@ export default function QuizRoom() {
           {state.currentSegment}
         </h1>
         <p className="text-accent2 text-sm font-arabic">
-          السؤال {state.segments[state.currentSegment].currentQuestionIndex + 1} من {state.segments[state.currentSegment].questionsPerSegment}
+          السؤال {state.segments[state.currentSegment].currentQuestionIndex + 1}{' '}
+          من {state.segments[state.currentSegment].questionsPerSegment}
         </p>
       </div>
 
@@ -182,20 +195,22 @@ export default function QuizRoom() {
       <div className="flex-1 p-4">
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 h-full">
           {/* Hide question text for BELL and SING segments */}
-          {state.currentSegment !== 'BELL' && state.currentSegment !== 'SING' && questions.length > 0 && (
-            <div className="mb-4">
-              <p className="text-white font-arabic text-center text-lg">
-                {questions[0]?.text}
-              </p>
+          {state.currentSegment !== 'BELL' &&
+            state.currentSegment !== 'SING' &&
+            questions.length > 0 && (
+              <div className="mb-4">
+                <p className="text-white font-arabic text-center text-lg">
+                  {questions[0]?.text}
+                </p>
+              </div>
+            )}
+
+          {/* Bell segment buzzer */}
+          {state.currentSegment === 'BELL' && (
+            <div className="flex items-center justify-center h-full">
+              <Buzzer />
             </div>
           )}
-
-                     {/* Bell segment buzzer */}
-           {state.currentSegment === 'BELL' && (
-             <div className="flex items-center justify-center h-full">
-               <Buzzer />
-             </div>
-           )}
 
           {/* Other segments - waiting area */}
           {state.currentSegment !== 'BELL' && (

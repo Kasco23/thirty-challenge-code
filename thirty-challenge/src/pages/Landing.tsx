@@ -1,7 +1,7 @@
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useGame } from "../hooks/useGame";
-import { useState } from "react";
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { useGame } from '../hooks/useGame';
+import { useState } from 'react';
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -14,13 +14,14 @@ export default function Landing() {
     setIsCreating(true);
     try {
       // Use custom game ID or generate a random one
-      const gameId = useCustomId && customGameId.trim() 
-        ? customGameId.trim().toUpperCase()
-        : Math.random().toString(36).substring(2, 8).toUpperCase();
-      
+      const gameId =
+        useCustomId && customGameId.trim()
+          ? customGameId.trim().toUpperCase()
+          : Math.random().toString(36).substring(2, 8).toUpperCase();
+
       // Initialize the game
       actions.startGame(gameId);
-      
+
       // Navigate to host setup page
       navigate(`/host-setup/${gameId}`, { replace: true });
     } catch (error) {
@@ -30,7 +31,7 @@ export default function Landing() {
   };
 
   const handleJoinGame = () => {
-    navigate("/join");
+    navigate('/join');
   };
 
   return (
@@ -43,7 +44,7 @@ export default function Landing() {
       <motion.h1
         className="text-5xl sm:text-7xl font-extrabold mb-6 text-accent glow font-arabic text-center"
         style={{
-          textShadow: "0 0 30px #7c3aed, 0 0 20px #38bdf8",
+          textShadow: '0 0 30px #7c3aed, 0 0 20px #38bdf8',
         }}
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -51,8 +52,8 @@ export default function Landing() {
       >
         تحدي الثلاثين
       </motion.h1>
-      
-      <motion.p 
+
+      <motion.p
         className="mb-10 text-accent2 text-lg font-arabic text-center"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -60,7 +61,7 @@ export default function Landing() {
       >
         !ابدأ التحدي مع أصدقائك الآن
       </motion.p>
-      
+
       <motion.div
         className="flex flex-col gap-6 items-center w-full max-w-md"
         initial={{ y: 20, opacity: 0 }}
@@ -78,12 +79,16 @@ export default function Landing() {
             />
             استخدام رمز جلسة مخصص
           </label>
-          
+
           {useCustomId && (
             <motion.input
               type="text"
               value={customGameId}
-              onChange={(e) => setCustomGameId(e.target.value.replace(/[^A-Za-z0-9]/g, '').substring(0, 8))}
+              onChange={(e) =>
+                setCustomGameId(
+                  e.target.value.replace(/[^A-Za-z0-9]/g, '').substring(0, 8),
+                )
+              }
               placeholder="ادخل رمز الجلسة (حروف وأرقام فقط)"
               className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 font-mono text-center uppercase"
               initial={{ opacity: 0, height: 0 }}
@@ -104,10 +109,10 @@ export default function Landing() {
               إنشاء الجلسة...
             </div>
           ) : (
-            "إنشاء جلسة جديدة"
+            'إنشاء جلسة جديدة'
           )}
         </button>
-        
+
         <button
           onClick={handleJoinGame}
           className="w-full px-6 py-3 text-lg rounded-xl font-bold bg-transparent hover:bg-white/10 text-white/80 hover:text-accent2 border border-white/20 hover:border-accent2 transition-all font-arabic"
