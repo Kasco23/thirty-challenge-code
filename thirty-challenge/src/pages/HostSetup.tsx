@@ -38,7 +38,7 @@ export default function HostSetup() {
       actions.updateSegmentSettings(segmentSettings);
 
       // 2) create / resume the game (persists to Supabase)
-      await actions.startGame(String(gameId));
+     await actions.startGame(String(gameId), hostName.trim());
 
       // 3) navigate to lobby
       navigate(
