@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 
 /**
@@ -11,7 +10,9 @@ export default function Landing() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center space-y-6 p-4">
       <h1 className="text-4xl font-extrabold text-accent">تحدي الثلاثين</h1>
-      <p className="text-center text-lg text-gray-300">ابدأ التحدي مع أصدقائك الآن!</p>
+      <p className="text-center text-lg text-gray-300">
+        ابدأ التحدي مع أصدقائك الآن!
+      </p>
       <div className="space-y-3">
         <Link
           to="/join"

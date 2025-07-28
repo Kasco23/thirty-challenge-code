@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 
 /**
@@ -11,53 +11,85 @@ import { supabase } from '../lib/supabaseClient';
  */
 export default function TestAPI() {
   // store the output from API calls
-  const [output, setOutput] = useState<any>(null);
+  // API responses are arbitrary JSON, so store as unknown
+  const [output, setOutput] = useState<unknown>(null);
   // optional state for room and user names
   const [roomName, setRoomName] = useState('');
   const [userName, setUserName] = useState('');
+  // log of all operations performed in this page
+  const [log, setLog] = useState<string[]>([]);
+
+  /** Convenience utility to add a timestamped message to the log state. */
+  const addLog = (msg: string, data?: unknown) =>
+    setLog((l) => [
+      ...l,
+      `${new Date().toISOString()}  ${msg}${data ? '  ' + JSON.stringify(data) : ''}`,
+    ]);
 
   /**
-   * Helper to invoke a Netlify function endpoint.
-   * All Netlify functions in this project live under
-   * `/.netlify/functions/<function-name>`.  The helper wraps
-   * common fetch logic, including stringifying the body and
-   * parsing the JSON response.  In case of network errors
-   * the error message is captured into the output state.
+   * Generic helper for invoking Netlify serverless functions.
+   * Each call posts a JSON payload and returns the parsed JSON
+   * response. Any error is surfaced through a thrown exception
+   * which callers can catch and log.
    */
-  const callFunction = async (path: string, body: Record<string, any>) => {
-    try {
-      const res = await fetch(path, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      setOutput(data);
-    } catch (err: any) {
-      setOutput({ error: err instanceof Error ? err.message : String(err) });
-    }
+  const callFn = async (name: string, payload: unknown) => {
+    const res = await fetch(`/.netlify/functions/${name}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    // Fetch only resolves network errors. non-2xx statuses
+    // still produce a Response object, so we parse and return it.
+    return res.json();
   };
 
   // Netlify function wrappers
   const handleCreateRoom = async () => {
-    const name = roomName || `test-room-${Date.now()}`;
-    await callFunction('/.netlify/functions/create-daily-room', { roomName: name });
+    const name = roomName || `room-${Date.now()}`;
+    addLog(`Create Room: ${name}`);
+    try {
+      const data = await callFn('create-daily-room', { roomName: name });
+      setOutput(data);
+      addLog('Create Room → ' + JSON.stringify(data));
+    } catch (err) {
+      setOutput({ error: String(err) });
+      addLog('Create Room Error', err);
+    }
   };
+
   const handleCreateToken = async () => {
-    const room = roomName || `test-room-${Date.now()}`;
+    const room = roomName || `room-${Date.now()}`;
     const user = userName || 'Test User';
-    await callFunction('/.netlify/functions/create-daily-token', {
-      room,
-      user,
-      isHost: false,
-    });
+    addLog(`Create Token for ${room}`);
+    try {
+      const data = await callFn('create-daily-token', {
+        room,
+        user,
+        isHost: true,
+      });
+      setOutput(data);
+      addLog('Create Token → ' + JSON.stringify(data));
+    } catch (err) {
+      setOutput({ error: String(err) });
+      addLog('Create Token Error', err);
+    }
   };
+
   const handleDeleteRoom = async () => {
     if (!roomName) {
       setOutput({ error: 'Please provide a room name before deleting.' });
       return;
     }
-    await callFunction('/.netlify/functions/delete-daily-room', { roomName });
+    addLog(`Delete Room: ${roomName}`);
+    try {
+      const data = await callFn('delete-daily-room', { roomName });
+      setOutput(data);
+      addLog('Delete Room → ' + JSON.stringify(data));
+    } catch (err) {
+      setOutput({ error: String(err) });
+      addLog('Delete Room Error', err);
+    }
   };
 
   // Supabase CRUD examples
@@ -79,7 +111,10 @@ export default function TestAPI() {
   };
   const updatePlayer = async () => {
     // Grab the first player row and update its name
-    const { data: rows, error: fetchError } = await supabase.from('players').select('*').limit(1);
+    const { data: rows, error: fetchError } = await supabase
+      .from('players')
+      .select('*')
+      .limit(1);
     if (fetchError || !rows || rows.length === 0) {
       setOutput({ error: fetchError || 'No players to update' });
       return;
@@ -94,13 +129,20 @@ export default function TestAPI() {
   };
   const deletePlayer = async () => {
     // Delete the first player row as a simple test
-    const { data: rows, error: fetchError } = await supabase.from('players').select('*').limit(1);
+    const { data: rows, error: fetchError } = await supabase
+      .from('players')
+      .select('*')
+      .limit(1);
     if (fetchError || !rows || rows.length === 0) {
       setOutput({ error: fetchError || 'No players to delete' });
       return;
     }
     const id = rows[0].id;
-    const { data, error } = await supabase.from('players').delete().eq('id', id).select();
+    const { data, error } = await supabase
+      .from('players')
+      .delete()
+      .eq('id', id)
+      .select();
     setOutput(error ? { error } : { data });
   };
 
@@ -122,35 +164,65 @@ export default function TestAPI() {
           value={userName}
           onChange={(e) => setUserName(e.target.value)}
         />
-        <button onClick={handleCreateRoom} className="w-full rounded bg-blue-600 p-2 text-white">
+        <button
+          onClick={handleCreateRoom}
+          className="w-full rounded bg-blue-600 p-2 text-white"
+        >
           Create Daily Room
         </button>
-        <button onClick={handleCreateToken} className="w-full rounded bg-blue-600 p-2 text-white">
+        <button
+          onClick={handleCreateToken}
+          className="w-full rounded bg-blue-600 p-2 text-white"
+        >
           Create Meeting Token
         </button>
-        <button onClick={handleDeleteRoom} className="w-full rounded bg-red-600 p-2 text-white">
+        <button
+          onClick={handleDeleteRoom}
+          className="w-full rounded bg-red-600 p-2 text-white"
+        >
           Delete Daily Room
         </button>
         <hr />
-        <button onClick={fetchGames} className="w-full rounded bg-green-600 p-2 text-white">
+        <button
+          onClick={fetchGames}
+          className="w-full rounded bg-green-600 p-2 text-white"
+        >
           Fetch Games
         </button>
-        <button onClick={fetchPlayers} className="w-full rounded bg-green-600 p-2 text-white">
+        <button
+          onClick={fetchPlayers}
+          className="w-full rounded bg-green-600 p-2 text-white"
+        >
           Fetch Players
         </button>
-        <button onClick={addPlayer} className="w-full rounded bg-green-600 p-2 text-white">
+        <button
+          onClick={addPlayer}
+          className="w-full rounded bg-green-600 p-2 text-white"
+        >
           Add Player
         </button>
-        <button onClick={updatePlayer} className="w-full rounded bg-yellow-600 p-2 text-white">
+        <button
+          onClick={updatePlayer}
+          className="w-full rounded bg-yellow-600 p-2 text-white"
+        >
           Update Player
         </button>
-        <button onClick={deletePlayer} className="w-full rounded bg-red-600 p-2 text-white">
+        <button
+          onClick={deletePlayer}
+          className="w-full rounded bg-red-600 p-2 text-white"
+        >
           Delete Player
         </button>
       </div>
       <pre className="mt-4 overflow-x-auto rounded bg-gray-900 p-4 text-sm text-white">
         {JSON.stringify(output, null, 2)}
       </pre>
+      <details className="mt-4 w-full">
+        <summary className="cursor-pointer font-bold">📜 Event Log</summary>
+        <pre className="mt-2 max-h-64 overflow-y-auto text-xs">
+          {log.join('\n')}
+        </pre>
+      </details>
     </div>
   );
 }
