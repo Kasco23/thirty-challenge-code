@@ -1,12 +1,12 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation } from "react-router-dom";
 
 export default function Room() {
   const query = new URLSearchParams(useLocation().search);
-  const name = query.get('name');
-  const flag = query.get('flag');
-  const club = query.get('club');
+  const name = query.get("name");
+  const flag = query.get("flag");
+  const club = query.get("club");
 
-  const logos = import.meta.glob('/src/assets/logos/*.svg', { eager: true });
+  const logos = import.meta.glob("/src/assets/logos/*.svg", { eager: true });
   const logoSrc = logos[`/src/assets/logos/${club}.svg`] as { default: string };
 
   return (
@@ -18,8 +18,9 @@ export default function Room() {
         {logoSrc?.default && (
           <img
             src={logoSrc.default}
-            alt={club || 'club'}
+            alt={club || "club"}
             className="h-10"
+            loading="lazy"
           />
         )}
       </div>

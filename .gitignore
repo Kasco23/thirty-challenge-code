@@ -34,3 +34,6 @@ yarn-error.log*
 # Netlify
 .netlify/
 netlify/functions-build/
+
+coverage/
+thirty-challenge/coverage/
