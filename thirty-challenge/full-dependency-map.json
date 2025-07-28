@@ -1,6 +1,32 @@
 {
   "netlify/functions/create-daily-room.ts": [],
   "netlify/functions/create-daily-token.ts": [],
+  "thirty-challenge/src/App.tsx": [
+    "thirty-challenge/src/components/Buzzer.tsx",
+    "thirty-challenge/src/components/Timer.tsx",
+    "thirty-challenge/src/context/GameContext.tsx",
+    "thirty-challenge/src/pages/Admin.tsx",
+    "thirty-challenge/src/pages/FinalScores.tsx",
+    "thirty-challenge/src/pages/HostPanel.tsx",
+    "thirty-challenge/src/pages/HostQuestion.tsx",
+    "thirty-challenge/src/pages/HostSetup.tsx",
+    "thirty-challenge/src/pages/Join.tsx",
+    "thirty-challenge/src/pages/JudgePanel.tsx",
+    "thirty-challenge/src/pages/Landing.tsx",
+    "thirty-challenge/src/pages/Lobby.tsx",
+    "thirty-challenge/src/pages/NotFound.tsx",
+    "thirty-challenge/src/pages/QuizRoom.tsx",
+    "thirty-challenge/src/pages/Reconnect.tsx",
+    "thirty-challenge/src/pages/Room.tsx",
+    "thirty-challenge/src/pages/Scoreboard.tsx",
+    "thirty-challenge/src/pages/SegmentIntro.tsx",
+    "thirty-challenge/src/pages/TrueLobby.tsx",
+    "thirty-challenge/src/pages/segments/AUCT.tsx",
+    "thirty-challenge/src/pages/segments/BELL.tsx",
+    "thirty-challenge/src/pages/segments/REMO.tsx",
+    "thirty-challenge/src/pages/segments/SING.tsx",
+    "thirty-challenge/src/pages/segments/WSHA.tsx"
+  ],
   "thirty-challenge/src/__tests__/math.test.ts": [],
   "thirty-challenge/src/components/Buzzer.tsx": [
     "thirty-challenge/src/hooks/useGame.ts"
@@ -44,6 +70,7 @@
   ],
   "thirty-challenge/src/lib/supabaseClient.ts": [],
   "thirty-challenge/src/main.tsx": [
+    "thirty-challenge/src/App.tsx",
     "thirty-challenge/src/index.css"
   ],
   "thirty-challenge/src/pages/Admin.tsx": [],
