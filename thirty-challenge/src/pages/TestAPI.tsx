@@ -57,7 +57,6 @@ export default function TestAPI() {
       addLog("Create Room → " + JSON.stringify(data));
     } catch (err) {
       setOutput({ error: String(err) });
-      setMeetingToken(data.token);
       addLog("Create Room Error", err);
     }
   };
@@ -73,6 +72,7 @@ export default function TestAPI() {
         isHost: true,
       });
       setOutput(data);
+      setMeetingToken(data.token);
       addLog("Create Token → " + JSON.stringify(data));
     } catch (err) {
       setOutput({ error: String(err) });
