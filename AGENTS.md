@@ -13,15 +13,18 @@
 - **Host:** Netlify (depoly site), Supabase (database), daily.co (video chat)
 
 ---
+
 Current repo:
 This repo and branch are used for testing. this repo was forked in order to facilitate easier editing.
 
 ---
 
-##  🧠 Dependency Awareness Section
+## 🧠 Dependency Awareness Section
+
 Always check `full-dependency-map.json` at repo root to understand real file relationships. — it is generated using `npx madge` and represents all `ts/tsx` dependencies across `src/`.
 
 Do not rely on static folder assumptions. Use this file to:
+
 - Find redundant files
 - Suggest refactors
 - Understand component hierarchy
@@ -30,7 +33,9 @@ Use full-dependency-map.json to avoid redundant changes or circular imports.
 If adding new modules or folders, ensure madge-dependency-map.yml is rerun to update the file.
 
 ---
+
 ## 🧾 Environment Variables
+
 The `.env` file exists **locally only**, and must include:
 
 - `VITE_SUPABASE_URL`
@@ -43,6 +48,7 @@ Agent should assume these are properly configured if `supabaseClient.ts` is pres
 They are configure on Netlify
 
 ---
+
 ## 📌 Core Guidelines for AI Agents
 
 - Always **assume Node 20**, ESM only — avoid `require`, use top-level `import`.
@@ -79,6 +85,7 @@ They are configure on Netlify
 | `PROJECT_OVERVIEW.md`    | Stack rationale, tooling, folder structure              |
 | `QUIZ_STRUCTURE.md`      | Segment order, question types, rules (WIP)              |
 | `AGENT.MD`               | (this file) Agent onboarding                            |
+
 ## Task Types You Can Help With
 
 - Creating new React components from spec (e.g. Timer, AnimatedPanel)
@@ -97,7 +104,6 @@ They are configure on Netlify
 
 - Suggesting project board issues from TODOs or new features
 
-
 ---
 
 ## 🛑 Avoid Unless Explicitly Asked
@@ -114,12 +120,12 @@ They are configure on Netlify
 
 - Don’t overwrite `.env` or suggest secrets hardcoding.
 
-
 ---
 
 ## ⚠️ Hosting Intent: LIVE Site
 
 Do not assume this is a static SPA. This site is hosted on **Netlify with a custom domain (quiz.tyshub.xyz)** and relies on:
+
 - Supabase (realtime DB)
 - Daily.co (live video)
 - Vite Dev + Production build
@@ -167,7 +173,6 @@ Deployment targets like Netlify must respect vite.config.ts, environment variabl
 - Stick to pinned versions from `PROJECT_OVERVIEW.md`.
 
 - Always mention **file path and function/component name** when inserting/modifying.
-
 
 ---
 

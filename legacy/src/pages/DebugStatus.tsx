@@ -17,11 +17,9 @@ export default function DebugStatus() {
         typeof input === 'string'
           ? input
           : input instanceof Request
-          ? input.url
-          : String(input);
-      setRequests(prev =>
-        [...prev, `${res.status} ${urlString}`].slice(-20)
-      );
+            ? input.url
+            : String(input);
+      setRequests((prev) => [...prev, `${res.status} ${urlString}`].slice(-20));
       return res;
     };
     return () => {

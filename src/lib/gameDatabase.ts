@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from "./supabaseClient";
+import { supabase, isSupabaseConfigured } from './supabaseClient';
 // GameState and PlayerId types are not needed in this module
 
 export interface GameRecord {
@@ -46,29 +46,29 @@ export class GameDatabase {
     hostName?: string,
   ): Promise<GameRecord | null> {
     if (!this.isConfigured()) {
-      console.warn("Supabase not configured");
+      console.warn('Supabase not configured');
       return null;
     }
 
     try {
       const { data, error } = await supabase
-        .from("games")
+        .from('games')
         .insert({
           id: gameId,
           host_name: hostName || null,
-          phase: "lobby",
+          phase: 'lobby',
         })
         .select()
         .single();
 
       if (error) {
-        console.error("Error creating game:", error);
+        console.error('Error creating game:', error);
         return null;
       }
 
       return data as GameRecord;
     } catch (error) {
-      console.error("Error creating game:", error);
+      console.error('Error creating game:', error);
       return null;
     }
   }
@@ -78,19 +78,19 @@ export class GameDatabase {
 
     try {
       const { data, error } = await supabase
-        .from("games")
-        .select("*")
-        .eq("id", gameId)
+        .from('games')
+        .select('*')
+        .eq('id', gameId)
         .single();
 
       if (error) {
-        console.error("Error fetching game:", error);
+        console.error('Error fetching game:', error);
         return null;
       }
 
       return data as GameRecord;
     } catch (error) {
-      console.error("Error fetching game:", error);
+      console.error('Error fetching game:', error);
       return null;
     }
   }
@@ -103,20 +103,20 @@ export class GameDatabase {
 
     try {
       const { data, error } = await supabase
-        .from("games")
+        .from('games')
         .update(updates)
-        .eq("id", gameId)
+        .eq('id', gameId)
         .select()
         .single();
 
       if (error) {
-        console.error("Error updating game:", error);
+        console.error('Error updating game:', error);
         return null;
       }
 
       return data as GameRecord;
     } catch (error) {
-      console.error("Error updating game:", error);
+      console.error('Error updating game:', error);
       return null;
     }
   }
@@ -139,27 +139,27 @@ export class GameDatabase {
 
     try {
       const { data, error } = await supabase
-        .from("players")
+        .from('players')
         .insert({
           id: playerId,
           game_id: gameId,
           name: playerData.name,
           flag: playerData.flag || null,
           club: playerData.club || null,
-          role: playerData.role || "playerA",
+          role: playerData.role || 'playerA',
           is_connected: true,
         })
         .select()
         .single();
 
       if (error) {
-        console.error("Error adding player:", error);
+        console.error('Error adding player:', error);
         return null;
       }
 
       return data as PlayerRecord;
     } catch (error) {
-      console.error("Error adding player:", error);
+      console.error('Error adding player:', error);
       return null;
     }
   }
@@ -169,19 +169,19 @@ export class GameDatabase {
 
     try {
       const { data, error } = await supabase
-        .from("players")
-        .select("*")
-        .eq("game_id", gameId)
-        .order("joined_at", { ascending: true });
+        .from('players')
+        .select('*')
+        .eq('game_id', gameId)
+        .order('joined_at', { ascending: true });
 
       if (error) {
-        console.error("Error fetching players:", error);
+        console.error('Error fetching players:', error);
         return [];
       }
 
       return data as PlayerRecord[];
     } catch (error) {
-      console.error("Error fetching players:", error);
+      console.error('Error fetching players:', error);
       return [];
     }
   }
@@ -194,20 +194,20 @@ export class GameDatabase {
 
     try {
       const { data, error } = await supabase
-        .from("players")
+        .from('players')
         .update(updates)
-        .eq("id", playerId)
+        .eq('id', playerId)
         .select()
         .single();
 
       if (error) {
-        console.error("Error updating player:", error);
+        console.error('Error updating player:', error);
         return null;
       }
 
       return data as PlayerRecord;
     } catch (error) {
-      console.error("Error updating player:", error);
+      console.error('Error updating player:', error);
       return null;
     }
   }
@@ -218,9 +218,9 @@ export class GameDatabase {
   ) {
     if (!this.isConfigured()) return;
     const { error } = await supabase
-      .from("game_events")
+      .from('game_events')
       .insert([{ game_id: gameId, event_type, event_data }]);
-    if (error) console.error("insertGameEvent error:", error);
+    if (error) console.error('insertGameEvent error:', error);
   }
 
   static async removePlayer(playerId: string): Promise<boolean> {
@@ -228,18 +228,18 @@ export class GameDatabase {
 
     try {
       const { error } = await supabase
-        .from("players")
+        .from('players')
         .delete()
-        .eq("id", playerId);
+        .eq('id', playerId);
 
       if (error) {
-        console.error("Error removing player:", error);
+        console.error('Error removing player:', error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error("Error removing player:", error);
+      console.error('Error removing player:', error);
       return false;
     }
   }
@@ -258,7 +258,7 @@ export class GameDatabase {
     },
   ) {
     if (!this.isConfigured()) {
-      console.warn("Supabase not configured - real-time disabled");
+      console.warn('Supabase not configured - real-time disabled');
       return null;
     }
 
@@ -266,39 +266,39 @@ export class GameDatabase {
     const gameSubscription = supabase
       .channel(`game:${gameId}`)
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "*",
-          schema: "public",
-          table: "games",
+          event: '*',
+          schema: 'public',
+          table: 'games',
           filter: `id=eq.${gameId}`,
         },
         (payload) => {
-          console.log("Game update:", payload);
-          if (payload.eventType === "UPDATE" && callbacks.onGameUpdate) {
+          console.log('Game update:', payload);
+          if (payload.eventType === 'UPDATE' && callbacks.onGameUpdate) {
             callbacks.onGameUpdate(payload.new as GameRecord);
           }
         },
       )
       .on(
-        "postgres_changes",
+        'postgres_changes',
         {
-          event: "*",
-          schema: "public",
-          table: "players",
+          event: '*',
+          schema: 'public',
+          table: 'players',
           filter: `game_id=eq.${gameId}`,
         },
         (payload) => {
-          console.log("Player update:", payload);
-          if (payload.eventType === "INSERT" && callbacks.onPlayerJoin) {
+          console.log('Player update:', payload);
+          if (payload.eventType === 'INSERT' && callbacks.onPlayerJoin) {
             callbacks.onPlayerJoin(payload.new as PlayerRecord);
           } else if (
-            payload.eventType === "UPDATE" &&
+            payload.eventType === 'UPDATE' &&
             callbacks.onPlayerUpdate
           ) {
             callbacks.onPlayerUpdate(payload.new as PlayerRecord);
           } else if (
-            payload.eventType === "DELETE" &&
+            payload.eventType === 'DELETE' &&
             callbacks.onPlayerLeave
           ) {
             callbacks.onPlayerLeave(payload.old.id);
@@ -322,20 +322,20 @@ export class GameDatabase {
     if (!this.isConfigured()) return false;
 
     try {
-      const { error } = await supabase.from("game_events").insert({
+      const { error } = await supabase.from('game_events').insert({
         game_id: gameId,
         event_type: eventType,
         event_data: eventData,
       });
 
       if (error) {
-        console.error("Error logging game event:", error);
+        console.error('Error logging game event:', error);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error("Error logging game event:", error);
+      console.error('Error logging game event:', error);
       return false;
     }
   }

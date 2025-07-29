@@ -4,7 +4,7 @@
 
 ### 1. Local Development
 
-Create a `.env.local` file in the `thirty-challenge/` directory (this file is gitignored):
+Create a `.env.local` file in the project root (this file is gitignored):
 
 ```bash
 # === PUBLIC VARIABLES (VITE_ prefix) ===

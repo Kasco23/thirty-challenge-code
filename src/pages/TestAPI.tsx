@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
 
 /**
  * TestAPI component provides a simple UI for exercising backend
@@ -14,8 +14,8 @@ export default function TestAPI() {
   // API responses are arbitrary JSON, so store as unknown
   const [output, setOutput] = useState<unknown>(null);
   // optional state for room and user names
-  const [roomName, setRoomName] = useState("");
-  const [userName, setUserName] = useState("");
+  const [roomName, setRoomName] = useState('');
+  const [userName, setUserName] = useState('');
   const [roomUrl, setRoomUrl] = useState<string | null>(null);
   const [meetingToken, setMeetingToken] = useState<string | null>(null);
   const [showVideo, setShowVideo] = useState(false); // log of all operations performed in this page
@@ -25,7 +25,7 @@ export default function TestAPI() {
   const addLog = (msg: string, data?: unknown) =>
     setLog((l) => [
       ...l,
-      `${new Date().toISOString()}  ${msg}${data ? "  " + JSON.stringify(data) : ""}`,
+      `${new Date().toISOString()}  ${msg}${data ? '  ' + JSON.stringify(data) : ''}`,
     ]);
 
   /**
@@ -36,8 +36,8 @@ export default function TestAPI() {
    */
   const callFn = async (name: string, payload: unknown) => {
     const res = await fetch(`/.netlify/functions/${name}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
@@ -51,64 +51,64 @@ export default function TestAPI() {
     const name = roomName || `room-${Date.now()}`;
     addLog(`Create Room: ${name}`);
     try {
-      const data = await callFn("create-daily-room", { roomName: name });
+      const data = await callFn('create-daily-room', { roomName: name });
       setOutput(data);
       setRoomUrl(data.url);
-      addLog("Create Room → " + JSON.stringify(data));
+      addLog('Create Room → ' + JSON.stringify(data));
     } catch (err) {
       setOutput({ error: String(err) });
-      addLog("Create Room Error", err);
+      addLog('Create Room Error', err);
     }
   };
 
   const handleCreateToken = async () => {
     const room = roomName || `room-${Date.now()}`;
-    const user = userName || "Test User";
+    const user = userName || 'Test User';
     addLog(`Create Token for ${room}`);
     try {
-      const data = await callFn("create-daily-token", {
+      const data = await callFn('create-daily-token', {
         room,
         user,
         isHost: true,
       });
       setOutput(data);
       setMeetingToken(data.token);
-      addLog("Create Token → " + JSON.stringify(data));
+      addLog('Create Token → ' + JSON.stringify(data));
     } catch (err) {
       setOutput({ error: String(err) });
-      addLog("Create Token Error", err);
+      addLog('Create Token Error', err);
     }
   };
 
   const handleDeleteRoom = async () => {
     if (!roomName) {
-      setOutput({ error: "Please provide a room name before deleting." });
+      setOutput({ error: 'Please provide a room name before deleting.' });
       return;
     }
     addLog(`Delete Room: ${roomName}`);
     try {
-      const data = await callFn("delete-daily-room", { roomName });
+      const data = await callFn('delete-daily-room', { roomName });
       setOutput(data);
-      addLog("Delete Room → " + JSON.stringify(data));
+      addLog('Delete Room → ' + JSON.stringify(data));
     } catch (err) {
       setOutput({ error: String(err) });
-      addLog("Delete Room Error", err);
+      addLog('Delete Room Error', err);
     }
   };
 
   // Supabase CRUD examples
   const fetchGames = async () => {
-    const { data, error } = await supabase.from("games").select("*");
+    const { data, error } = await supabase.from('games').select('*');
     setOutput(error ? { error } : { data });
   };
   const fetchPlayers = async () => {
-    const { data, error } = await supabase.from("players").select("*");
+    const { data, error } = await supabase.from('players').select('*');
     setOutput(error ? { error } : { data });
   };
   const addPlayer = async () => {
     // Insert a minimal record; adjust fields to your schema if necessary
     const { data, error } = await supabase
-      .from("players")
+      .from('players')
       .insert({ name: `Test Player ${Date.now()}` })
       .select();
     setOutput(error ? { error } : { data });
@@ -116,36 +116,36 @@ export default function TestAPI() {
   const updatePlayer = async () => {
     // Grab the first player row and update its name
     const { data: rows, error: fetchError } = await supabase
-      .from("players")
-      .select("*")
+      .from('players')
+      .select('*')
       .limit(1);
     if (fetchError || !rows || rows.length === 0) {
-      setOutput({ error: fetchError || "No players to update" });
+      setOutput({ error: fetchError || 'No players to update' });
       return;
     }
     const id = rows[0].id;
     const { data, error } = await supabase
-      .from("players")
+      .from('players')
       .update({ name: `Updated Player ${Date.now()}` })
-      .eq("id", id)
+      .eq('id', id)
       .select();
     setOutput(error ? { error } : { data });
   };
   const deletePlayer = async () => {
     // Delete the first player row as a simple test
     const { data: rows, error: fetchError } = await supabase
-      .from("players")
-      .select("*")
+      .from('players')
+      .select('*')
       .limit(1);
     if (fetchError || !rows || rows.length === 0) {
-      setOutput({ error: fetchError || "No players to delete" });
+      setOutput({ error: fetchError || 'No players to delete' });
       return;
     }
     const id = rows[0].id;
     const { data, error } = await supabase
-      .from("players")
+      .from('players')
       .delete()
-      .eq("id", id)
+      .eq('id', id)
       .select();
     setOutput(error ? { error } : { data });
   };
@@ -153,10 +153,10 @@ export default function TestAPI() {
   /** Join the created Daily room in an embedded iframe */
   const handleJoinRoom = () => {
     if (!roomUrl || !meetingToken) {
-      setOutput({ error: "Create room & token first." });
+      setOutput({ error: 'Create room & token first.' });
       return;
     }
-    addLog("Join Room");
+    addLog('Join Room');
     setShowVideo(true);
   };
 
@@ -241,9 +241,9 @@ export default function TestAPI() {
           src={`${roomUrl}?t=${meetingToken}&embed=true`}
           allow="camera; microphone; fullscreen; speaker; display-capture"
           style={{
-            width: "100%",
-            maxWidth: "100%",
-            height: "600px",
+            width: '100%',
+            maxWidth: '100%',
+            height: '600px',
             border: 0,
           }}
         />
@@ -254,7 +254,7 @@ export default function TestAPI() {
       <details className="mt-4 w-full">
         <summary className="cursor-pointer font-bold">📜 Event Log</summary>
         <pre className="mt-2 max-h-64 overflow-y-auto text-xs">
-          {log.join("\n")}
+          {log.join('\n')}
         </pre>
       </details>
     </div>
