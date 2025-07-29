@@ -9,6 +9,12 @@ import { Link } from 'react-router-dom';
 export default function Landing() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center space-y-6 p-4">
+      {/* Logo from public assets to match the new branding */}
+      <img
+        src="/tahadialthalatheen/images/Logo.png"
+        alt="تحدي الثلاثين"
+        className="w-32 md:w-48"
+      />
       <h1 className="text-4xl font-extrabold text-accent">تحدي الثلاثين</h1>
       <p className="text-center text-lg text-gray-300">
         ابدأ التحدي مع أصدقائك الآن!

@@ -2,9 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'DG Bebo';
+  src: url('/tahadialthalatheen/fonts/DG-BeboT.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Almarai';
+  src: url('/tahadialthalatheen/fonts/Almarai-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
 body {
-  font-family: 'Noto Naskh Arabic', Tajawal, Arial, sans-serif;
-  background: #070718;
+  @apply bg-brand-dark text-brand-light font-body;
 }
 .font-arabic {
   font-family: 'Noto Naskh Arabic', Tajawal, Arial, sans-serif;
