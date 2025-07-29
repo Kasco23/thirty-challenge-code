@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useGame } from '../hooks/useGame';
+import { useGame } from '@/hooks/useGame';
 
 interface TimerProps {
   onTimeUp?: () => void;

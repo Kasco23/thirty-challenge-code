@@ -10,8 +10,8 @@ export default function Join() {
   const [joinType, setJoinType] = useState<'host' | 'player' | ''>('');
   const [gameId, setGameId] = useState('');
   const [name, setName] = useState('');
-  const [selectedFlag, setSelectedFlag] = useState('');
-  const [selectedTeam, setSelectedTeam] = useState('');
+  const [selectedFlag, setSelectedFlag] = useState<string>('');
+  const [selectedTeam, setSelectedTeam] = useState<string>('');
   const [flagSearch, setFlagSearch] = useState('');
   const [teamSearch, setTeamSearch] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -205,7 +205,7 @@ export default function Join() {
                 className="w-full px-4 py-2 mb-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic"
               />
               <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto">
-                {filteredFlags.map((flag) => (
+                {filteredFlags.map((flag: { code: string; name: string }) => (
                   <button
                     key={flag.code}
                     type="button"
@@ -238,7 +238,7 @@ export default function Join() {
                 className="w-full px-4 py-2 mb-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic"
               />
               <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                {filteredTeams.map((team) => (
+                {filteredTeams.map((team: import('@/utils/teamUtils').Team) => (
                   <button
                     key={team.name}
                     type="button"

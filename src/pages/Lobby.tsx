@@ -3,7 +3,6 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGame } from '@/hooks/useGame';
 import VideoRoom from '@/components/VideoRoom';
-import { CLUB_THEMES } from '@/themes/clubs';
 
 interface LobbyParticipant {
   id: string;
@@ -158,7 +157,7 @@ export default function TrueLobby() {
   }
 
   const connectedPlayers = Object.values(state.players).filter(
-    (p) => p.isConnected,
+    (p: import('@/types/game').Player) => p.isConnected,
   ).length;
   const hostMobileConnected = myParticipant.type === 'host-mobile' || false; // TODO: Track this in global state
 
@@ -192,7 +191,10 @@ export default function TrueLobby() {
                 <p className="text-white font-arabic mb-2">إعدادات الأسئلة:</p>
                 <div className="text-sm text-white/70 font-arabic space-y-1">
                   {Object.entries(state.segments).map(
-                    ([segmentCode, segment]) => (
+                    ([segmentCode, segment]: [
+                      import('@/types/game').SegmentCode,
+                      import('@/types/game').SegmentState,
+                    ]) => (
                       <div key={segmentCode} className="flex justify-between">
                         <span>{segmentCode}:</span>
                         <span>{segment.questionsPerSegment} سؤال</span>
@@ -310,9 +312,6 @@ export default function TrueLobby() {
             const isMe =
               myParticipant.type === 'player' &&
               myParticipant.playerId === playerId;
-            const clubTheme =
-              CLUB_THEMES[player.club as keyof typeof CLUB_THEMES] ||
-              CLUB_THEMES.liverpool;
 
             return (
               <div
@@ -323,10 +322,7 @@ export default function TrueLobby() {
                     : 'from-gray-800/30 to-gray-700/30 border-gray-500/30'
                 }`}
               >
-                <h3
-                  className="text-xl font-bold text-center mb-4 font-arabic"
-                  style={{ color: clubTheme.primary }}
-                >
+                <h3 className="text-xl font-bold text-center mb-4 text-accent2 font-arabic">
                   لاعب {index + 1} {isMe && '(أنت)'}
                 </h3>
 

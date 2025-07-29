@@ -1,5 +1,5 @@
 // Get all logo files from the assets/logos directory as URLs
-const logoModules = import.meta.glob('../assets/logos/*.svg', {
+const logoModules = import.meta.glob('@/assets/logos/*.svg', {
   eager: true,
   as: 'url',
 }) as Record<string, string>;
@@ -16,7 +16,7 @@ export function getAllTeams(): Team[] {
 
   for (const path in logoModules) {
     const logoPath = logoModules[path];
-    // Extract team name from file path (e.g., "../assets/logos/real-madrid.svg" -> "real-madrid")
+    // Extract team name from file path (e.g., "@/assets/logos/real-madrid.svg" -> "real-madrid")
     const fileName = path.split('/').pop()?.replace('.svg', '') || '';
 
     // Convert kebab-case to Title Case (e.g., "real-madrid" -> "Real Madrid")

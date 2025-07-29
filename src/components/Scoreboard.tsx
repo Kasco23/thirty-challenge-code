@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useGame } from '../hooks/useGame';
+import { useGame } from '@/hooks/useGame';
 import type { PlayerId } from '../types/game';
 
 export default function Scoreboard() {
