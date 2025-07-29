@@ -4,11 +4,10 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "package.json"
-      - "vite.config.ts"
-      - "netlify/functions/**"
-      - "src/**"
-      - ".github/workflows/madge-dependency-map.yml"
+      - 'package.json'
+      - 'vite.config.ts'
+      - 'netlify/functions/**'
+      - 'src/**'
 
 permissions:
   contents: write
@@ -44,7 +43,7 @@ jobs:
       - name: Run Madge and generate JSON
         run: |
           # Include functions from the repo root
-          npx madge src ../netlify/functions \
+          npx madge src netlify/functions \
             --extensions ts,tsx \
             --exclude "^node_modules" \
             --json > full-dependency-map.json
