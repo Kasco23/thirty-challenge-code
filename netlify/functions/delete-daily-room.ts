@@ -1,36 +1,36 @@
-import type { Handler } from "@netlify/functions";
+import type { Handler } from '@netlify/functions';
 
 /**
  * Delete a Daily.co video room by name.
  * This is triggered via POST request with JSON body `{ roomName }`.
  */
 export const handler: Handler = async (event) => {
-  if (event.httpMethod !== "POST") {
+  if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      body: JSON.stringify({ error: "Method not allowed" }),
+      body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }
 
   if (!process.env.DAILY_API_KEY) {
-    console.error("DAILY_API_KEY environment variable is missing");
+    console.error('DAILY_API_KEY environment variable is missing');
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Daily API key not configured" }),
+      body: JSON.stringify({ error: 'Daily API key not configured' }),
     };
   }
 
   try {
-    const { roomName } = JSON.parse(event.body || "{}");
+    const { roomName } = JSON.parse(event.body || '{}');
     if (!roomName) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "Room name is required" }),
+        body: JSON.stringify({ error: 'Room name is required' }),
       };
     }
 
     const response = await fetch(`https://api.daily.co/v1/rooms/${roomName}`, {
-      method: "DELETE",
+      method: 'DELETE',
       headers: {
         Authorization: `Bearer ${process.env.DAILY_API_KEY}`,
       },
@@ -38,26 +38,26 @@ export const handler: Handler = async (event) => {
 
     if (!response.ok) {
       const error = await response.text();
-      console.error("Daily.co API delete error:", error);
+      console.error('Daily.co API delete error:', error);
       return {
         statusCode: response.status,
-        body: JSON.stringify({ error: "Failed to delete room" }),
+        body: JSON.stringify({ error: 'Failed to delete room' }),
       };
     }
 
     return {
       statusCode: 200,
       headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
       },
       body: JSON.stringify({ success: true }),
     };
   } catch (error) {
-    console.error("Function error:", error);
+    console.error('Function error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: "Internal server error" }),
+      body: JSON.stringify({ error: 'Internal server error' }),
     };
   }
 };

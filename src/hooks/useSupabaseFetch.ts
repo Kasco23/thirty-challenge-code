@@ -4,15 +4,15 @@
  */
 export async function useSupabaseFetch<T = unknown>(
   url: string,
-  init: RequestInit & { skipAuth?: boolean } = {}
+  init: RequestInit & { skipAuth?: boolean } = {},
 ): Promise<T> {
   // Build a proper Headers instance
   const headers = new Headers(init.headers);
-  headers.set("Accept", "application/json");
-  
+  headers.set('Accept', 'application/json');
+
   // Inject the anon API key unless skipAuth is true
   if (!init.skipAuth) {
-    headers.set("apikey", import.meta.env.VITE_SUPABASE_ANON_KEY);
+    headers.set('apikey', import.meta.env.VITE_SUPABASE_ANON_KEY);
   }
 
   // Perform the request

@@ -22,7 +22,8 @@ const dependenciesLimiter = rateLimit({
   legacyHeaders: false, // Disable the X-RateLimit-* headers
 });
 
-const REPO_ZIP_URL = 'https://github.com/Kasco23/thirty-challenge/archive/refs/heads/main.zip';
+const REPO_ZIP_URL =
+  'https://github.com/Kasco23/thirty-challenge/archive/refs/heads/main.zip';
 
 app.get('/dependencies', dependenciesLimiter, async (req, res) => {
   const file = req.query.path;
@@ -34,7 +35,7 @@ app.get('/dependencies', dependenciesLimiter, async (req, res) => {
     const zipResponse = await axios({
       method: 'GET',
       url: REPO_ZIP_URL,
-      responseType: 'stream'
+      responseType: 'stream',
     });
 
     // Step 2: Extract the ZIP
@@ -64,7 +65,7 @@ app.get('/dependencies', dependenciesLimiter, async (req, res) => {
     res.json({
       file: requestedFile,
       dependencies,
-      importedBy
+      importedBy,
     });
   } catch (err) {
     console.error(err);
@@ -73,8 +74,7 @@ app.get('/dependencies', dependenciesLimiter, async (req, res) => {
     // Clean up temp files
     await fs.remove(tempDir);
   }
-})
+});
 app.listen(PORT, () => {
   console.log(`✅ Server listening on port ${PORT}`);
 });
-

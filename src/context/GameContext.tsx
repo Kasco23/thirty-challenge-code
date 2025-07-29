@@ -27,7 +27,11 @@ function reducer(state: GameState, update: Partial<GameState>): GameState {
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
-  return <GameContext.Provider value={{ state, dispatch }}>{children}</GameContext.Provider>;
+  return (
+    <GameContext.Provider value={{ state, dispatch }}>
+      {children}
+    </GameContext.Provider>
+  );
 }
 
 export function useGame() {

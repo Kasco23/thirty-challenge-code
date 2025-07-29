@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getAllTeams, searchTeams, searchFlags } from '../../../thirty-challenge/src/utils/teamUtils';
+import {
+  getAllTeams,
+  searchTeams,
+  searchFlags,
+} from '../../../thirty-challenge/src/utils/teamUtils';
 import { GameDatabase } from '../../../thirty-challenge/src/lib/gameDatabase';
 
 export default function Join() {

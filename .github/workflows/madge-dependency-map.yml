@@ -7,7 +7,7 @@ on:
       - "package.json"
       - "vite.config.ts"
       - "netlify/functions/**"
-      - "thirty-challenge/src/**"
+      - "src/**"
       - ".github/workflows/madge-dependency-map.yml"
 
 permissions:
@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./thirty-challenge
+        working-directory: .
 
     steps:
       - uses: actions/checkout@v4

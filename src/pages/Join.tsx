@@ -37,7 +37,10 @@ export default function Join() {
           placeholder="Room ID"
           className="w-full rounded border p-2"
         />
-        <button type="submit" className="w-full rounded bg-blue-600 p-2 text-white">
+        <button
+          type="submit"
+          className="w-full rounded bg-blue-600 p-2 text-white"
+        >
           Join Room
         </button>
       </form>

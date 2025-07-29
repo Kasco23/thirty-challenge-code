@@ -9,7 +9,9 @@ const { VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY } = import.meta.env as {
 };
 
 if (!VITE_SUPABASE_URL || !VITE_SUPABASE_ANON_KEY) {
-  console.error('Supabase env vars VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY are missing.');
+  console.error(
+    'Supabase env vars VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY are missing.',
+  );
 }
 
 // Fallback values to avoid runtime crashes if environment variables are not set

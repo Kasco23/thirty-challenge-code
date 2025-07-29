@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest        # ← here’s your “runs-on”
     defaults:
       run:
-        working-directory: thirty-challenge
+        working-directory: .
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
