@@ -4,20 +4,13 @@
   "netlify/functions/delete-daily-room.ts": [],
   "netlify/functions/game-event.ts": [],
   "src/App.tsx": [],
-  "src/components/Buzzer.tsx": [
-    "src/hooks/useGame.ts"
-  ],
+  "src/components/Buzzer.tsx": [],
   "src/components/ConnectionBanner.tsx": [],
   "src/components/Scoreboard.tsx": [
-    "src/hooks/useGame.ts",
     "src/types/game.ts"
   ],
-  "src/components/Timer.tsx": [
-    "src/hooks/useGame.ts"
-  ],
-  "src/components/VideoRoom.tsx": [
-    "src/hooks/useGame.ts"
-  ],
+  "src/components/Timer.tsx": [],
+  "src/components/VideoRoom.tsx": [],
   "src/context/GameContext.tsx": [],
   "src/context/GameContextDefinition.ts": [
     "src/types/game.ts"
@@ -26,9 +19,7 @@
     "src/types/game.ts"
   ],
   "src/hooks/useErrorLog.ts": [],
-  "src/hooks/useGame.ts": [
-    "src/context/GameContextDefinition.ts"
-  ],
+  "src/hooks/useGame.ts": [],
   "src/hooks/useSupabaseFetch.ts": [],
   "src/index.css": [],
   "src/lib/gameDatabase.ts": [
@@ -51,10 +42,6 @@
   "src/pages/QuizRoom.tsx": [],
   "src/pages/Scoreboard.tsx": [],
   "src/pages/SegmentIntro.tsx": [],
-  "src/pages/TestAPI.tsx": [
-    "src/lib/supabaseClient.ts"
-  ],
-  "src/themes/clubs.ts": [],
   "src/types/game.ts": [],
   "src/utils/teamUtils.ts": [],
   "src/vite-env.d.ts": []
