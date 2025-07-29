@@ -7,6 +7,7 @@
     "dev": "vite",
     "dev:netlify": "netlify dev",
     "build": "tsc -b && vite build",
+    "test": "jest --passWithNoTests",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "preview": "vite preview"
