@@ -9,8 +9,7 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
-    "preview": "vite preview",
-    "test": "jest --coverage"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@daily-co/daily-js": "^0.81.0",
