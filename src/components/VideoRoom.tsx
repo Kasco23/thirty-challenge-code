@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState, useCallback } from 'react';
 import DailyIframe from '@daily-co/daily-js';
-import { useGame } from '../hooks/useGame';
+import { useGame } from '@/hooks/useGame';
 
 interface VideoRoomProps {
   gameId: string;

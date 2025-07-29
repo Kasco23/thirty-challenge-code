@@ -116,11 +116,13 @@ export default function QuizRoom() {
                   <div className="bg-white/20 rounded-lg p-4">
                     <p className="text-white font-arabic mb-2">الإجابات:</p>
                     <ul className="space-y-1">
-                      {questions[0]?.answers.map((answer, index) => (
-                        <li key={index} className="text-accent2 font-arabic">
-                          • {answer}
-                        </li>
-                      ))}
+                      {questions[0]?.answers.map(
+                        (answer: string, index: number) => (
+                          <li key={index} className="text-accent2 font-arabic">
+                            • {answer}
+                          </li>
+                        ),
+                      )}
                     </ul>
                   </div>
                 </div>
