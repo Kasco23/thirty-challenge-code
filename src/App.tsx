@@ -1,12 +1,14 @@
 import { Routes, Route } from 'react-router-dom';
-import { GameProvider } from './context/GameContext';
-import ConnectionBanner from './components/ConnectionBanner';
+import { GameProvider } from '@/context/GameContext';
+import ConnectionBanner from '@/components/ConnectionBanner';
 
 // Only import the minimal set of pages needed for this test branch.
-import Landing from './pages/Landing';
-import Join from './pages/Join';
-import TestAPI from './pages/TestAPI';
-import NotFound from './pages/NotFound';
+import Landing from '@/pages/Landing';
+import Join from '@/pages/Join';
+import Lobby from '@/pages/Lobby';
+import QuizRoom from '@/pages/QuizRoom';
+import FinalScores from '@/pages/FinalScores';
+import NotFound from '@/pages/NotFound';
 
 /**
  * Root application component.  The `Test_arena` branch aims to focus on
@@ -22,7 +24,9 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/join" element={<Join />} />
-          <Route path="/test-api" element={<TestAPI />} />
+          <Route path="/lobby" element={<Lobby />} />
+          <Route path="/quiz" element={<QuizRoom />} />
+          <Route path="/scores" element={<FinalScores />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
