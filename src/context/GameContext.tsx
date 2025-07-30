@@ -75,7 +75,67 @@ export function useGame() {
 
   const advanceQuestion = () => dispatch({ type: 'ADVANCE_QUESTION' });
 
+  // ================= Daily.co video helpers =================
+  const callFn = async (name: string, payload: unknown) => {
+    const res = await fetch(`/.netlify/functions/${name}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    return res.json();
+  };
+
+  const createVideoRoom = async (gameId: string) => {
+    const result = (await callFn('create-daily-room', {
+      roomName: gameId,
+    })) as {
+      url?: string;
+      error?: string;
+    };
+    if (result.url) {
+      await GameDatabase.updateGame(gameId, {
+        video_room_url: result.url,
+        video_room_created: true,
+      });
+      return { success: true, roomUrl: result.url };
+    }
+    return { success: false, error: result.error || 'create failed' };
+  };
+
+  const endVideoRoom = async (gameId: string) => {
+    await callFn('delete-daily-room', { roomName: gameId });
+    await GameDatabase.updateGame(gameId, {
+      video_room_created: false,
+      video_room_url: null,
+    });
+    return { success: true };
+  };
+
+  const generateDailyToken = async (
+    room: string,
+    user: string,
+    isHost: boolean,
+  ) => {
+    const result = (await callFn('create-daily-token', {
+      room,
+      user,
+      isHost,
+    })) as { token?: string; error?: string };
+    if (result.token) return { success: true, token: result.token };
+    return { success: false, error: result.error || 'token failed' };
+  };
+
   // Return legacy actions object for backward compatibility
   const actions: Record<string, (...args: unknown[]) => unknown> = {};
-  return { state, dispatch, startSession, startGame, advanceQuestion, actions };
+  return {
+    state,
+    dispatch,
+    startSession,
+    startGame,
+    advanceQuestion,
+    createVideoRoom,
+    endVideoRoom,
+    generateDailyToken,
+    actions,
+  };
 }
