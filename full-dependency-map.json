@@ -37,6 +37,7 @@
     "src/App.tsx"
   ],
   "src/pages/ControlRoom.tsx": [],
+  "src/pages/CreateSession.tsx": [],
   "src/pages/FinalScores.tsx": [],
   "src/pages/Join.tsx": [],
   "src/pages/Landing.tsx": [],
