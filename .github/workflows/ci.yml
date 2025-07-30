@@ -16,8 +16,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install dependencies
-        run: npm ci
+      - name: Install deps
+        run: npm install
 
       # Run Jest unit tests. passWithNoTests lets CI succeed if no tests exist.
       - name: Run tests

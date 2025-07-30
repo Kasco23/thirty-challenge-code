@@ -7,6 +7,7 @@ import Landing from '@/pages/Landing';
 import Join from '@/pages/Join';
 import Lobby from '@/pages/Lobby';
 import QuizRoom from '@/pages/QuizRoom';
+import ControlRoom from '@/pages/ControlRoom';
 import FinalScores from '@/pages/FinalScores';
 import NotFound from '@/pages/NotFound';
 
@@ -25,6 +26,8 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/join" element={<Join />} />
           <Route path="/lobby" element={<Lobby />} />
+          {/* Dedicated host control screen */}
+          <Route path="/control-room" element={<ControlRoom />} />
           <Route path="/quiz" element={<QuizRoom />} />
           <Route path="/scores" element={<FinalScores />} />
           <Route path="*" element={<NotFound />} />
