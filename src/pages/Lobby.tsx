@@ -217,7 +217,7 @@ export default function TrueLobby() {
                   <p>
                     رمز المقدم (للهاتف):{' '}
                     <span className="font-mono text-blue-300">
-                      {gameId}-HOST
+                      {state.hostCode}
                     </span>
                   </p>
                   <p>
@@ -423,7 +423,10 @@ export default function TrueLobby() {
                 <>
                   <p>• هذا الجهاز للتحكم في اللعبة فقط</p>
                   <p>• اضغط "إنشاء غرفة الفيديو" لبدء الفيديو</p>
-                  <p>• للمشاركة بالفيديو، انضم من هاتفك برمز: {gameId}-HOST</p>
+                  <p>
+                    • للمشاركة بالفيديو، انضم من هاتفك برمز المقدم{' '}
+                    {state.hostCode}
+                  </p>
                   <p>• انتظر انضمام اللاعبين ثم اضغط "بدء اللعبة"</p>
                 </>
               )}
