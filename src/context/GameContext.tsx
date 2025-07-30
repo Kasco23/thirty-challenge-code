@@ -111,18 +111,32 @@ export function useGame() {
     return { success: true };
   };
 
+  /**
+   * Request a Daily.co meeting token for a participant.
+   *
+   * @param room - Daily.co room name
+   * @param user - Display name for the token
+   * @param isHost - Whether the user should have host privileges
+   * @returns The token string, or null if generation failed
+   */
   const generateDailyToken = async (
     room: string,
     user: string,
     isHost: boolean,
-  ) => {
-    const result = (await callFn('create-daily-token', {
-      room,
-      user,
-      isHost,
-    })) as { token?: string; error?: string };
-    if (result.token) return { success: true, token: result.token };
-    return { success: false, error: result.error || 'token failed' };
+  ): Promise<string | null> => {
+    try {
+      const res = await fetch('/.netlify/functions/create-daily-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ room, user, isHost }),
+      });
+      const json = (await res.json()) as { token?: string; error?: string };
+      if (!json.token) throw new Error(json.error || 'No token');
+      return json.token;
+    } catch (err) {
+      console.error('generateDailyToken error', err);
+      return null;
+    }
   };
 
   // Return legacy actions object for backward compatibility
