@@ -1,5 +1,12 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 // GameState and PlayerId types are not needed in this module
+const FALLBACK_SEGMENT_SETTINGS: Record<string, number> = {
+ WSHA: 4,
+ AUCT: 4,
+ BELL: 10,
+ SING: 10,
+ REMO: 4,
+};
 
 export interface GameRecord {
   id: string;
@@ -69,7 +76,10 @@ export class GameDatabase {
           host_code: hostCode,
           host_name: hostName,
           phase: 'CONFIG',
-          segment_settings: segmentSettings,
+          segment_settings:  
+            Object.keys(segmentSettings).length
+              ? segmentSettings
+              : FALLBACK_SEGMENT_SETTINGS,
         })
         .select()
         .single();
