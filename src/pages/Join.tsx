@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { getAllTeams, searchTeams, searchFlags } from '@/utils/teamUtils';
 import { GameDatabase } from '@/lib/gameDatabase';
+import { supabase } from '@/lib/supabaseClient';
 
 export default function Join() {
   const navigate = useNavigate();
@@ -30,28 +31,45 @@ export default function Join() {
     setErrorMsg('');
     if (!gameId.trim()) return;
 
-    const actualGameId = gameId.toUpperCase().replace('-HOST', '');
-    const existing = await GameDatabase.getGame(actualGameId);
-    if (!existing) {
-      setErrorMsg('لا توجد جلسة بهذا الرمز');
-      return;
-    }
-
     if (joinType === 'host') {
-      navigate(`/lobby/${actualGameId}?role=host-mobile`);
+      const hostCode = gameId.toUpperCase();
+      const { data } = await supabase
+        .from('games')
+        .select('id')
+        .eq('host_code', hostCode)
+        .single();
+      const foundId = data?.id;
+      if (!foundId) {
+        setErrorMsg('لا توجد جلسة بهذا الرمز');
+        return;
+      }
+      navigate(`/lobby/${foundId}?role=host-mobile`);
     } else {
+      const actualGameId = gameId.toUpperCase();
+      const existing = await GameDatabase.getGame(actualGameId);
+      if (!existing) {
+        setErrorMsg('لا توجد جلسة بهذا الرمز');
+        return;
+      }
       setStep(3);
     }
   };
 
-  const handlePlayerJoin = (e: React.FormEvent) => {
+  const handlePlayerJoin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (name.trim() && selectedFlag && selectedTeam) {
-      const playerRole = 'playerA'; // You might want to make this dynamic based on available slots
-      navigate(
-        `/lobby/${gameId.toUpperCase()}?role=${playerRole}&name=${encodeURIComponent(name)}&flag=${selectedFlag}&club=${selectedTeam}&autoJoin=true`,
-      );
-    }
+    if (!name.trim() || !selectedFlag || !selectedTeam) return;
+
+    const playerRole = 'playerA'; // TODO: choose open slot dynamically
+    const sessionId = gameId.toUpperCase();
+
+    await GameDatabase.addPlayer(playerRole, sessionId, {
+      name,
+      flag: selectedFlag,
+      club: selectedTeam,
+      role: playerRole,
+    });
+
+    navigate(`/lobby/${sessionId}?role=${playerRole}`);
   };
 
   return (
