@@ -2,7 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import { GameProvider } from '@/context/GameContext';
 import ConnectionBanner from '@/components/ConnectionBanner';
 
-// Only import the minimal set of pages needed for this test branch.
+// Import the page components required for the early playable build.
 import Landing from '@/pages/Landing';
 import Join from '@/pages/Join';
 import Lobby from '@/pages/Lobby';
@@ -11,10 +11,10 @@ import FinalScores from '@/pages/FinalScores';
 import NotFound from '@/pages/NotFound';
 
 /**
- * Root application component.  The `Test_arena` branch aims to focus on
- * API and state management logic without the distraction of full game
- * flows.  To that end, the router exposes only the home page, join
- * page, a `/test-api` page for backend testing, and a catch‑all 404.
+ * Root application component. This simplified router is used during
+ * development to focus on core API and state management logic without
+ * the distraction of all game flows. Additional routes will be added as
+ * features mature.
  */
 export default function App() {
   return (

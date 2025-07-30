@@ -28,5 +28,6 @@
   // Exclude legacy code moved into the ignored folder.  This ensures
   // files under `ignored/` are not compiled or type‑checked during
   // development.
-  "exclude": ["ignored/**/*"]
+  // Exclude both ignored and legacy code from compilation
+  "exclude": ["ignored/**/*", "legacy/**/*"]
 }

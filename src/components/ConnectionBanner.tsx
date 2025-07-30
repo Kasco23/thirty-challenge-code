@@ -1,8 +1,8 @@
 /**
- * Simple connection status banner for the Test_arena branch.  In the
- * original application this component reflected real‑time connectivity
- * to both Supabase and Daily.co.  Here it renders a static message
- * indicating that the app is running in test mode.
+ * Displays a simple connection status banner. The full game will eventually
+ * reflect real-time connectivity to Supabase and Daily.co. For now, this
+ * component renders a static message so the UI has some persistent header
+ * content during development.
  */
 export default function ConnectionBanner() {
   return (

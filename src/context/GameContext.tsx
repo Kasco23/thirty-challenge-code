@@ -1,11 +1,10 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 
 /**
- * Minimal game context used for the Test_arena branch.  The full game
- * logic is retained in the `main` branch but removed here to focus on
- * testing Supabase and Daily APIs.  Consumers can access the state
- * object and a dispatch function but should not rely on detailed
- * actions in this stripped‑down version.
+ * Basic game context used during early development. Consumers can access
+ * the state object and a simple dispatch function to mutate it. Extend the
+ * `GameState` interface with any additional properties needed as features
+ * are implemented.
  */
 export interface GameState {
   // Extend this interface with any state needed for your tests
@@ -19,7 +18,12 @@ interface GameContextValue {
 
 const initialState: GameState = {};
 
-const GameContext = createContext<GameContextValue | undefined>(undefined);
+// Export the context so hooks importing from this module share the same
+// instance provided by `GameProvider`. Creating a second context would
+// cause `useGame` to throw an error that it is not inside a provider.
+export const GameContext = createContext<GameContextValue | undefined>(
+  undefined,
+);
 
 function reducer(state: GameState, update: Partial<GameState>): GameState {
   return { ...state, ...update };
