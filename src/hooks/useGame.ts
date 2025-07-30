@@ -1,5 +1,7 @@
 import { useContext } from 'react';
-import { GameContext } from '@/context/GameContextDefinition';
+// Import the context definition from the same file that exports
+// `GameProvider` to ensure both share the exact context instance.
+import { GameContext } from '@/context/GameContext';
 
 export function useGame() {
   const context = useContext(GameContext);
