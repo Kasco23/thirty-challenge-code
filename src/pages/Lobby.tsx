@@ -276,7 +276,7 @@ export default function TrueLobby() {
               {videoRoomCreated && myParticipant.type === 'host-mobile' ? (
                 <VideoRoom
                   gameId={gameId}
-                  userName={state.hostName}
+                  userName={state.hostName ?? ''}
                   userRole="host-mobile"
                   className="w-full h-full"
                 />

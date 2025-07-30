@@ -42,11 +42,9 @@ export function gameReducer(state: GameState, action: GameAction) {
         draft.currentQuestionIndex += 1;
         draft.timer = 0;
         draft.isTimerRunning = false;
-        draft.players = Object.fromEntries(
-          (Object.entries(draft.players) as [PlayerId, Player][]).map(
-            ([id, p]) => [id, { ...p, strikes: 0 }],
-          ),
-        );
+        Object.values(draft.players).forEach((p) => {
+          p.strikes = 0;
+        });
         return;
 
       case 'ADD_PLAYER':
@@ -67,7 +65,9 @@ export function gameReducer(state: GameState, action: GameAction) {
         return;
 
       case 'RESET_STRIKES':
-        Object.values(draft.players).forEach((p) => (p.strikes = 0));
+        Object.values(draft.players).forEach((p) => {
+          p.strikes = 0;
+        });
         return;
 
       case 'COMPLETE_GAME':

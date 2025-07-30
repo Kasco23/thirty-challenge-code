@@ -26,6 +26,7 @@
     "src/lib/supabaseClient.ts"
   ],
   "src/lib/gameSync.ts": [
+    "src/lib/gameDatabase.ts",
     "src/lib/supabaseClient.ts",
     "src/types/game.ts"
   ],
