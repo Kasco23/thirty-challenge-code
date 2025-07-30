@@ -1,0 +1,93 @@
+---
+config:
+  theme: neo-dark
+  layout: dagre
+---
+flowchart TD
+  subgraph HostPC["Host (PC)"]
+    direction TB
+      CreateSession@{ label: "Generate Random Session ID<br>Insert into Supabase (game, Phase='Config')" }
+      EnterName["Enter Name"]
+      SelectSegments["Scroll/Set Segment Questions<br>(5 segments)"]
+      CreateHostCode["Create Host Session Code"]
+      ConfirmPC["Confirm Configuration"]
+      LobbyController["Lobby Screen (Host Quiz Controller)<br>Shows 3 Remote Video Frames, Player &amp; Host Info"]
+      UpdatePhase@{ label: "Supabase: Update Host Info, Phase='Lobby'<br>Daily: Create Video Room &amp; Token" }
+      WaitPlayers["Wait for Players & Host(Phone) to Join"]
+      AlertPopup["Alert: {player_name} is connected"]
+  end
+
+  subgraph HostPhone["Host (Phone)"]
+    direction TB
+      ClickJoinPhone@{ label: "'Join Session'" }
+      ChooseAsHost@{ label: "Choose 'As Host'" }
+      EnterSessionAndCode["Enter Session ID & Host Session Code"]
+      ConfirmPhoneHost["Confirm and Join"]
+      PhoneLobbyEntry["Join Phone Lobby"]
+  end
+
+  subgraph PlayerPhone["Player (Phone)"]
+    direction TB
+      ClickJoinPlayer@{ label: "'Join Session'" }
+      ChooseAsPlayer@{ label: "Choose 'As Player'" }
+      EnterSIDName["Enter Session ID & Name"]
+      ChooseFlag["Choose Flag"]
+      ChooseLogo["Choose Logo"]
+      ConfirmPlayer["Confirm & Join"]
+      UpdatePlayerInfo["Supabase: Update Player Info"]
+      GetPlayerToken["Daily: Create Token & Join Room"]
+      PhoneLobbyPlayerEntry["Join Phone Lobby"]
+  end
+
+  subgraph PhoneLobby["Phone Lobby<br/>(Video: Host+2 Players)"]
+    direction TB
+      HostJoinRoom["Host Joins Video Room"]
+      PlayerJoinRoom["Players Join Video Room"]
+      PhoneLobbyVideo["Phone Lobby Video (3 streams)"]
+  end
+
+  HomePage(["Home Page"]) --> StartSession["Start a Session"] & JoinSession["Join Session"]
+  StartSession --> CreateSession
+  CreateSession --> EnterName
+  EnterName --> SelectSegments
+  SelectSegments --> CreateHostCode
+  CreateHostCode --> ConfirmPC
+  ConfirmPC --> LobbyController
+  LobbyController --> UpdatePhase
+  UpdatePhase --> WaitPlayers
+
+  WaitPlayers -- On Player Join --> AlertPopup
+
+  JoinSession --> ClickJoinPhone & ClickJoinPlayer
+
+  ClickJoinPhone --> ChooseAsHost
+  ChooseAsHost --> EnterSessionAndCode
+  EnterSessionAndCode --> ConfirmPhoneHost
+  ConfirmPhoneHost --> PhoneLobbyEntry
+  PhoneLobbyEntry --> HostJoinRoom
+
+  ClickJoinPlayer --> ChooseAsPlayer
+  ChooseAsPlayer --> EnterSIDName
+  EnterSIDName --> ChooseFlag
+  ChooseFlag --> ChooseLogo
+  ChooseLogo --> ConfirmPlayer
+  ConfirmPlayer --> UpdatePlayerInfo
+  UpdatePlayerInfo --> GetPlayerToken
+  GetPlayerToken --> PhoneLobbyPlayerEntry
+  PhoneLobbyPlayerEntry --> PlayerJoinRoom
+
+  HostJoinRoom & PlayerJoinRoom --> PhoneLobbyVideo
+
+  %% Show connection from Phone Lobby to Host PC lobby as broadcast only (one way)
+  PhoneLobbyVideo -.->|Broadcasts video feeds| LobbyController
+
+  %% Make it clear PhoneLobby is separate from HostPC's LobbyController
+  PhoneLobby -.->|"No back channel (view only)"| LobbyController
+
+  %% Shape and label customizations
+  CreateSession@{ shape: rect }
+  UpdatePhase@{ shape: rect }
+  ClickJoinPhone@{ shape: rect }
+  ChooseAsHost@{ shape: rect }
+  ClickJoinPlayer@{ shape: rect }
+  ChooseAsPlayer@{ shape: rect }
