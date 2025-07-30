@@ -7,8 +7,7 @@ import VideoRoom from '@/components/VideoRoom';
  * quick controls for starting the game or advancing questions.
  */
 export default function ControlRoom() {
-  const { state, startGame, advanceQuestion, createVideoRoom, endVideoRoom } =
-    useGame();
+  const { state, startGame, createVideoRoom, endVideoRoom } = useGame();
 
   const handleCreate = async () => {
     if (!state.gameId) return;
@@ -45,13 +44,6 @@ export default function ControlRoom() {
         >
           ابدأ اللعبة
         </button>
-        <button
-          onClick={() => advanceQuestion()}
-          disabled={state.phase !== 'PLAYING'}
-          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg font-arabic"
-        >
-          السؤال التالي
-        </button>
         {!state.videoRoomCreated ? (
           <button
             onClick={handleCreate}
@@ -71,35 +63,36 @@ export default function ControlRoom() {
 
       {/* Video tiles grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Host mobile video */}
-        <div>
-          <h3 className="text-center text-white font-arabic mb-2">المقدم</h3>
-          <VideoRoom
-            gameId={state.gameId}
-            userName={state.hostName ?? 'المقدم'}
-            userRole="host-mobile"
-          />
-        </div>
-
-        {/* Player A video */}
-        <div>
-          <h3 className="text-center text-white font-arabic mb-2">لاعب 1</h3>
-          <VideoRoom
-            gameId={state.gameId}
-            userName={state.players.playerA.name || 'Player A'}
-            userRole="playerA"
-          />
-        </div>
-
-        {/* Player B video */}
-        <div>
-          <h3 className="text-center text-white font-arabic mb-2">لاعب 2</h3>
-          <VideoRoom
-            gameId={state.gameId}
-            userName={state.players.playerB.name || 'Player B'}
-            userRole="playerB"
-          />
-        </div>
+        {(
+          [
+            {
+              id: 'host-mobile',
+              label: 'المقدم',
+              name: state.hostName ?? 'المقدم',
+            },
+            {
+              id: 'playerA',
+              label: 'لاعب 1',
+              name: state.players.playerA.name || 'Player A',
+            },
+            {
+              id: 'playerB',
+              label: 'لاعب 2',
+              name: state.players.playerB.name || 'Player B',
+            },
+          ] as const
+        ).map((p) => (
+          <div key={p.id as string}>
+            <h3 className="text-center text-white font-arabic mb-2">
+              {p.label}
+            </h3>
+            <VideoRoom
+              gameId={state.gameId}
+              userName={p.name}
+              userRole={p.id as 'host-mobile' | 'playerA' | 'playerB'}
+            />
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -16,7 +16,7 @@ export default function VideoRoom({
   userRole,
   className = '',
 }: VideoRoomProps) {
-  const { state, actions } = useGame();
+  const { state, generateDailyToken } = useGame();
   const callFrameRef = useRef<HTMLDivElement>(null);
   const callObjectRef = useRef<unknown>(null);
   const [isJoining, setIsJoining] = useState(false);
@@ -31,13 +31,13 @@ export default function VideoRoom({
 
     try {
       // Get Daily.co token for this user
-      const tokenResult = (await actions.generateDailyToken(
+      const token = await generateDailyToken(
         gameId,
         userName,
         userRole === 'host-mobile',
-      )) as any;
-      if (!tokenResult.success) {
-        throw new Error(tokenResult.error || 'Failed to get access token');
+      );
+      if (!token) {
+        throw new Error('Failed to get access token');
       }
 
       // Create Daily call object
@@ -87,8 +87,8 @@ export default function VideoRoom({
       // Join the meeting
       await (callObject as any).join({
         url: state.videoRoomUrl,
-        token: (tokenResult as any).token,
-        userName: userName,
+        token,
+        userName,
         startVideoOff: false,
         startAudioOff: false,
       });
@@ -102,7 +102,7 @@ export default function VideoRoom({
       setError(errorMessage);
       setIsJoining(false);
     }
-  }, [actions, gameId, userName, userRole, state.videoRoomUrl]);
+  }, [generateDailyToken, gameId, userName, userRole, state.videoRoomUrl]);
 
   // Join the video call when room is available
   useEffect(() => {
