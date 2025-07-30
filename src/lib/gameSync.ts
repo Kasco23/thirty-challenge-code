@@ -1,14 +1,31 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabase, isSupabaseConfigured } from './supabaseClient';
-import type { GameState, PlayerId } from '../types/game';
+import type { GameRecord, PlayerRecord } from './gameDatabase';
+import type { Dispatch } from 'react';
+import type { GameState, PlayerId, Player } from '../types/game';
+import type { GameAction } from '@/context/gameReducer';
+import { mapRecordToState } from '@/context/GameContext';
+
+function mapPlayerRecord(record: PlayerRecord): Player {
+  return {
+    id: record.id as PlayerId,
+    name: record.name,
+    flag: record.flag ?? undefined,
+    club: record.club ?? undefined,
+    score: record.score,
+    strikes: record.strikes,
+    isConnected: record.is_connected,
+    specialButtons: record.special_buttons as Player['specialButtons'],
+  };
+}
 
 export interface GameSyncCallbacks {
-  onGameStateUpdate: (gameState: Partial<GameState>) => void;
-  onPlayerJoin: (playerId: PlayerId, playerData: unknown) => void;
-  onPlayerLeave: (playerId: PlayerId) => void;
-  onHostUpdate: (hostName: string) => void;
-  onVideoRoomUpdate: (roomUrl: string, roomCreated: boolean) => void;
-  onPresenceStateChange?: (state: Record<string, unknown>) => void;
+  onGameStateUpdate: (_gameState: Partial<GameState>) => void;
+  onPlayerJoin: (_playerId: PlayerId, _playerData: unknown) => void;
+  onPlayerLeave: (_playerId: PlayerId) => void;
+  onHostUpdate: (_hostName: string) => void;
+  onVideoRoomUpdate: (_roomUrl: string, _roomCreated: boolean) => void;
+  onPresenceStateChange?: (_state: Record<string, unknown>) => void;
 }
 
 export class GameSync {
@@ -242,4 +259,57 @@ export function createGameSync(
   callbacks: GameSyncCallbacks,
 ): GameSync {
   return new GameSync(gameId, callbacks);
+}
+
+export function attachGameSync(gameId: string, dispatch: Dispatch<GameAction>) {
+  const channel = supabase
+    .channel(`game:${gameId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'games',
+        filter: `id=eq.${gameId}`,
+      },
+      (payload) => {
+        const newRow = payload.new as GameRecord;
+        dispatch({ type: 'INIT', payload: mapRecordToState(newRow) });
+      },
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'players',
+        filter: `game_id=eq.${gameId}`,
+      },
+      (payload) => {
+        const pl = payload.new as PlayerRecord;
+        dispatch({ type: 'ADD_PLAYER', player: mapPlayerRecord(pl) });
+      },
+    )
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'players',
+        filter: `game_id=eq.${gameId}`,
+      },
+      (payload) => {
+        const pl = payload.new as PlayerRecord;
+        dispatch({
+          type: 'UPDATE_PLAYER',
+          id: pl.id as any,
+          partial: mapPlayerRecord(pl),
+        });
+      },
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
 }

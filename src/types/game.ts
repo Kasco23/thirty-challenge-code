@@ -49,7 +49,7 @@ export interface GameState {
   // identity
   gameId: string;
   hostCode: string;
-  hostName: string;
+  hostName: string | null;
 
   // progress
   phase: GamePhase;
