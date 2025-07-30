@@ -1,19 +1,37 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import type { GameState } from '@/types/game';
+import { createContext, useContext, useReducer, ReactNode } from 'react';
+import type { GameState, SegmentCode, Player, PlayerId } from '@/types/game';
+import { GameDatabase, type GameRecord } from '@/lib/gameDatabase';
+import { gameReducer, type GameAction } from './gameReducer';
 
-/**
- * Basic game context used during early development. Consumers can access
- * the state object and a simple dispatch function to mutate it. Extend the
- * `GameState` interface with any additional properties needed as features
- * are implemented.
- */
-interface GameContextValue {
-  state: GameState;
-  dispatch: React.Dispatch<Partial<GameState>>;
-  // Placeholder until real actions are implemented
-  actions: Record<string, (...args: unknown[]) => unknown>;
-}
+/** Default player objects used when initializing game state */
+const defaultPlayers: Record<PlayerId, Player> = {
+  playerA: {
+    id: 'playerA',
+    name: '',
+    score: 0,
+    strikes: 0,
+    isConnected: false,
+    specialButtons: {
+      LOCK_BUTTON: false,
+      TRAVELER_BUTTON: false,
+      PIT_BUTTON: false,
+    },
+  },
+  playerB: {
+    id: 'playerB',
+    name: '',
+    score: 0,
+    strikes: 0,
+    isConnected: false,
+    specialButtons: {
+      LOCK_BUTTON: false,
+      TRAVELER_BUTTON: false,
+      PIT_BUTTON: false,
+    },
+  },
+};
 
+/** Initial in-memory game state */
 const initialState: GameState = {
   gameId: '',
   hostCode: '',
@@ -31,48 +49,36 @@ const initialState: GameState = {
     SING: 0,
     REMO: 0,
   },
-  players: {
-    playerA: {
-      id: 'playerA',
-      name: '',
-      score: 0,
-      isConnected: false,
-      specialButtons: {
-        LOCK_BUTTON: false,
-        TRAVELER_BUTTON: false,
-        PIT_BUTTON: false,
-      },
-    },
-    playerB: {
-      id: 'playerB',
-      name: '',
-      score: 0,
-      isConnected: false,
-      specialButtons: {
-        LOCK_BUTTON: false,
-        TRAVELER_BUTTON: false,
-        PIT_BUTTON: false,
-      },
-    },
-  },
+  players: defaultPlayers,
   scoreHistory: [],
 };
 
-// Export the context so hooks importing from this module share the same
-// instance provided by `GameProvider`. Creating a second context would
-// cause `useGame` to throw an error that it is not inside a provider.
-export const GameContext = createContext<GameContextValue | undefined>(
-  undefined,
-);
-
-function reducer(state: GameState, update: Partial<GameState>): GameState {
-  return { ...state, ...update };
+/** Map a Supabase record to our internal GameState shape */
+function mapRecordToState(record: GameRecord): GameState {
+  return {
+    ...initialState,
+    gameId: record.id,
+    hostCode: record.host_code,
+    hostName: record.host_name ?? '',
+    phase: record.phase as GameState['phase'],
+    currentSegment: record.current_segment as GameState['currentSegment'],
+    currentQuestionIndex: record.current_question_index,
+    videoRoomUrl: record.video_room_url ?? undefined,
+    videoRoomCreated: record.video_room_created,
+    timer: record.timer,
+    isTimerRunning: record.is_timer_running,
+    segmentSettings: record.segment_settings as Record<SegmentCode, number>,
+  };
 }
 
+export const GameContext = createContext<
+  { state: GameState; dispatch: React.Dispatch<GameAction> } | undefined
+>(undefined);
+
 export function GameProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [state, dispatch] = useReducer(gameReducer, initialState);
   return (
-    <GameContext.Provider value={{ state, dispatch, actions: {} }}>
+    <GameContext.Provider value={{ state, dispatch }}>
       {children}
     </GameContext.Provider>
   );
@@ -81,5 +87,31 @@ export function GameProvider({ children }: { children: ReactNode }) {
 export function useGame() {
   const ctx = useContext(GameContext);
   if (!ctx) throw new Error('useGame must be used within a GameProvider');
-  return ctx;
+  const { state, dispatch } = ctx;
+
+  // ================ Helper actions =================
+
+  const startSession = async (
+    gameId: string,
+    hostCode: string,
+    segmentSettings: Record<SegmentCode, number>,
+    hostName?: string,
+  ) => {
+    const record = await GameDatabase.createGame(
+      gameId,
+      hostCode,
+      hostName ?? null,
+      segmentSettings,
+    );
+    if (record) dispatch({ type: 'INIT', payload: mapRecordToState(record) });
+  };
+
+  const startGame = () => dispatch({ type: 'SET_PHASE', phase: 'PLAYING' });
+
+  const advanceQuestion = () => dispatch({ type: 'ADVANCE_QUESTION' });
+
+  // Return legacy actions object for backward compatibility
+  const actions: Record<string, (...args: unknown[]) => unknown> = {};
+
+  return { state, dispatch, startSession, startGame, advanceQuestion, actions };
 }

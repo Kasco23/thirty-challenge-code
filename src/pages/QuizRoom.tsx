@@ -12,7 +12,7 @@ type UserRole = 'host' | 'playerA' | 'playerB';
 export default function QuizRoom() {
   const { gameId } = useParams<{ gameId: string }>();
   const [searchParams] = useSearchParams();
-  const { state, actions } = useGame();
+  const { state, startGame, advanceQuestion, actions } = useGame();
 
   const userRole = (searchParams.get('role') as UserRole) || 'playerA';
   const isMobile = window.innerWidth < 768;
@@ -20,7 +20,7 @@ export default function QuizRoom() {
   // Initialize game if needed
   useState(() => {
     if (gameId && gameId !== state.gameId) {
-      actions.startGame(gameId);
+      startGame();
     }
   });
 
@@ -28,7 +28,7 @@ export default function QuizRoom() {
   const questions = getQuestionsForSegment(state.currentSegment as SegmentCode);
 
   const handleNextQuestion = () => {
-    actions.nextQuestion();
+    advanceQuestion();
   };
 
   const handleNextSegment = () => {
