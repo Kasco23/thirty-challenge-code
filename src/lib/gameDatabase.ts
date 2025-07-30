@@ -1,9 +1,19 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 // GameState and PlayerId types are not needed in this module
 
+/** Default question counts for each segment. */
+const DEFAULT_SEGMENT_SETTINGS: Record<string, number> = {
+  WSHA: 4,
+  AUCT: 4,
+  BELL: 10,
+  SING: 10,
+  REMO: 4,
+};
+
 export interface GameRecord {
   id: string;
   host_name: string | null;
+  host_code: string;
   phase: string;
   current_segment: string;
   current_question_index: number;
@@ -41,9 +51,16 @@ export class GameDatabase {
   // GAME OPERATIONS
   // =====================================
 
+  /**
+   * Create a new game row in the database.
+   * @param gameId Unique game identifier.
+   * @param hostName host display name.
+   * @param hostCode Secret host code used for authentication.
+   */
   static async createGame(
     gameId: string,
     hostName?: string,
+    hostCode: string,
   ): Promise<GameRecord | null> {
     if (!this.isConfigured()) {
       console.warn('Supabase not configured');
@@ -56,7 +73,9 @@ export class GameDatabase {
         .insert({
           id: gameId,
           host_name: hostName || null,
-          phase: 'lobby',
+          host_code: hostCode,
+          phase: 'CONFIG',
+          segment_settings: DEFAULT_SEGMENT_SETTINGS,
         })
         .select()
         .single();
@@ -73,6 +92,10 @@ export class GameDatabase {
     }
   }
 
+  /**
+   * Fetch a game by its ID.
+   * @param gameId The game ID to look up.
+   */
   static async getGame(gameId: string): Promise<GameRecord | null> {
     if (!this.isConfigured()) return null;
 
@@ -95,6 +118,38 @@ export class GameDatabase {
     }
   }
 
+  /**
+   * Look up a game using both its ID and host code to avoid collisions.
+   */
+  static async getGameByHostCode(
+    gameId: string,
+    hostCode: string,
+  ): Promise<GameRecord | null> {
+    if (!this.isConfigured()) return null;
+
+    try {
+      const { data, error } = await supabase
+        .from('games')
+        .select('*')
+        .eq('id', gameId)
+        .eq('host_code', hostCode)
+        .single();
+
+      if (error) {
+        console.error('Error fetching game with host code:', error);
+        return null;
+      }
+
+      return data as GameRecord;
+    } catch (error) {
+      console.error('Error fetching game with host code:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Update a game record with the provided fields.
+   */
   static async updateGame(
     gameId: string,
     updates: Partial<GameRecord>,
