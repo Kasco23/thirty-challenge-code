@@ -3,11 +3,11 @@ import { supabase, isSupabaseConfigured } from './supabaseClient';
 
 /** Default question counts for each segment. */
 const DEFAULT_SEGMENT_SETTINGS: Record<string, number> = {
-  WSHA: 10,
-  AUCT: 8,
-  BELL: 12,
-  SING: 6,
-  REMO: 5,
+  WSHA: 4,
+  AUCT: 4,
+  BELL: 10,
+  SING: 10,
+  REMO: 4,
 };
 
 export interface GameRecord {
@@ -54,7 +54,7 @@ export class GameDatabase {
   /**
    * Create a new game row in the database.
    * @param gameId Unique game identifier.
-   * @param hostName Optional host display name.
+   * @param hostName host display name.
    * @param hostCode Secret host code used for authentication.
    */
   static async createGame(
