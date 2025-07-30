@@ -191,10 +191,7 @@ export default function TrueLobby() {
                 <p className="text-white font-arabic mb-2">إعدادات الأسئلة:</p>
                 <div className="text-sm text-white/70 font-arabic space-y-1">
                   {Object.entries(state.segments).map(
-                    ([segmentCode, segment]: [
-                      import('@/types/game').SegmentCode,
-                      import('@/types/game').SegmentState,
-                    ]) => (
+                    ([segmentCode, segment]) => (
                       <div key={segmentCode} className="flex justify-between">
                         <span>{segmentCode}:</span>
                         <span>{segment.questionsPerSegment} سؤال</span>
