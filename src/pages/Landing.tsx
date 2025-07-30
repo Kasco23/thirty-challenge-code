@@ -9,6 +9,13 @@ export default function Landing() {
   const [isCreating, setIsCreating] = useState(false);
   const [customGameId, setCustomGameId] = useState('');
   const [useCustomId, setUseCustomId] = useState(false);
+  const [segmentSettingsState] = useState({
+    WSHA: 4,
+    AUCT: 4,
+    BELL: 10,
+    SING: 10,
+    REMO: 4,
+  });
 
   const handleCreateSession = async () => {
     setIsCreating(true);
@@ -20,16 +27,10 @@ export default function Landing() {
           : Math.random().toString(36).substring(2, 8).toUpperCase();
 
       // Persist new session then move to host setup
-      await startSession(gameId, `${gameId}-HOST`, {
-        WSHA: 4,
-        AUCT: 4,
-        BELL: 10,
-        SING: 10,
-        REMO: 4,
-      });
+      await startSession(gameId, `${gameId}-HOST`, null, segmentSettingsState);
 
       // Navigate to host setup page
-      navigate(`/host-setup/${gameId}`, { replace: true });
+      navigate('/control-room');
     } catch (error) {
       console.error('Failed to start session:', error);
       setIsCreating(false);

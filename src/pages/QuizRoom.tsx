@@ -12,7 +12,10 @@ type UserRole = 'host' | 'playerA' | 'playerB';
 export default function QuizRoom() {
   const { gameId } = useParams<{ gameId: string }>();
   const [searchParams] = useSearchParams();
-  const { state, startGame, advanceQuestion, actions } = useGame();
+  const { state, startSession, startGame, advanceQuestion, actions } =
+    useGame();
+  // Currently unused helpers prepared for later features
+  void startSession;
 
   const userRole = (searchParams.get('role') as UserRole) || 'playerA';
   const isMobile = window.innerWidth < 768;
