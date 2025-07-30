@@ -12,6 +12,8 @@ export interface Player {
   name: string;
   flag?: string;
   club?: string;
+  /** Role of the player e.g. 'playerA' or 'playerB' */
+  role?: string;
   score: number;
   strikes?: number; // resets each question
   isConnected: boolean;

@@ -5,39 +5,12 @@ import {
   ReactNode,
   useEffect,
 } from 'react';
-import type { GameState, SegmentCode, Player, PlayerId } from '@/types/game';
+import type { GameState, SegmentCode } from '@/types/game';
 import { GameDatabase, type GameRecord } from '@/lib/gameDatabase';
 import { attachGameSync } from '@/lib/gameSync';
 import { gameReducer, type GameAction } from './gameReducer';
 import { initialGameState } from './initialGameState';
-
-/** Default player objects used when initializing game state */
-export const defaultPlayers: Record<PlayerId, Player> = {
-  playerA: {
-    id: 'playerA',
-    name: '',
-    score: 0,
-    strikes: 0,
-    isConnected: false,
-    specialButtons: {
-      LOCK_BUTTON: false,
-      TRAVELER_BUTTON: false,
-      PIT_BUTTON: false,
-    },
-  },
-  playerB: {
-    id: 'playerB',
-    name: '',
-    score: 0,
-    strikes: 0,
-    isConnected: false,
-    specialButtons: {
-      LOCK_BUTTON: false,
-      TRAVELER_BUTTON: false,
-      PIT_BUTTON: false,
-    },
-  },
-};
+import { defaultPlayers } from './defaults';
 
 /** Map a Supabase record to our internal GameState shape */
 export function mapRecordToState(record: GameRecord): GameState {
@@ -54,6 +27,7 @@ export function mapRecordToState(record: GameRecord): GameState {
     timer: record.timer,
     isTimerRunning: record.is_timer_running,
     segmentSettings: record.segment_settings as Record<SegmentCode, number>,
+    players: defaultPlayers,
   };
 }
 

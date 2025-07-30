@@ -1,5 +1,5 @@
 import type { GameState } from '@/types/game';
-import { defaultPlayers } from './GameContext';
+import { defaultPlayers } from './defaults';
 
 export const initialGameState: GameState = {
   gameId: '',
