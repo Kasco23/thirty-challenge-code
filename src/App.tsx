@@ -4,6 +4,7 @@ import ConnectionBanner from '@/components/ConnectionBanner';
 
 // Import the page components required for the early playable build.
 import Landing from '@/pages/Landing';
+import CreateSession from '@/pages/CreateSession';
 import Join from '@/pages/Join';
 import Lobby from '@/pages/Lobby';
 import QuizRoom from '@/pages/QuizRoom';
@@ -24,10 +25,10 @@ export default function App() {
         <ConnectionBanner />
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/create-session" element={<CreateSession />} />
+          <Route path="/control-room" element={<ControlRoom />} />
           <Route path="/join" element={<Join />} />
           <Route path="/lobby" element={<Lobby />} />
-          {/* Dedicated host control screen */}
-          <Route path="/control-room" element={<ControlRoom />} />
           <Route path="/quiz" element={<QuizRoom />} />
           <Route path="/scores" element={<FinalScores />} />
           <Route path="*" element={<NotFound />} />

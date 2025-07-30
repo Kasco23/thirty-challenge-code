@@ -1,40 +1,16 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useGame } from '@/hooks/useGame';
-import { useState } from 'react';
 
+/**
+ * Landing page with simple navigation options. Hosts can create a
+ * new session while players can join an existing one. All detailed
+ * session setup now lives on the CreateSession page.
+ */
 export default function Landing() {
   const navigate = useNavigate();
-  const { startSession } = useGame();
-  const [isCreating, setIsCreating] = useState(false);
-  const [customGameId, setCustomGameId] = useState('');
-  const [useCustomId, setUseCustomId] = useState(false);
-  const [segmentSettingsState] = useState({
-    WSHA: 4,
-    AUCT: 4,
-    BELL: 10,
-    SING: 10,
-    REMO: 4,
-  });
 
-  const handleCreateSession = async () => {
-    setIsCreating(true);
-    try {
-      // Use custom game ID or generate a random one
-      const gameId =
-        useCustomId && customGameId.trim()
-          ? customGameId.trim().toUpperCase()
-          : Math.random().toString(36).substring(2, 8).toUpperCase();
-
-      // Persist new session then move to host setup
-      await startSession(gameId, `${gameId}-HOST`, null, segmentSettingsState);
-
-      // Navigate to host setup page
-      navigate('/control-room');
-    } catch (error) {
-      console.error('Failed to start session:', error);
-      setIsCreating(false);
-    }
+  const handleCreateSession = () => {
+    navigate('/create-session');
   };
 
   const handleJoinGame = () => {
@@ -56,9 +32,7 @@ export default function Landing() {
 
       <motion.h1
         className="text-5xl sm:text-7xl font-extrabold mb-6 text-accent glow font-arabic text-center"
-        style={{
-          textShadow: '0 0 30px #7c3aed, 0 0 20px #38bdf8',
-        }}
+        style={{ textShadow: '0 0 30px #7c3aed, 0 0 20px #38bdf8' }}
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
@@ -81,49 +55,11 @@ export default function Landing() {
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.6 }}
       >
-        {/* Custom Game ID Option */}
-        <div className="w-full">
-          <label className="flex items-center gap-2 text-white/80 text-sm font-arabic mb-3">
-            <input
-              type="checkbox"
-              checked={useCustomId}
-              onChange={(e) => setUseCustomId(e.target.checked)}
-              className="rounded"
-            />
-            استخدام رمز جلسة مخصص
-          </label>
-
-          {useCustomId && (
-            <motion.input
-              type="text"
-              value={customGameId}
-              onChange={(e) =>
-                setCustomGameId(
-                  e.target.value.replace(/[^A-Za-z0-9]/g, '').substring(0, 8),
-                )
-              }
-              placeholder="ادخل رمز الجلسة (حروف وأرقام فقط)"
-              className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/50 font-mono text-center uppercase"
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              maxLength={8}
-            />
-          )}
-        </div>
-
         <button
           onClick={handleCreateSession}
-          disabled={isCreating || (useCustomId && !customGameId.trim())}
-          className="w-full px-10 py-4 text-xl rounded-2xl font-bold bg-accent2 hover:bg-accent shadow-lg transition-all border border-accent glow disabled:opacity-50 disabled:cursor-not-allowed font-arabic"
+          className="w-full px-10 py-4 text-xl rounded-2xl font-bold bg-accent2 hover:bg-accent shadow-lg transition-all border border-accent glow font-arabic"
         >
-          {isCreating ? (
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              إنشاء الجلسة...
-            </div>
-          ) : (
-            'إنشاء جلسة جديدة'
-          )}
+          إنشاء جلسة جديدة
         </button>
 
         <button
@@ -134,7 +70,6 @@ export default function Landing() {
         </button>
       </motion.div>
 
-      {/* Instructions */}
       <motion.div
         className="mt-12 text-center text-white/60 text-sm max-w-md"
         initial={{ opacity: 0 }}

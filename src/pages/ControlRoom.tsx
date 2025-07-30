@@ -2,14 +2,23 @@ import { useGame } from '@/hooks/useGame';
 import VideoRoom from '@/components/VideoRoom';
 
 /**
- * Dedicated page for quiz hosts to control the game flow.
- * Provides Arabic UI text and shows session codes for players
- * and hosts. The host can start the game or advance to the
- * next question. If a Daily video room has been created, the
- * host's mobile device will join via the VideoRoom component.
+ * Host control interface shown on the PC. Displays join codes,
+ * lets the host create or end the Daily video room, and offers
+ * quick controls for starting the game or advancing questions.
  */
 export default function ControlRoom() {
-  const { state, startGame, advanceQuestion } = useGame();
+  const { state, startGame, advanceQuestion, createVideoRoom, endVideoRoom } =
+    useGame();
+
+  const handleCreate = async () => {
+    if (!state.gameId) return;
+    await createVideoRoom(state.gameId);
+  };
+
+  const handleEnd = async () => {
+    if (!state.gameId) return;
+    await endVideoRoom(state.gameId);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 p-6">
@@ -17,8 +26,8 @@ export default function ControlRoom() {
         غرفة التحكم
       </h1>
 
-      {/* Display the session codes for players and host */}
-      <div className="text-center mb-6">
+      {/* Display session codes */}
+      <div className="text-center mb-6 space-y-1">
         <p className="text-accent2 font-arabic">
           رمز اللاعبين: <span className="font-mono">{state.gameId}</span>
         </p>
@@ -28,7 +37,7 @@ export default function ControlRoom() {
       </div>
 
       {/* Host actions */}
-      <div className="flex gap-4 justify-center mb-8">
+      <div className="flex flex-wrap gap-4 justify-center mb-8">
         <button
           onClick={() => startGame()}
           disabled={state.phase !== 'CONFIG'}
@@ -43,16 +52,55 @@ export default function ControlRoom() {
         >
           السؤال التالي
         </button>
+        {!state.videoRoomCreated ? (
+          <button
+            onClick={handleCreate}
+            className="px-6 py-3 bg-accent2 hover:bg-accent text-white rounded-lg font-arabic"
+          >
+            إنشاء غرفة الفيديو
+          </button>
+        ) : (
+          <button
+            onClick={handleEnd}
+            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-arabic"
+          >
+            إنهاء غرفة الفيديو
+          </button>
+        )}
       </div>
 
-      {/* Show mobile video room when available */}
-      {state.videoRoomCreated && state.videoRoomUrl && (
-        <VideoRoom
-          gameId={state.gameId}
-          userName={state.hostName ?? 'المقدم'}
-          userRole="host-mobile"
-        />
-      )}
+      {/* Video tiles grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Host mobile video */}
+        <div>
+          <h3 className="text-center text-white font-arabic mb-2">المقدم</h3>
+          <VideoRoom
+            gameId={state.gameId}
+            userName={state.hostName ?? 'المقدم'}
+            userRole="host-mobile"
+          />
+        </div>
+
+        {/* Player A video */}
+        <div>
+          <h3 className="text-center text-white font-arabic mb-2">لاعب 1</h3>
+          <VideoRoom
+            gameId={state.gameId}
+            userName={state.players.playerA.name || 'Player A'}
+            userRole="playerA"
+          />
+        </div>
+
+        {/* Player B video */}
+        <div>
+          <h3 className="text-center text-white font-arabic mb-2">لاعب 2</h3>
+          <VideoRoom
+            gameId={state.gameId}
+            userName={state.players.playerB.name || 'Player B'}
+            userRole="playerB"
+          />
+        </div>
+      </div>
     </div>
   );
 }
