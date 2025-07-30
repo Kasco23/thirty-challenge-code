@@ -6,18 +6,12 @@
   "src/App.tsx": [],
   "src/components/Buzzer.tsx": [],
   "src/components/ConnectionBanner.tsx": [],
-  "src/components/Scoreboard.tsx": [
-    "src/types/game.ts"
-  ],
+  "src/components/Scoreboard.tsx": [],
   "src/components/Timer.tsx": [],
   "src/components/VideoRoom.tsx": [],
   "src/context/GameContext.tsx": [],
-  "src/context/GameContextDefinition.ts": [
-    "src/types/game.ts"
-  ],
-  "src/data/questions.ts": [
-    "src/types/game.ts"
-  ],
+  "src/context/GameContextDefinition.ts": [],
+  "src/data/questions.ts": [],
   "src/hooks/useErrorLog.ts": [],
   "src/hooks/useGame.ts": [],
   "src/hooks/useSupabaseFetch.ts": [],
