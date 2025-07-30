@@ -1,21 +1,19 @@
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 // GameState and PlayerId types are not needed in this module
-
-/** Default question counts for each segment. */
-const DEFAULT_SEGMENT_SETTINGS: Record<string, number> = {
-  WSHA: 4,
-  AUCT: 4,
-  BELL: 10,
-  SING: 10,
-  REMO: 4,
+const FALLBACK_SEGMENT_SETTINGS: Record<string, number> = {
+ WSHA: 4,
+ AUCT: 4,
+ BELL: 10,
+ SING: 10,
+ REMO: 4,
 };
 
 export interface GameRecord {
   id: string;
+  host_code: string; // Host code used for auth; non-unique
   host_name: string | null;
-  host_code: string;
-  phase: string;
-  current_segment: string;
+  phase: string; // 'CONFIG' | 'LOBBY' | 'PLAYING' | 'COMPLETED'
+  current_segment: string | null;
   current_question_index: number;
   timer: number;
   is_timer_running: boolean;
@@ -52,15 +50,18 @@ export class GameDatabase {
   // =====================================
 
   /**
-   * Create a new game row in the database.
-   * @param gameId Unique game identifier.
-   * @param hostName host display name.
-   * @param hostCode Secret host code used for authentication.
+   * Insert a new game in CONFIG phase.
+   *
+   * @param gameId        six-char player join code
+   * @param hostCode      full host code e.g. ABC123-HOST
+   * @param hostName      optional display name
+   * @param segmentSettings  map of segment codes to question counts
    */
   static async createGame(
     gameId: string,
-    hostName?: string,
     hostCode: string,
+    hostName: string | null = null,
+    segmentSettings: Record<string, number> = {},
   ): Promise<GameRecord | null> {
     if (!this.isConfigured()) {
       console.warn('Supabase not configured');
@@ -72,10 +73,13 @@ export class GameDatabase {
         .from('games')
         .insert({
           id: gameId,
-          host_name: hostName || null,
           host_code: hostCode,
+          host_name: hostName,
           phase: 'CONFIG',
-          segment_settings: DEFAULT_SEGMENT_SETTINGS,
+          segment_settings:  
+            Object.keys(segmentSettings).length
+              ? segmentSettings
+              : FALLBACK_SEGMENT_SETTINGS,
         })
         .select()
         .single();
@@ -102,7 +106,7 @@ export class GameDatabase {
     try {
       const { data, error } = await supabase
         .from('games')
-        .select('*')
+        .select('*') // selects all columns including host_code
         .eq('id', gameId)
         .single();
 
