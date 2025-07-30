@@ -35,6 +35,7 @@ export default function Join() {
     if (!gameId.trim()) return;
 
     if (joinType === 'host') {
+
       const sessionId = gameId.toUpperCase();
       const code = hostCode.toUpperCase();
       const { data } = await supabase
@@ -42,6 +43,8 @@ export default function Join() {
         .select('id')
         .eq('id', sessionId)
         .eq('host_code', code)
+
+
         .single();
       const foundId = data?.id;
       if (!foundId) {
