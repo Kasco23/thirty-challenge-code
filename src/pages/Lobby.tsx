@@ -33,7 +33,9 @@ export default function TrueLobby() {
       gameId
     ) {
       setIsCreatingRoom(true);
-      actions.createVideoRoom(gameId).finally(() => setIsCreatingRoom(false));
+      (actions.createVideoRoom(gameId) as Promise<unknown>).finally(() =>
+        setIsCreatingRoom(false),
+      );
     }
   }, [myParticipant, state.videoRoomCreated, gameId, actions]);
 
@@ -118,7 +120,11 @@ export default function TrueLobby() {
 
     setIsCreatingRoom(true);
     try {
-      const result = await actions.createVideoRoom(gameId);
+      const result = (await actions.createVideoRoom(gameId)) as {
+        success: boolean;
+        roomUrl?: string;
+        error?: string;
+      };
       if (!result.success) {
         console.error('Failed to create room:', result.error);
         alert('فشل في إنشاء غرفة الفيديو: ' + result.error);
@@ -190,11 +196,11 @@ export default function TrueLobby() {
               <div>
                 <p className="text-white font-arabic mb-2">إعدادات الأسئلة:</p>
                 <div className="text-sm text-white/70 font-arabic space-y-1">
-                  {Object.entries(state.segments).map(
-                    ([segmentCode, segment]) => (
+                  {Object.entries(state.segmentSettings).map(
+                    ([segmentCode, count]) => (
                       <div key={segmentCode} className="flex justify-between">
                         <span>{segmentCode}:</span>
-                        <span>{segment.questionsPerSegment} سؤال</span>
+                        <span>{count} سؤال</span>
                       </div>
                     ),
                   )}
@@ -380,7 +386,7 @@ export default function TrueLobby() {
                     </div>
 
                     <div className="text-white/60 text-sm font-arabic">
-                      النقاط: {player.score} | الأخطاء: {player.strikes}/3
+                      النقاط: {player.score} | الأخطاء: {player.strikes ?? 0}/3
                     </div>
                   </div>
                 ) : (

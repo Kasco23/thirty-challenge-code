@@ -1,5 +1,5 @@
 import { createContext } from 'react';
-import type { GameState, PlayerId, SegmentCode } from '../types/game';
+import type { GameState, PlayerId, SegmentCode } from '@/types/game';
 
 interface GameContextType {
   state: GameState;
