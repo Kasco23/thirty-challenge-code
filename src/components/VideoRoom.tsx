@@ -31,11 +31,11 @@ export default function VideoRoom({
 
     try {
       // Get Daily.co token for this user
-      const tokenResult = await actions.generateDailyToken(
+      const tokenResult = (await actions.generateDailyToken(
         gameId,
         userName,
         userRole === 'host-mobile',
-      );
+      )) as any;
       if (!tokenResult.success) {
         throw new Error(tokenResult.error || 'Failed to get access token');
       }
@@ -87,7 +87,7 @@ export default function VideoRoom({
       // Join the meeting
       await (callObject as any).join({
         url: state.videoRoomUrl,
-        token: tokenResult.token,
+        token: (tokenResult as any).token,
         userName: userName,
         startVideoOff: false,
         startAudioOff: false,

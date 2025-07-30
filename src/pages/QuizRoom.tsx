@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { useGame } from '@/hooks/useGame';
 import { getQuestionsForSegment } from '@/data/questions';
+import type { SegmentCode } from '@/types/game';
 import Buzzer from '@/components/Buzzer';
 import Scoreboard from '@/components/Scoreboard';
 import Timer from '@/components/Timer';
@@ -24,7 +25,7 @@ export default function QuizRoom() {
   });
 
   const currentGameId = gameId || state.gameId;
-  const questions = getQuestionsForSegment(state.currentSegment);
+  const questions = getQuestionsForSegment(state.currentSegment as SegmentCode);
 
   const handleNextQuestion = () => {
     actions.nextQuestion();
@@ -63,8 +64,7 @@ export default function QuizRoom() {
           {/* Header */}
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-white mb-2 font-arabic">
-              {state.currentSegment} - السؤال{' '}
-              {state.segments[state.currentSegment].currentQuestionIndex + 1}
+              {state.currentSegment} - السؤال {state.currentQuestionIndex + 1}
             </h1>
             <p className="text-accent2 font-arabic">
               رمز الجلسة: {currentGameId}
@@ -178,8 +178,10 @@ export default function QuizRoom() {
           {state.currentSegment}
         </h1>
         <p className="text-accent2 text-sm font-arabic">
-          السؤال {state.segments[state.currentSegment].currentQuestionIndex + 1}{' '}
-          من {state.segments[state.currentSegment].questionsPerSegment}
+          السؤال {state.currentQuestionIndex + 1} من{' '}
+          {state.currentSegment
+            ? state.segmentSettings[state.currentSegment]
+            : 0}
         </p>
       </div>
 

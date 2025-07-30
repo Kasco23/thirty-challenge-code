@@ -1,7 +1,11 @@
 // Game Types for Thirty Challenge Quiz
 export type PlayerId = 'playerA' | 'playerB';
 export type SegmentCode = 'WSHA' | 'AUCT' | 'BELL' | 'SING' | 'REMO';
-export type GamePhase = 'LOBBY' | 'PLAYING' | 'FINAL_SCORES';
+export type GamePhase =
+  | 'CONFIG' // PC host is choosing settings
+  | 'LOBBY' // waiting room, video up
+  | 'PLAYING' // questions in progress
+  | 'COMPLETED'; // final scores shown
 
 export interface Player {
   id: PlayerId;
@@ -9,7 +13,7 @@ export interface Player {
   flag?: string;
   club?: string;
   score: number;
-  strikes: number;
+  strikes?: number; // resets each question
   isConnected: boolean;
   specialButtons: {
     LOCK_BUTTON: boolean; // AUCT segment - available at 40 points
@@ -42,17 +46,31 @@ export interface ScoreEvent {
 }
 
 export interface GameState {
+  // identity
   gameId: string;
+  hostCode: string;
+  hostName: string;
+
+  // progress
   phase: GamePhase;
-  currentSegment: SegmentCode;
+  currentSegment: SegmentCode | null; // null until PLAYING
   currentQuestionIndex: number;
+
+  // video
+  videoRoomUrl?: string;
+  videoRoomCreated: boolean;
+
+  // timing
   timer: number;
   isTimerRunning: boolean;
-  videoRoomUrl?: string;
-  videoRoomCreated?: boolean;
+
+  // configuration
+  segmentSettings: Record<SegmentCode, number>;
+
+  // live participants
   players: Record<PlayerId, Player>;
-  hostName: string;
-  segments: Record<SegmentCode, SegmentState>;
+
+  // history / analytics
   scoreHistory: ScoreEvent[];
 }
 
@@ -61,6 +79,7 @@ export interface StartGameAction {
   type: 'START_GAME';
   payload: {
     gameId: string;
+    hostCode: string;
   };
 }
 

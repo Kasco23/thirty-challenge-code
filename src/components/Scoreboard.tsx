@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useGame } from '@/hooks/useGame';
-import type { PlayerId } from '../types/game';
+import type { PlayerId } from '@/types/game';
 
 export default function Scoreboard() {
   const { state } = useGame();
@@ -83,7 +83,7 @@ export default function Scoreboard() {
             <div
               key={index}
               className={`w-3 h-3 rounded-full ${
-                index < player.strikes ? 'bg-red-500' : 'bg-white/20'
+                index < (player.strikes ?? 0) ? 'bg-red-500' : 'bg-white/20'
               }`}
             />
           ))}
@@ -148,10 +148,12 @@ export default function Scoreboard() {
         <div className="text-accent2 font-arabic text-lg">
           {state.currentSegment}
         </div>
-        <div className="text-white/70 text-sm font-arabic">
-          السؤال {state.segments[state.currentSegment].currentQuestionIndex + 1}{' '}
-          من {state.segments[state.currentSegment].questionsPerSegment}
-        </div>
+        {state.currentSegment && (
+          <div className="text-white/70 text-sm font-arabic">
+            السؤال {state.currentQuestionIndex + 1} من{' '}
+            {state.segmentSettings[state.currentSegment]}
+          </div>
+        )}
       </div>
     </div>
   );

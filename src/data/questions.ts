@@ -1,4 +1,4 @@
-import type { Question, SegmentCode } from '../types/game';
+import type { Question, SegmentCode } from '@/types/game';
 
 // Comprehensive questions database for each segment
 export const sampleQuestions: Record<SegmentCode, Question[]> = {
