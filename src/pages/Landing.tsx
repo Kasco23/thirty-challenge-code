@@ -5,7 +5,7 @@ import { useState } from 'react';
 
 export default function Landing() {
   const navigate = useNavigate();
-  const { actions } = useGame();
+  const { startSession } = useGame();
   const [isCreating, setIsCreating] = useState(false);
   const [customGameId, setCustomGameId] = useState('');
   const [useCustomId, setUseCustomId] = useState(false);
@@ -19,8 +19,14 @@ export default function Landing() {
           ? customGameId.trim().toUpperCase()
           : Math.random().toString(36).substring(2, 8).toUpperCase();
 
-      // Initialize the game
-      actions.startGame(gameId);
+      // Persist new session then move to host setup
+      await startSession(gameId, `${gameId}-HOST`, {
+        WSHA: 4,
+        AUCT: 4,
+        BELL: 10,
+        SING: 10,
+        REMO: 4,
+      });
 
       // Navigate to host setup page
       navigate(`/host-setup/${gameId}`, { replace: true });
@@ -41,6 +47,12 @@ export default function Landing() {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}
     >
+      <img
+        src="/tahadialthalatheen/images/Logo.png"
+        alt="تحدي الثلاثين"
+        className="w-32 mb-6"
+      />
+
       <motion.h1
         className="text-5xl sm:text-7xl font-extrabold mb-6 text-accent glow font-arabic text-center"
         style={{

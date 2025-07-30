@@ -18,7 +18,7 @@ export default function TrueLobby() {
   const { gameId } = useParams<{ gameId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { state, actions } = useGame();
+  const { state, startGame, actions } = useGame();
 
   const [myParticipant, setMyParticipant] = useState<LobbyParticipant | null>(
     null,
@@ -48,7 +48,7 @@ export default function TrueLobby() {
 
     // Initialize game if needed
     if (state.gameId !== gameId) {
-      actions.startGame(gameId);
+      startGame();
     }
 
     // Determine my role from URL parameters
@@ -112,7 +112,7 @@ export default function TrueLobby() {
     if (participant) {
       actions.trackPresence(participant);
     }
-  }, [gameId, searchParams, state.gameId, state.hostName, actions]);
+  }, [gameId, searchParams, state.gameId, state.hostName, actions, startGame]);
 
   // Create video room when host PC clicks button
   const handleCreateVideoRoom = async () => {

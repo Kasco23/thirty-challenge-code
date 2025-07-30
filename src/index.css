@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --brand-dark: #19194d;
+  --brand-grad: #6e45e2;
+  --brand-light: #efefef;
+  --accent-blue: #50aaf2;
+  --font-header: 'DG Bebo', sans-serif;
+  --font-body: 'Almarai', sans-serif;
+}
+
 @font-face {
   font-family: 'DG Bebo';
   src: url('/tahadialthalatheen/fonts/DG-BeboT.ttf') format('truetype');
