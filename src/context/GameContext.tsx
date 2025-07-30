@@ -2,9 +2,10 @@ import { createContext, useContext, useReducer, ReactNode } from 'react';
 import type { GameState, SegmentCode, Player, PlayerId } from '@/types/game';
 import { GameDatabase, type GameRecord } from '@/lib/gameDatabase';
 import { gameReducer, type GameAction } from './gameReducer';
+import { initialGameState } from './initialGameState';
 
 /** Default player objects used when initializing game state */
-const defaultPlayers: Record<PlayerId, Player> = {
+export const defaultPlayers: Record<PlayerId, Player> = {
   playerA: {
     id: 'playerA',
     name: '',
@@ -31,39 +32,17 @@ const defaultPlayers: Record<PlayerId, Player> = {
   },
 };
 
-/** Initial in-memory game state */
-const initialState: GameState = {
-  gameId: '',
-  hostCode: '',
-  hostName: '',
-  phase: 'CONFIG',
-  currentSegment: null,
-  currentQuestionIndex: 0,
-  videoRoomCreated: false,
-  timer: 0,
-  isTimerRunning: false,
-  segmentSettings: {
-    WSHA: 0,
-    AUCT: 0,
-    BELL: 0,
-    SING: 0,
-    REMO: 0,
-  },
-  players: defaultPlayers,
-  scoreHistory: [],
-};
-
 /** Map a Supabase record to our internal GameState shape */
 function mapRecordToState(record: GameRecord): GameState {
   return {
-    ...initialState,
+    ...initialGameState,
     gameId: record.id,
     hostCode: record.host_code,
-    hostName: record.host_name ?? '',
+    hostName: record.host_name ?? null,
     phase: record.phase as GameState['phase'],
     currentSegment: record.current_segment as GameState['currentSegment'],
     currentQuestionIndex: record.current_question_index,
-    videoRoomUrl: record.video_room_url ?? undefined,
+    videoRoomUrl: record.video_room_url ?? null,
     videoRoomCreated: record.video_room_created,
     timer: record.timer,
     isTimerRunning: record.is_timer_running,
@@ -76,7 +55,7 @@ export const GameContext = createContext<
 >(undefined);
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(gameReducer, initialState);
+  const [state, dispatch] = useReducer(gameReducer, initialGameState);
   return (
     <GameContext.Provider value={{ state, dispatch }}>
       {children}
@@ -94,13 +73,13 @@ export function useGame() {
   const startSession = async (
     gameId: string,
     hostCode: string,
+    hostName: string | null,
     segmentSettings: Record<SegmentCode, number>,
-    hostName?: string,
   ) => {
     const record = await GameDatabase.createGame(
       gameId,
       hostCode,
-      hostName ?? null,
+      hostName,
       segmentSettings,
     );
     if (record) dispatch({ type: 'INIT', payload: mapRecordToState(record) });

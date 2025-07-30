@@ -18,7 +18,11 @@ export default function TrueLobby() {
   const { gameId } = useParams<{ gameId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { state, startGame, actions } = useGame();
+  const { state, startSession, startGame, advanceQuestion, actions } =
+    useGame();
+  // Expose helpers for future flows
+  void startSession;
+  void advanceQuestion;
 
   const [myParticipant, setMyParticipant] = useState<LobbyParticipant | null>(
     null,

@@ -1,4 +1,4 @@
-import produce from 'immer';
+import { produce, Draft } from 'immer';
 import type {
   GameState,
   GamePhase,
@@ -20,8 +20,8 @@ export type GameAction =
   | { type: 'RESET_STRIKES' }
   | { type: 'COMPLETE_GAME' };
 
-export function gameReducer(state: GameState, action: GameAction): GameState {
-  return produce(state, draft => {
+export function gameReducer(state: GameState, action: GameAction) {
+  return produce<GameState>(state, (draft: Draft<GameState>) => {
     switch (action.type) {
       case 'INIT':
         return action.payload;
@@ -43,10 +43,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         draft.timer = 0;
         draft.isTimerRunning = false;
         draft.players = Object.fromEntries(
-          Object.entries(draft.players).map(([id, p]) => [
-            id,
-            { ...p, strikes: 0 },
-          ]),
+          (Object.entries(draft.players) as [PlayerId, Player][]).map(
+            ([id, p]) => [id, { ...p, strikes: 0 }],
+          ),
         );
         return;
 
@@ -68,7 +67,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return;
 
       case 'RESET_STRIKES':
-        Object.values(draft.players).forEach(p => (p.strikes = 0));
+        Object.values(draft.players).forEach((p) => (p.strikes = 0));
         return;
 
       case 'COMPLETE_GAME':
