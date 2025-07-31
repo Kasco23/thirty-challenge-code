@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
-import { useGame } from '@/hooks/useGame';
+import { useGameState } from '@/hooks/useGameAtoms';
 import type { PlayerId } from '@/types/game';
 
 export default function Scoreboard() {
-  const { state } = useGame();
+  const state = useGameState();
 
   // Special button configurations
   const buttonConfig = {

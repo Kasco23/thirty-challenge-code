@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useGame } from '@/hooks/useGame';
+import { useGameState } from '@/hooks/useGameAtoms';
 
 export default function Buzzer() {
-  const { state } = useGame();
+  const state = useGameState();
   const [isPressed, setIsPressed] = useState(false);
 
   const handleBuzzerClick = () => {

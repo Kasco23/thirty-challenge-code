@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { useGame } from '@/hooks/useGame';
+import { useGameState, useGameActions, usePlayerActions } from '@/hooks/useGameAtoms';
 import { getQuestionsForSegment } from '@/data/questions';
 import type { SegmentCode } from '@/types/game';
 import Buzzer from '@/components/Buzzer';
@@ -12,8 +12,9 @@ type UserRole = 'host' | 'playerA' | 'playerB';
 export default function QuizRoom() {
   const { gameId } = useParams<{ gameId: string }>();
   const [searchParams] = useSearchParams();
-  const { state, startSession, startGame, advanceQuestion, actions } =
-    useGame();
+  const state = useGameState();
+  const { startSession, startGame, advanceQuestion } = useGameActions();
+  const { updatePlayer, scorePlayer } = usePlayerActions();
   // Currently unused helpers prepared for later features
   void startSession;
 
@@ -35,18 +36,24 @@ export default function QuizRoom() {
   };
 
   const handleNextSegment = () => {
-    actions.nextSegment();
+    // TODO: Implement nextSegment action using atoms
+    console.warn('nextSegment not yet implemented with atoms');
   };
 
   const handleAddStrike = (playerId: 'playerA' | 'playerB') => {
-    actions.addStrike(playerId);
+    updatePlayer({ 
+      playerId: playerId as 'playerA' | 'playerB', 
+      update: { 
+        strikes: (state.players[playerId]?.strikes || 0) + 1 
+      } 
+    });
   };
 
   const handleUpdateScore = (
     playerId: 'playerA' | 'playerB',
     points: number,
   ) => {
-    actions.updateScore(playerId, points);
+    scorePlayer(playerId as 'playerA' | 'playerB', points);
   };
 
   if (!currentGameId) {

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useGame } from '@/hooks/useGame';
+import { useGameActions } from '@/hooks/useGameAtoms';
 import type { SegmentCode } from '@/types/game';
 
 const SEGMENTS: Record<SegmentCode, string> = {
@@ -19,7 +19,7 @@ const SEGMENTS: Record<SegmentCode, string> = {
  */
 export default function CreateSession() {
   const nav = useNavigate();
-  const { startSession } = useGame();
+  const { startSession } = useGameActions();
 
   const [hostName, setHostName] = useState('');
   const [hostCode, setHostCode] = useState('');

@@ -1,13 +1,16 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useGame } from '@/hooks/useGame';
+import { useGameState } from '@/hooks/useGameAtoms';
+import { useSetAtom } from 'jotai';
+import { updateGameStateAtom } from '@/state';
 
 interface TimerProps {
   onTimeUp?: () => void;
 }
 
 export default function Timer({ onTimeUp }: TimerProps) {
-  const { state, actions } = useGame();
+  const state = useGameState();
+  const updateGameState = useSetAtom(updateGameStateAtom);
   const [localTime, setLocalTime] = useState(state.timer);
 
   useEffect(() => {
@@ -21,7 +24,7 @@ export default function Timer({ onTimeUp }: TimerProps) {
         setLocalTime((prev: number) => {
           const newTime = prev - 1;
           if (newTime <= 0) {
-            actions.stopTimer();
+            updateGameState({ isTimerRunning: false });
             if (onTimeUp) {
               onTimeUp();
             }
@@ -33,7 +36,7 @@ export default function Timer({ onTimeUp }: TimerProps) {
 
       return () => clearInterval(interval);
     }
-  }, [state.isTimerRunning, localTime, actions, onTimeUp]);
+  }, [state.isTimerRunning, localTime, updateGameState, onTimeUp]);
 
   const progress = localTime > 0 ? (localTime / 30) * 100 : 0; // Assuming 30 seconds default
   const isLowTime = localTime <= 10 && localTime > 0;
