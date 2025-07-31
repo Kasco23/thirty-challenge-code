@@ -110,11 +110,13 @@ export default function TrueLobby() {
       const result = await createVideoRoom(gameId);
       if (!result.success) {
         console.error('Failed to create room:', result.error);
-        alert('فشل في إنشاء غرفة الفيديو: ' + result.error);
+        showAlertMessage(`فشل في إنشاء غرفة الفيديو: ${result.error}`, 'error');
+      } else {
+        showAlertMessage('تم إنشاء غرفة الفيديو بنجاح', 'success');
       }
     } catch (error) {
       console.error('Error creating room:', error);
-      alert('خطأ في إنشاء غرفة الفيديو');
+      showAlertMessage('خطأ في إنشاء غرفة الفيديو', 'error');
     } finally {
       setIsCreatingRoom(false);
     }
@@ -125,15 +127,35 @@ export default function TrueLobby() {
 
     try {
       await endVideoRoom(gameId);
+      showAlertMessage('تم إنهاء غرفة الفيديو', 'info');
     } catch (error) {
       console.error('Error ending room:', error);
-      alert('خطأ في إنهاء غرفة الفيديو');
+      showAlertMessage('خطأ في إنهاء غرفة الفيديو', 'error');
     }
   };
 
   const handleStartGame = () => {
     navigate(`/game/${gameId}?role=host`);
   };
+
+  // Function to show alerts
+  const showAlertMessage = (message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
+    setAlertMessage(message);
+    setAlertType(type);
+    setShowAlert(true);
+  };
+
+  // Track player connections and show alerts
+  useEffect(() => {
+    const currentConnectedCount = Object.values(state.players).filter(p => p.isConnected).length;
+    
+    if (currentConnectedCount > 0 && myParticipant?.type === 'host-pc') {
+      const newPlayer = Object.values(state.players).find(p => p.isConnected && p.name);
+      if (newPlayer) {
+        showAlertMessage(`انضم ${newPlayer.name} للعبة`, 'success');
+      }
+    }
+  }, [state.players, myParticipant]);
 
   if (!myParticipant || !gameId) {
     return (
@@ -149,26 +171,6 @@ export default function TrueLobby() {
     (p) => p.isConnected,
   ).length;
   const hostMobileConnected = myParticipant.type === 'host-mobile' || false; // TODO: Track this in global state
-
-  // Function to show alerts
-  const showAlertMessage = (message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
-    setAlertMessage(message);
-    setAlertType(type);
-    setShowAlert(true);
-  };
-
-  // Track player connections and show alerts
-  useEffect(() => {
-    const previousConnectedCount = Object.values(state.players).filter(p => p.isConnected).length;
-    const currentConnectedCount = connectedPlayers;
-    
-    if (currentConnectedCount > previousConnectedCount && myParticipant?.type === 'host-pc') {
-      const newPlayer = Object.values(state.players).find(p => p.isConnected && p.name);
-      if (newPlayer) {
-        showAlertMessage(`انضم ${newPlayer.name} للعبة`, 'success');
-      }
-    }
-  }, [state.players, connectedPlayers, myParticipant]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 p-4">

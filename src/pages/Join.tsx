@@ -25,8 +25,10 @@ export default function Join() {
   
   // Confirmation modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showCreateRoomModal, setShowCreateRoomModal] = useState(false);
   const [playerRole, setPlayerRole] = useState<string>('');
   const [isJoining, setIsJoining] = useState(false);
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
 
   // Load teams lazily when component mounts
   useEffect(() => {
@@ -106,6 +108,15 @@ export default function Join() {
         return;
       }
 
+      // Check if video room exists
+      const game = await GameDatabase.getGame(sessionId);
+      if (!game?.video_room_created) {
+        // Set role and show create room modal
+        setPlayerRole(availableRole);
+        setShowCreateRoomModal(true);
+        return;
+      }
+
       // Set role and show confirmation modal
       setPlayerRole(availableRole);
       setShowConfirmModal(true);
@@ -141,6 +152,66 @@ export default function Join() {
       setErrorMsg('حدث خطأ أثناء الانضمام للعبة');
       setShowConfirmModal(false);
       setIsJoining(false);
+    }
+  };
+
+  const handleCreateRoom = async () => {
+    setIsCreatingRoom(true);
+    const sessionId = gameId.toUpperCase();
+
+    try {
+      // First, verify the game exists
+      const game = await GameDatabase.getGame(sessionId);
+      if (!game) {
+        setErrorMsg('لا توجد جلسة بهذا الرمز');
+        setIsCreatingRoom(false);
+        setShowCreateRoomModal(false);
+        return;
+      }
+
+      // Create the video room
+      const result = await fetch(`/.netlify/functions/create-daily-room`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomName: sessionId }),
+      });
+      
+      const data = await result.json() as { url?: string; error?: string };
+      
+      if (data.url) {
+        // Update the game with video room info
+        await GameDatabase.updateGame(sessionId, {
+          video_room_url: data.url,
+          video_room_created: true,
+        });
+
+        // Now add the player
+        const playerResult = await GameDatabase.addPlayer(playerRole, sessionId, {
+          name,
+          flag: selectedFlag,
+          club: selectedTeam,
+          role: playerRole,
+        });
+
+        if (!playerResult) {
+          setErrorMsg('فشل في الانضمام للعبة بعد إنشاء الغرفة');
+          setIsCreatingRoom(false);
+          setShowCreateRoomModal(false);
+          return;
+        }
+
+        // Navigate to lobby
+        navigate(`/lobby/${sessionId}?role=${playerRole}`);
+      } else {
+        setErrorMsg('فشل في إنشاء غرفة الفيديو: ' + (data.error || 'خطأ غير معروف'));
+        setIsCreatingRoom(false);
+        setShowCreateRoomModal(false);
+      }
+    } catch (error) {
+      console.error('Error creating room:', error);
+      setErrorMsg('حدث خطأ أثناء إنشاء غرفة الفيديو');
+      setIsCreatingRoom(false);
+      setShowCreateRoomModal(false);
     }
   };
 
@@ -423,6 +494,18 @@ export default function Join() {
         confirmText="انضم للعبة"
         cancelText="إلغاء"
         isLoading={isJoining}
+      />
+
+      {/* Create Room Modal */}
+      <ConfirmationModal
+        isOpen={showCreateRoomModal}
+        onClose={() => setShowCreateRoomModal(false)}
+        onConfirm={handleCreateRoom}
+        title="إنشاء غرفة الفيديو"
+        message={`لا توجد غرفة فيديو للعبة ${gameId}. هل تريد إنشاء غرفة فيديو جديدة والانضمام كـ${playerRole === 'playerA' ? 'لاعب أول' : 'لاعب ثاني'}؟`}
+        confirmText="إنشاء غرفة والانضمام"
+        cancelText="إلغاء"
+        isLoading={isCreatingRoom}
       />
     </div>
   );
