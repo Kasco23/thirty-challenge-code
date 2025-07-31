@@ -4,6 +4,7 @@
   "netlify/functions/delete-daily-room.ts": [],
   "netlify/functions/game-event.ts": [],
   "src/App.tsx": [],
+  "src/api/dailyClient.ts": [],
   "src/api/supabaseClient.ts": [],
   "src/components/Buzzer.tsx": [],
   "src/components/ConnectionBanner.tsx": [],
@@ -25,15 +26,11 @@
   "src/hooks/useErrorLog.ts": [],
   "src/hooks/useGame.ts": [],
   "src/hooks/useSupabaseFetch.ts": [],
-  "src/lib/gameDatabase.ts": [
-    "src/lib/supabaseClient.ts"
-  ],
+  "src/lib/gameDatabase.ts": [],
   "src/lib/gameSync.ts": [
     "src/lib/gameDatabase.ts",
-    "src/lib/supabaseClient.ts",
     "src/types/game.ts"
   ],
-  "src/lib/supabaseClient.ts": [],
   "src/main.tsx": [
     "src/App.tsx"
   ],
