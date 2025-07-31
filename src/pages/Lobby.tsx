@@ -12,7 +12,7 @@ export default function TrueLobby() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const state = useGameState();
-  const { startGame, createVideoRoom, endVideoRoom } = useGameActions();
+  const { startGame, createVideoRoom, endVideoRoom, generateDailyToken } = useGameActions();
   const { myParticipant, setParticipant } = useLobbyActions();
   
   // Initialize game sync
@@ -24,12 +24,20 @@ export default function TrueLobby() {
   const [showAlert, setShowAlert] = useState(false);
   const [showSessionStartModal, setShowSessionStartModal] = useState(false);
   const [isStartingSession, setIsStartingSession] = useState(false);
+  const [roomStatusLog, setRoomStatusLog] = useState<string[]>([]);
 
-  // Function to show alerts
+  // Function to show alerts and log room status
   const showAlertMessage = useCallback((message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
     setAlertMessage(message);
     setAlertType(type);
     setShowAlert(true);
+    
+    // Also log to room status
+    const timestamp = new Date().toLocaleTimeString('ar-SA');
+    setRoomStatusLog(prev => [
+      `${timestamp}: ${message}`,
+      ...prev.slice(0, 9) // Keep last 10 entries
+    ]);
   }, []);
 
   // Automatically create the video room when the host PC opens the lobby
@@ -37,36 +45,51 @@ export default function TrueLobby() {
     if (
       myParticipant?.type === 'host-pc' &&
       !state.videoRoomCreated &&
+      !isCreatingRoom &&
       gameId
     ) {
-      setIsCreatingRoom(true);
-      createVideoRoom(gameId).finally(() =>
-        setIsCreatingRoom(false),
-      );
-    }
-  }, [myParticipant, state.videoRoomCreated, gameId, createVideoRoom]);
-
-  // Automatically create video room when first player joins if host hasn't created it yet
-  useEffect(() => {
-    if (
-      myParticipant?.type === 'player' &&
-      !state.videoRoomCreated &&
-      gameId &&
-      !isCreatingRoom
-    ) {
-      console.log('Player joining without video room - creating room automatically');
+      console.log('Host PC auto-creating video room...');
       setIsCreatingRoom(true);
       createVideoRoom(gameId)
         .then((result) => {
           if (result.success) {
             showAlertMessage('تم إنشاء غرفة الفيديو تلقائياً', 'success');
           } else {
-            showAlertMessage('فشل في إنشاء غرفة الفيديو', 'error');
+            showAlertMessage(`فشل في إنشاء غرفة الفيديو: ${result.error}`, 'error');
           }
         })
         .finally(() => setIsCreatingRoom(false));
     }
-  }, [myParticipant, state.videoRoomCreated, gameId, createVideoRoom, isCreatingRoom, showAlertMessage]);
+  }, [myParticipant?.type, state.videoRoomCreated, gameId, createVideoRoom, isCreatingRoom, showAlertMessage]);
+
+  // For players: only create room after a delay if host hasn't created it
+  useEffect(() => {
+    if (
+      myParticipant?.type === 'player' &&
+      !state.videoRoomCreated &&
+      !isCreatingRoom &&
+      gameId
+    ) {
+      // Wait 5 seconds to give host PC time to create the room
+      const timer = setTimeout(() => {
+        if (!state.videoRoomCreated && !isCreatingRoom) {
+          console.log('Player creating video room after host delay...');
+          setIsCreatingRoom(true);
+          createVideoRoom(gameId)
+            .then((result) => {
+              if (result.success) {
+                showAlertMessage('تم إنشاء غرفة الفيديو تلقائياً (لاعب)', 'success');
+              } else {
+                showAlertMessage('فشل في إنشاء غرفة الفيديو', 'error');
+              }
+            })
+            .finally(() => setIsCreatingRoom(false));
+        }
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [myParticipant?.type, state.videoRoomCreated, gameId, createVideoRoom, isCreatingRoom, showAlertMessage]);
 
   // Use global video room state
   const videoRoomCreated = state.videoRoomCreated || false;
@@ -190,6 +213,27 @@ export default function TrueLobby() {
   // Track player connections and show alerts
   const previousConnectedPlayerIds = useRef<Set<string>>(new Set());
   const hasShownSessionStartModal = useRef(false);
+  const previousVideoRoomState = useRef<{ created: boolean; url?: string }>({ created: false });
+
+  // Track video room state changes
+  useEffect(() => {
+    const currentState = { created: state.videoRoomCreated, url: state.videoRoomUrl };
+    const previousState = previousVideoRoomState.current;
+
+    if (currentState.created !== previousState.created) {
+      if (currentState.created) {
+        showAlertMessage('تم إنشاء غرفة الفيديو بنجاح', 'success');
+      } else {
+        showAlertMessage('تم حذف غرفة الفيديو', 'info');
+      }
+    }
+
+    if (currentState.url !== previousState.url && currentState.url) {
+      showAlertMessage('تم تحديث رابط غرفة الفيديو', 'info');
+    }
+
+    previousVideoRoomState.current = currentState;
+  }, [state.videoRoomCreated, state.videoRoomUrl, showAlertMessage]);
 
   useEffect(() => {
     if (myParticipant?.type === 'host-pc') {
@@ -217,7 +261,7 @@ export default function TrueLobby() {
       // Update the previous state
       previousConnectedPlayerIds.current = currentConnectedPlayerIds;
     }
-  }, [state.players, state.videoRoomCreated, state.phase, myParticipant]);
+  }, [state.players, state.videoRoomCreated, state.phase, myParticipant, showAlertMessage]);
 
   if (!myParticipant || !gameId) {
     return (
@@ -348,6 +392,165 @@ export default function TrueLobby() {
             </div>
           </div>
         )}
+
+        {/* Video Room Status Debug Panel - For All Users */}
+        <div className="mb-8 bg-gray-800/50 rounded-xl p-6 border border-gray-600/30">
+          <h3 className="text-xl font-bold text-gray-300 mb-4 font-arabic text-center">
+            حالة غرفة الفيديو - معلومات تشخيصية
+          </h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-sm font-bold text-gray-300 mb-2 font-arabic">حالة الغرفة</h4>
+              <div className="space-y-1 text-sm">
+                <div className={`flex items-center gap-2 ${videoRoomCreated ? 'text-green-400' : 'text-red-400'}`}>
+                  <div className={`w-2 h-2 rounded-full ${videoRoomCreated ? 'bg-green-400' : 'bg-red-400'}`}></div>
+                  <span className="font-arabic">{videoRoomCreated ? 'تم إنشاء الغرفة' : 'لم يتم إنشاء الغرفة'}</span>
+                </div>
+                <div className="text-gray-400 font-arabic">
+                  URL: {state.videoRoomUrl ? (
+                    <a href={state.videoRoomUrl} target="_blank" rel="noopener noreferrer" 
+                       className="text-blue-400 hover:text-blue-300 break-all text-xs">
+                      {state.videoRoomUrl}
+                    </a>
+                  ) : 'غير متوفر'}
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-sm font-bold text-gray-300 mb-2 font-arabic">معلومات المستخدم</h4>
+              <div className="space-y-1 text-sm text-gray-400">
+                <div className="font-arabic">النوع: {myParticipant?.type || 'غير محدد'}</div>
+                <div className="font-arabic">الاسم: {myParticipant?.name || 'غير محدد'}</div>
+                <div className="font-arabic">المعرف: {myParticipant?.id || 'غير محدد'}</div>
+              </div>
+            </div>
+
+            <div className="bg-gray-700/30 rounded-lg p-4">
+              <h4 className="text-sm font-bold text-gray-300 mb-2 font-arabic">إحصائيات</h4>
+              <div className="space-y-1 text-sm text-gray-400">
+                <div className="font-arabic">اللاعبون المتصلون: {connectedPlayers}/2</div>
+                <div className="font-arabic">مرحلة اللعبة: {state.phase}</div>
+                <div className="font-arabic">معرف الجلسة: {gameId}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Debug Control Buttons */}
+          <div className="border-t border-gray-600/30 pt-4">
+            <h4 className="text-sm font-bold text-gray-300 mb-3 font-arabic">أدوات التشخيص والتحكم</h4>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <button
+                onClick={handleCreateVideoRoom}
+                disabled={isCreatingRoom || videoRoomCreated}
+                className="px-3 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm font-arabic transition-colors"
+              >
+                {isCreatingRoom ? 'جاري الإنشاء...' : 'إنشاء غرفة'}
+              </button>
+              
+              <button
+                onClick={handleEndVideoRoom}
+                disabled={!videoRoomCreated}
+                className="px-3 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm font-arabic transition-colors"
+              >
+                حذف الغرفة
+              </button>
+
+              <button
+                onClick={() => {
+                  if (state.videoRoomUrl) {
+                    window.open(state.videoRoomUrl, '_blank');
+                  } else {
+                    showAlertMessage('لا يوجد رابط غرفة فيديو', 'error');
+                  }
+                }}
+                disabled={!state.videoRoomUrl}
+                className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm font-arabic transition-colors"
+              >
+                فتح في Daily.co
+              </button>
+
+              <button
+                onClick={async () => {
+                  if (!gameId || !myParticipant) return;
+                  
+                  try {
+                    // Generate a fresh token for manual joining
+                    const token = await generateDailyToken(
+                      gameId,
+                      myParticipant.name,
+                      myParticipant.type === 'host-mobile'
+                    );
+                    
+                    if (token && state.videoRoomUrl) {
+                      // Create URL with token for manual join
+                      const joinUrl = `${state.videoRoomUrl}?t=${token}`;
+                      window.open(joinUrl, '_blank');
+                      showAlertMessage('تم فتح رابط انضمام مباشر', 'success');
+                    } else {
+                      showAlertMessage('فشل في توليد رمز الدخول', 'error');
+                    }
+                  } catch (error) {
+                    console.error('Error generating manual join token:', error);
+                    showAlertMessage('خطأ في توليد رمز الدخول', 'error');
+                  }
+                }}
+                disabled={!state.videoRoomUrl || !myParticipant}
+                className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm font-arabic transition-colors"
+              >
+                انضمام مباشر
+              </button>
+
+              <button
+                onClick={() => {
+                  // Force refresh of room status
+                  window.location.reload();
+                }}
+                className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm font-arabic transition-colors"
+              >
+                تحديث الصفحة
+              </button>
+            </div>
+
+            {/* Additional debug info for troubleshooting */}
+            <div className="mt-4 space-y-3">
+              {/* Live Activity Log */}
+              <div className="p-3 bg-gray-900/50 rounded-lg">
+                <h5 className="text-sm font-bold text-gray-300 mb-2 font-arabic">سجل النشاطات المباشرة</h5>
+                <div className="max-h-32 overflow-y-auto space-y-1">
+                  {roomStatusLog.length > 0 ? (
+                    roomStatusLog.map((entry, index) => (
+                      <div key={index} className="text-xs text-gray-400 font-arabic bg-gray-800/50 px-2 py-1 rounded">
+                        {entry}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-xs text-gray-500 font-arabic">لا توجد أنشطة حتى الآن</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Technical Details */}
+              <div className="p-3 bg-gray-900/50 rounded-lg">
+                <details className="text-sm">
+                  <summary className="text-gray-300 font-arabic cursor-pointer hover:text-white">
+                    معلومات تقنية إضافية (للمطورين)
+                  </summary>
+                  <div className="mt-2 space-y-1 text-xs text-gray-500 font-mono">
+                    <div>Game State: {JSON.stringify({ 
+                      videoRoomCreated: state.videoRoomCreated,
+                      videoRoomUrl: state.videoRoomUrl,
+                      phase: state.phase
+                    }, null, 2)}</div>
+                    <div>My Participant: {JSON.stringify(myParticipant, null, 2)}</div>
+                    <div>Connected Players: {JSON.stringify(Object.values(state.players).filter(p => p.isConnected), null, 2)}</div>
+                  </div>
+                </details>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Player notification when no video room exists */}
         {myParticipant.type === 'player' && !videoRoomCreated && (
