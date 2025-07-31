@@ -32,7 +32,7 @@ export default defineConfig({
       },
     },
     // optional: also raise Vite’s own warning bar from 500 kB to 200 kB
-    chunkSizeWarningLimit: 200, // kB  :contentReference[oaicite:1]{index=1}
+    chunkSizeWarningLimit: 200, // kB  :
   },
   optimizeDeps: {
     include: [
