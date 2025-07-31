@@ -9,7 +9,7 @@ export default defineConfig({
     bundlesize({
       limits: [
         // check every generated JS entry ≤ 200 kB gzip-compressed
-        { name: '**/*.js', limit: '500 kB' },
+        { name: '**/*.js', limit: '200 kB' },
       ],
     }),
   ],
