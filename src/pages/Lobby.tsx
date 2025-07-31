@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
 import VideoRoom from '@/components/VideoRoom';
+import AlertBanner from '@/components/AlertBanner';
 import type { LobbyParticipant } from '@/state';
 
 export default function TrueLobby() {
@@ -17,6 +18,9 @@ export default function TrueLobby() {
   useGameSync();
 
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState<'info' | 'success' | 'warning' | 'error'>('info');
+  const [showAlert, setShowAlert] = useState(false);
 
   // Automatically create the video room when the host PC opens the lobby
   useEffect(() => {
@@ -146,8 +150,36 @@ export default function TrueLobby() {
   ).length;
   const hostMobileConnected = myParticipant.type === 'host-mobile' || false; // TODO: Track this in global state
 
+  // Function to show alerts
+  const showAlertMessage = (message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
+    setAlertMessage(message);
+    setAlertType(type);
+    setShowAlert(true);
+  };
+
+  // Track player connections and show alerts
+  useEffect(() => {
+    const previousConnectedCount = Object.values(state.players).filter(p => p.isConnected).length;
+    const currentConnectedCount = connectedPlayers;
+    
+    if (currentConnectedCount > previousConnectedCount && myParticipant?.type === 'host-pc') {
+      const newPlayer = Object.values(state.players).find(p => p.isConnected && p.name);
+      if (newPlayer) {
+        showAlertMessage(`انضم ${newPlayer.name} للعبة`, 'success');
+      }
+    }
+  }, [state.players, connectedPlayers, myParticipant]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 p-4">
+      {/* Alert Banner */}
+      <AlertBanner
+        message={alertMessage}
+        type={alertType}
+        isVisible={showAlert}
+        onClose={() => setShowAlert(false)}
+      />
+
       <div className="max-w-7xl mx-auto">
         {/* Header - Same for everyone */}
         <div className="text-center mb-8">

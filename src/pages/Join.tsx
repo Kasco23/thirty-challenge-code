@@ -5,6 +5,7 @@ import { getAllTeams, searchTeams, searchFlags, type Team } from '@/utils/teamUt
 import { GameDatabase } from '@/lib/gameDatabase';
 import { getSupabase } from '@/lib/supabaseLazy';
 import LazyImage from '@/components/LazyImage';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 export default function Join() {
   const navigate = useNavigate();
@@ -21,6 +22,11 @@ export default function Join() {
   const [teamSearch, setTeamSearch] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [allTeams, setAllTeams] = useState<Team[]>([]);
+  
+  // Confirmation modal state
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [playerRole, setPlayerRole] = useState<string>('');
+  const [isJoining, setIsJoining] = useState(false);
 
   // Load teams lazily when component mounts
   useEffect(() => {
@@ -90,16 +96,30 @@ export default function Join() {
       const existingPlayers = await GameDatabase.getGamePlayers(sessionId);
       const takenRoles = existingPlayers.map(p => p.role);
       
-      let playerRole: string;
+      let availableRole: string;
       if (!takenRoles.includes('playerA')) {
-        playerRole = 'playerA';
+        availableRole = 'playerA';
       } else if (!takenRoles.includes('playerB')) {
-        playerRole = 'playerB';
+        availableRole = 'playerB';
       } else {
         setErrorMsg('اللعبة ممتلئة! لا يمكن انضمام المزيد من اللاعبين');
         return;
       }
 
+      // Set role and show confirmation modal
+      setPlayerRole(availableRole);
+      setShowConfirmModal(true);
+    } catch (error) {
+      console.error('Error checking game:', error);
+      setErrorMsg('حدث خطأ أثناء التحقق من اللعبة');
+    }
+  };
+
+  const handleConfirmJoin = async () => {
+    setIsJoining(true);
+    const sessionId = gameId.toUpperCase();
+
+    try {
       const result = await GameDatabase.addPlayer(playerRole, sessionId, {
         name,
         flag: selectedFlag,
@@ -109,13 +129,18 @@ export default function Join() {
 
       if (!result) {
         setErrorMsg('فشل في الانضمام للعبة. حاول مرة أخرى');
+        setShowConfirmModal(false);
+        setIsJoining(false);
         return;
       }
 
+      // Navigate to lobby
       navigate(`/lobby/${sessionId}?role=${playerRole}`);
     } catch (error) {
       console.error('Error joining game:', error);
       setErrorMsg('حدث خطأ أثناء الانضمام للعبة');
+      setShowConfirmModal(false);
+      setIsJoining(false);
     }
   };
 
@@ -387,6 +412,18 @@ export default function Join() {
           </form>
         )}
       </motion.div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmJoin}
+        title="تأكيد الانضمام للعبة"
+        message={`أنت على وشك الانضمام للعبة ${gameId} كـ${playerRole === 'playerA' ? 'لاعب أول' : 'لاعب ثاني'}. سيتم نقلك إلى صالة الانتظار لبدء الفيديو والانتظار حتى يبدأ المقدم اللعبة.`}
+        confirmText="انضم للعبة"
+        cancelText="إلغاء"
+        isLoading={isJoining}
+      />
     </div>
   );
 }
