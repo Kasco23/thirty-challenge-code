@@ -1,8 +1,6 @@
 /**
  * Displays a simple connection status banner. The full game will eventually
- * reflect real-time connectivity to Supabase and Daily.co. For now, this
- * component renders a static message so the UI has some persistent header
- * content during development.
+ * reflect real-time connectivity to Supabase and Daily.co. 
  */
 export default function ConnectionBanner() {
   return (

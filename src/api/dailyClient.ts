@@ -2,6 +2,7 @@ import DailyIframe, {
   DailyCall,
   DailyEventObjectParticipant,
   DailyParticipant,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
   DailyEventObjectAppMessage, // handy generic event type
 } from '@daily-co/daily-js';
 import { useEffect, useRef, useState } from 'react';
@@ -34,7 +35,7 @@ export const useDaily = (
   token?: string,
   userName?: string,
 ) => {
-  const callRef = useRef<DailyCall>();
+  const callRef = useRef<DailyCall>(null);
   const [meetingState, setMeetingState] = useState<string>('new');
   const [participants, setParticipants] = useState<
     Record<string, DailyParticipant>
@@ -64,7 +65,7 @@ export const useDaily = (
       .on('participant-updated', (e: DailyEventObjectParticipant) =>
         upsert(e.participant),
       )
-      .on('participant-left', (e: DailyEventObjectParticipant) =>
+      .on('participant-left', (e: import('@daily-co/daily-js').DailyEventObjectParticipantLeft) =>
         setParticipants((prev) => {
           const copy = { ...prev };
           delete copy[e.participant.session_id];
@@ -75,7 +76,9 @@ export const useDaily = (
     /* join immediately */
     joinRoom(call, roomUrl, token, userName).catch(console.error);
 
-    return () => leaveRoom(call).catch(console.error);
+    return () => {
+      leaveRoom(call).catch(console.error);
+    };
   }, [roomUrl, token, userName]);
 
   return { call: callRef.current, meetingState, participants };
