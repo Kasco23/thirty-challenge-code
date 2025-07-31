@@ -62,35 +62,6 @@ export default function TrueLobby() {
     }
   }, [myParticipant?.type, state.videoRoomCreated, gameId, createVideoRoom, isCreatingRoom, showAlertMessage]);
 
-  // For players: only create room after a delay if host hasn't created it
-  useEffect(() => {
-    if (
-      myParticipant?.type === 'player' &&
-      !state.videoRoomCreated &&
-      !isCreatingRoom &&
-      gameId
-    ) {
-      // Wait 5 seconds to give host PC time to create the room
-      const timer = setTimeout(() => {
-        if (!state.videoRoomCreated && !isCreatingRoom) {
-          console.log('Player creating video room after host delay...');
-          setIsCreatingRoom(true);
-          createVideoRoom(gameId)
-            .then((result) => {
-              if (result.success) {
-                showAlertMessage('تم إنشاء غرفة الفيديو تلقائياً (لاعب)', 'success');
-              } else {
-                showAlertMessage('فشل في إنشاء غرفة الفيديو', 'error');
-              }
-            })
-            .finally(() => setIsCreatingRoom(false));
-        }
-      }, 5000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [myParticipant?.type, state.videoRoomCreated, gameId, createVideoRoom, isCreatingRoom, showAlertMessage]);
-
   // Use global video room state
   const videoRoomCreated = state.videoRoomCreated || false;
 

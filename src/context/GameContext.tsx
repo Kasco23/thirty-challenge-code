@@ -85,7 +85,12 @@ export function useGame() {
     return res.json();
   };
 
+  /**
+   * @deprecated Video room creation should only be done through the Lobby component.
+   * This function is kept for backward compatibility but should not be used.
+   */
   const createVideoRoom = async (gameId: string) => {
+    console.warn('[DEPRECATED] createVideoRoom called from GameContext. Use Lobby component instead.');
     const result = (await callFn('create-daily-room', {
       roomName: gameId,
     })) as {
@@ -102,7 +107,12 @@ export function useGame() {
     return { success: false, error: result.error || 'create failed' };
   };
 
+  /**
+   * @deprecated Video room deletion should only be done through the Lobby component.
+   * This function is kept for backward compatibility but should not be used.
+   */
   const endVideoRoom = async (gameId: string) => {
+    console.warn('[DEPRECATED] endVideoRoom called from GameContext. Use Lobby component instead.');
     await callFn('delete-daily-room', { roomName: gameId });
     await GameDatabase.updateGame(gameId, {
       video_room_created: false,
