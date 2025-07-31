@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import { GameProvider } from '@/context/GameContext';
+import { Provider as JotaiProvider } from 'jotai';
 import ConnectionBanner from '@/components/ConnectionBanner';
 
 // Import the page components required for the early playable build.
@@ -20,7 +20,7 @@ import NotFound from '@/pages/NotFound';
  */
 export default function App() {
   return (
-    <GameProvider>
+    <JotaiProvider>
       <div className="dark min-h-screen bg-gradient-to-tr from-black via-[#10102a] to-accent2">
         <ConnectionBanner />
         <Routes>
@@ -34,6 +34,6 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
-    </GameProvider>
+    </JotaiProvider>
   );
 }

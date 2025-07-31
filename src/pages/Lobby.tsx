@@ -1,32 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useGame } from '@/hooks/useGame';
+import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
 import VideoRoom from '@/components/VideoRoom';
-
-interface LobbyParticipant {
-  id: string;
-  name: string;
-  type: 'host-pc' | 'host-mobile' | 'player';
-  playerId?: 'playerA' | 'playerB';
-  flag?: string;
-  club?: string;
-  isConnected: boolean;
-}
+import type { LobbyParticipant } from '@/state';
 
 export default function TrueLobby() {
   const { gameId } = useParams<{ gameId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { state, startSession, startGame, advanceQuestion, actions } =
-    useGame();
-  // Expose helpers for future flows
-  void startSession;
-  void advanceQuestion;
+  const state = useGameState();
+  const { startGame, createVideoRoom, endVideoRoom } = useGameActions();
+  const { myParticipant, setParticipant } = useLobbyActions();
+  
+  // Initialize game sync
+  useGameSync();
 
-  const [myParticipant, setMyParticipant] = useState<LobbyParticipant | null>(
-    null,
-  );
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
 
   // Automatically create the video room when the host PC opens the lobby
@@ -37,11 +26,11 @@ export default function TrueLobby() {
       gameId
     ) {
       setIsCreatingRoom(true);
-      (actions.createVideoRoom(gameId) as Promise<unknown>).finally(() =>
+      createVideoRoom(gameId).finally(() =>
         setIsCreatingRoom(false),
       );
     }
-  }, [myParticipant, state.videoRoomCreated, gameId, actions]);
+  }, [myParticipant, state.videoRoomCreated, gameId, createVideoRoom]);
 
   // Use global video room state
   const videoRoomCreated = state.videoRoomCreated || false;
@@ -52,6 +41,7 @@ export default function TrueLobby() {
 
     // Initialize game if needed
     if (state.gameId !== gameId) {
+      // For now, just update the atoms - we'll handle game loading separately
       startGame();
     }
 
@@ -73,7 +63,6 @@ export default function TrueLobby() {
         type: 'host-pc',
         isConnected: true,
       };
-      if (hostName) actions.updateHostName(hostName);
     } else if (role === 'host-mobile') {
       // Mobile Host (with video)
       participant = {
@@ -82,7 +71,6 @@ export default function TrueLobby() {
         type: 'host-mobile',
         isConnected: true,
       };
-      if (name) actions.updateHostName(name);
     } else if (
       (role === 'playerA' || role === 'playerB') &&
       name &&
@@ -100,23 +88,14 @@ export default function TrueLobby() {
         isConnected: true,
       };
 
+      // TODO: Implement player joining when autoJoin is true
       if (autoJoin) {
-        actions.joinGame(role, {
-          name,
-          flag,
-          club,
-          isConnected: true,
-        });
+        console.log('Auto-joining player:', { role, name, flag, club });
       }
     }
 
-    setMyParticipant(participant);
-
-    // Track presence for real-time synchronization
-    if (participant) {
-      actions.trackPresence(participant);
-    }
-  }, [gameId, searchParams, state.gameId, state.hostName, actions, startGame]);
+    setParticipant(participant);
+  }, [gameId, searchParams, state.gameId, state.hostName, startGame, setParticipant]);
 
   // Create video room when host PC clicks button
   const handleCreateVideoRoom = async () => {
@@ -124,11 +103,7 @@ export default function TrueLobby() {
 
     setIsCreatingRoom(true);
     try {
-      const result = (await actions.createVideoRoom(gameId)) as {
-        success: boolean;
-        roomUrl?: string;
-        error?: string;
-      };
+      const result = await createVideoRoom(gameId);
       if (!result.success) {
         console.error('Failed to create room:', result.error);
         alert('فشل في إنشاء غرفة الفيديو: ' + result.error);
@@ -145,7 +120,7 @@ export default function TrueLobby() {
     if (!gameId) return;
 
     try {
-      await actions.endVideoRoom(gameId);
+      await endVideoRoom(gameId);
     } catch (error) {
       console.error('Error ending room:', error);
       alert('خطأ في إنهاء غرفة الفيديو');
@@ -167,7 +142,7 @@ export default function TrueLobby() {
   }
 
   const connectedPlayers = Object.values(state.players).filter(
-    (p: import('@/types/game').Player) => p.isConnected,
+    (p) => p.isConnected,
   ).length;
   const hostMobileConnected = myParticipant.type === 'host-mobile' || false; // TODO: Track this in global state
 
@@ -313,7 +288,7 @@ export default function TrueLobby() {
             </div>
           </div>
 
-          {/* Player A Video */}
+          {/* Player A and B Videos */}
           {(['playerA', 'playerB'] as const).map((playerId, index) => {
             const player = state.players[playerId];
             const isMe =
