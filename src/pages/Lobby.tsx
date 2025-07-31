@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
 import VideoRoom from '@/components/VideoRoom';
 import AlertBanner from '@/components/AlertBanner';
+import ConfirmationModal from '@/components/ConfirmationModal';
 import type { LobbyParticipant } from '@/state';
 
 export default function TrueLobby() {
@@ -21,6 +22,8 @@ export default function TrueLobby() {
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState<'info' | 'success' | 'warning' | 'error'>('info');
   const [showAlert, setShowAlert] = useState(false);
+  const [showSessionStartModal, setShowSessionStartModal] = useState(false);
+  const [isStartingSession, setIsStartingSession] = useState(false);
 
   // Automatically create the video room when the host PC opens the lobby
   useEffect(() => {
@@ -92,9 +95,11 @@ export default function TrueLobby() {
         isConnected: true,
       };
 
-      // TODO: Implement player joining when autoJoin is true
+      // Auto-join logic for players
       if (autoJoin) {
         console.log('Auto-joining player:', { role, name, flag, club });
+        // This is handled by the database insertion in Join.tsx
+        // The real-time sync will update the player state here
       }
     }
 
@@ -138,6 +143,26 @@ export default function TrueLobby() {
     navigate(`/game/${gameId}?role=host`);
   };
 
+  const handleStartSession = async () => {
+    setIsStartingSession(true);
+    try {
+      // Start the game session (this will change phase to PLAYING)
+      startGame();
+      setShowSessionStartModal(false);
+      showAlertMessage('تم بدء الجلسة بنجاح!', 'success');
+      
+      // Navigate to the game room
+      setTimeout(() => {
+        navigate(`/game/${gameId}?role=host`);
+      }, 1500);
+    } catch (error) {
+      console.error('Failed to start session:', error);
+      showAlertMessage('فشل في بدء الجلسة', 'error');
+    } finally {
+      setIsStartingSession(false);
+    }
+  };
+
   // Function to show alerts
   const showAlertMessage = (message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
     setAlertMessage(message);
@@ -147,6 +172,7 @@ export default function TrueLobby() {
 
   // Track player connections and show alerts
   const previousConnectedPlayerIds = useRef<Set<string>>(new Set());
+  const hasShownSessionStartModal = useRef(false);
 
   useEffect(() => {
     if (myParticipant?.type === 'host-pc') {
@@ -160,10 +186,21 @@ export default function TrueLobby() {
         }
       });
 
+      // Show session start modal when first player joins and video room is ready
+      if (
+        currentConnectedPlayers.length >= 1 && 
+        state.videoRoomCreated && 
+        state.phase === 'CONFIG' &&
+        !hasShownSessionStartModal.current
+      ) {
+        setShowSessionStartModal(true);
+        hasShownSessionStartModal.current = true;
+      }
+
       // Update the previous state
       previousConnectedPlayerIds.current = currentConnectedPlayerIds;
     }
-  }, [state.players, myParticipant]);
+  }, [state.players, state.videoRoomCreated, state.phase, myParticipant]);
 
   if (!myParticipant || !gameId) {
     return (
@@ -351,10 +388,10 @@ export default function TrueLobby() {
                 </h3>
 
                 <div className="aspect-video bg-black/30 rounded-lg mb-4 overflow-hidden">
-                  {player.isConnected && videoRoomCreated && isMe ? (
+                  {videoRoomCreated && isMe ? (
                     <VideoRoom
                       gameId={gameId}
-                      userName={player.name}
+                      userName={player.name || name || 'لاعب'}
                       userRole={playerId}
                       className="w-full h-full"
                     />
@@ -363,13 +400,13 @@ export default function TrueLobby() {
                       <div className="text-center text-white/50">
                         <div className="text-4xl mb-2">👤</div>
                         <p className="text-sm font-arabic">
-                          {!player.isConnected
-                            ? 'في انتظار الاتصال...'
-                            : !videoRoomCreated
-                              ? 'في انتظار إنشاء الغرفة...'
-                              : !isMe
-                                ? 'فيديو اللاعب الآخر'
-                                : 'في انتظار الفيديو...'}
+                          {!videoRoomCreated
+                            ? 'في انتظار إنشاء الغرفة...'
+                            : !isMe
+                              ? (player.isConnected 
+                                  ? 'فيديو اللاعب الآخر' 
+                                  : 'في انتظار الاتصال...')
+                              : 'جاري تحضير الفيديو...'}
                         </p>
                       </div>
                     </div>
@@ -464,6 +501,21 @@ export default function TrueLobby() {
           </div>
         </motion.div>
       </div>
+
+      {/* Session Start Modal */}
+      <ConfirmationModal
+        isOpen={showSessionStartModal}
+        onClose={() => {
+          setShowSessionStartModal(false);
+          hasShownSessionStartModal.current = false;
+        }}
+        onConfirm={handleStartSession}
+        title="بدء الجلسة"
+        message={`انضم ${Object.values(state.players).filter(p => p.isConnected && p.name).length} لاعب للعبة. هل تريد بدء الجلسة الآن؟ سيتم نقل جميع المشاركين إلى غرفة اللعب.`}
+        confirmText="بدء الجلسة"
+        cancelText="انتظار المزيد"
+        isLoading={isStartingSession}
+      />
     </div>
   );
 }

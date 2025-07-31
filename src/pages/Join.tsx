@@ -147,7 +147,7 @@ export default function Join() {
 
       // Navigate to lobby
       try {
-        navigate(`/lobby/${sessionId}?role=${playerRole}`);
+        navigate(`/lobby/${sessionId}?role=${playerRole}&name=${encodeURIComponent(name)}&flag=${selectedFlag}&club=${encodeURIComponent(selectedTeam)}&autoJoin=true`);
       } catch (navError) {
         console.error('Navigation error:', navError);
         setErrorMsg('فشل في الانتقال إلى الردهة. حاول مرة أخرى.');
@@ -206,7 +206,7 @@ export default function Join() {
         }
 
         // Navigate to lobby
-        navigate(`/lobby/${sessionId}?role=${playerRole}`);
+        navigate(`/lobby/${sessionId}?role=${playerRole}&name=${encodeURIComponent(name)}&flag=${selectedFlag}&club=${encodeURIComponent(selectedTeam)}&autoJoin=true`);
       } else {
         setErrorMsg('فشل في إنشاء غرفة الفيديو: ' + (data.error || 'خطأ غير معروف'));
         setIsCreatingRoom(false);
