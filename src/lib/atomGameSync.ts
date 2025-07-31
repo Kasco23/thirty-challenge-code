@@ -1,7 +1,7 @@
-import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
+import { isSupabaseConfigured, getSupabase, createChannel } from '@/lib/supabaseLazy';
 import type { GameRecord, PlayerRecord } from '@/lib/gameDatabase';
 import type { GameState, PlayerId, Player } from '@/types/game';
-import type { RealtimeChannel } from '@supabase/supabase-js';
+import type { RealtimeChannel } from '@/lib/supabaseLazy';
 import { createStore } from 'jotai';
 type Store = ReturnType<typeof createStore>;
 import { 
@@ -65,8 +65,11 @@ export class AtomGameSync {
     }
 
     try {
+      // Lazy load Supabase when actually needed
+      const supabase = await getSupabase();
+      
       // Create channel for real-time presence and broadcasts
-      this.channel = supabase.channel(`game:${this.gameId}`, {
+      this.channel = await createChannel(`game:${this.gameId}`, {
         config: {
           broadcast: { self: true },
           presence: { key: 'participants' },
@@ -294,6 +297,7 @@ export class AtomGameSync {
     }
 
     if (this.gameSubscription) {
+      const supabase = await getSupabase();
       supabase.removeChannel(this.gameSubscription);
       this.gameSubscription = null;
     }

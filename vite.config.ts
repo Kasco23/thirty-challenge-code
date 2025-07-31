@@ -28,11 +28,15 @@ export default defineConfig({
           vendor: ['react', 'react-dom'],
           router: ['react-router-dom'],
           ui: ['framer-motion'],
+          // Split SDKs into separate chunks for lazy loading
+          supabase: ['@supabase/supabase-js'],
+          daily: ['@daily-co/daily-js'],
+          jotai: ['jotai'],
         },
       },
     },
     // optional: also raise Vite’s own warning bar from 500 kB to 200 kB
-    chunkSizeWarningLimit: 200, // kB  :
+    chunkSizeWarningLimit: 200, // kB
   },
   optimizeDeps: {
     include: [
@@ -40,8 +44,6 @@ export default defineConfig({
       'react-dom',
       'react-router-dom',
       'framer-motion',
-      '@supabase/supabase-js',
-      '@daily-co/daily-js',
       'flag-icons',
     ],
   },
