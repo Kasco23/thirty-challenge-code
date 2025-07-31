@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState, useCallback } from 'react';
-import DailyIframe from '@daily-co/daily-js';
-import { useGame } from '@/hooks/useGame';
+import { useGameState, useGameActions } from '@/hooks/useGameAtoms';
 
 interface VideoRoomProps {
   gameId: string;
@@ -16,7 +15,8 @@ export default function VideoRoom({
   userRole,
   className = '',
 }: VideoRoomProps) {
-  const { state, generateDailyToken } = useGame();
+  const state = useGameState();
+  const { generateDailyToken } = useGameActions();
   const callFrameRef = useRef<HTMLDivElement>(null);
   const callObjectRef = useRef<unknown>(null);
   const [isJoining, setIsJoining] = useState(false);
@@ -40,8 +40,11 @@ export default function VideoRoom({
         throw new Error('Failed to get access token');
       }
 
+      // Lazy load Daily.co SDK when video is actually needed
+      const DailyIframe = await import('@daily-co/daily-js');
+      
       // Create Daily call object
-      const callObject = DailyIframe.createCallObject({
+      const callObject = DailyIframe.default.createCallObject({
         iframeStyle: {
           position: 'relative',
           width: '100%',

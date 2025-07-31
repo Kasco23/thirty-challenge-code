@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { getAllTeams, searchTeams, searchFlags } from '@/utils/teamUtils';
+import { getAllTeams, searchTeams, searchFlags, type Team } from '@/utils/teamUtils';
 import { GameDatabase } from '@/lib/gameDatabase';
-import { supabase } from '@/lib/supabaseClient';
+import { getSupabase } from '@/lib/supabaseLazy';
+import LazyImage from '@/components/LazyImage';
 
 export default function Join() {
   const navigate = useNavigate();
@@ -19,8 +20,21 @@ export default function Join() {
   const [flagSearch, setFlagSearch] = useState('');
   const [teamSearch, setTeamSearch] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [allTeams, setAllTeams] = useState<Team[]>([]);
 
-  const allTeams = getAllTeams();
+  // Load teams lazily when component mounts
+  useEffect(() => {
+    const loadTeams = async () => {
+      try {
+        const teams = await getAllTeams();
+        setAllTeams(teams);
+      } catch (error) {
+        console.error('Failed to load teams:', error);
+      }
+    };
+    loadTeams();
+  }, []);
+
   const filteredFlags = searchFlags(flagSearch);
   const filteredTeams = searchTeams(allTeams, teamSearch);
 
@@ -38,6 +52,7 @@ export default function Join() {
 
       const sessionId = gameId.toUpperCase();
       const code = hostCode.toUpperCase();
+      const supabase = await getSupabase();
       const { data } = await supabase
         .from('games')
         .select('id')
@@ -309,11 +324,10 @@ export default function Join() {
                         : 'border-white/20 bg-white/5 hover:border-white/40'
                     }`}
                   >
-                    <img
+                    <LazyImage
                       src={team.logoPath}
                       alt={team.name}
                       className="w-8 h-8 object-contain"
-                      loading="lazy"
                     />
                     <span className="text-white font-arabic text-sm">
                       {team.displayName}

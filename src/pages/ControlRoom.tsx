@@ -1,4 +1,4 @@
-import { useGame } from '@/hooks/useGame';
+import { useGameState, useGameActions } from '@/hooks/useGameAtoms';
 import VideoRoom from '@/components/VideoRoom';
 
 /**
@@ -7,7 +7,8 @@ import VideoRoom from '@/components/VideoRoom';
  * quick controls for starting the game or advancing questions.
  */
 export default function ControlRoom() {
-  const { state, startGame, createVideoRoom, endVideoRoom } = useGame();
+  const state = useGameState();
+  const { startGame, createVideoRoom, endVideoRoom } = useGameActions();
 
   const handleCreate = async () => {
     if (!state.gameId) return;
