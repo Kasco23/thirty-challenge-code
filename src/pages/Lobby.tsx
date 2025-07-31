@@ -146,14 +146,22 @@ export default function TrueLobby() {
   };
 
   // Track player connections and show alerts
+  const previousConnectedPlayerIds = useRef<Set<string>>(new Set());
+
   useEffect(() => {
-    const currentConnectedCount = Object.values(state.players).filter(p => p.isConnected).length;
-    
-    if (currentConnectedCount > 0 && myParticipant?.type === 'host-pc') {
-      const newPlayer = Object.values(state.players).find(p => p.isConnected && p.name);
-      if (newPlayer) {
-        showAlertMessage(`انضم ${newPlayer.name} للعبة`, 'success');
-      }
+    if (myParticipant?.type === 'host-pc') {
+      const currentConnectedPlayers = Object.values(state.players).filter(p => p.isConnected && p.name);
+      const currentConnectedPlayerIds = new Set(currentConnectedPlayers.map(p => p.id));
+
+      // Detect newly joined players
+      currentConnectedPlayers.forEach(player => {
+        if (!previousConnectedPlayerIds.current.has(player.id)) {
+          showAlertMessage(`انضم ${player.name} للعبة`, 'success');
+        }
+      });
+
+      // Update the previous state
+      previousConnectedPlayerIds.current = currentConnectedPlayerIds;
     }
   }, [state.players, myParticipant]);
 
