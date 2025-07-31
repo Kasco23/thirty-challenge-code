@@ -82,17 +82,41 @@ export default function Join() {
     e.preventDefault();
     if (!name.trim() || !selectedFlag || !selectedTeam) return;
 
-    const playerRole = 'playerA'; // TODO: choose open slot dynamically
+    setErrorMsg('');
     const sessionId = gameId.toUpperCase();
 
-    await GameDatabase.addPlayer(playerRole, sessionId, {
-      name,
-      flag: selectedFlag,
-      club: selectedTeam,
-      role: playerRole,
-    });
+    try {
+      // Check existing players to find available slot
+      const existingPlayers = await GameDatabase.getGamePlayers(sessionId);
+      const takenRoles = existingPlayers.map(p => p.role);
+      
+      let playerRole: string;
+      if (!takenRoles.includes('playerA')) {
+        playerRole = 'playerA';
+      } else if (!takenRoles.includes('playerB')) {
+        playerRole = 'playerB';
+      } else {
+        setErrorMsg('اللعبة ممتلئة! لا يمكن انضمام المزيد من اللاعبين');
+        return;
+      }
 
-    navigate(`/lobby/${sessionId}?role=${playerRole}`);
+      const result = await GameDatabase.addPlayer(playerRole, sessionId, {
+        name,
+        flag: selectedFlag,
+        club: selectedTeam,
+        role: playerRole,
+      });
+
+      if (!result) {
+        setErrorMsg('فشل في الانضمام للعبة. حاول مرة أخرى');
+        return;
+      }
+
+      navigate(`/lobby/${sessionId}?role=${playerRole}`);
+    } catch (error) {
+      console.error('Error joining game:', error);
+      setErrorMsg('حدث خطأ أثناء الانضمام للعبة');
+    }
   };
 
   return (
@@ -336,6 +360,13 @@ export default function Join() {
                 ))}
               </div>
             </div>
+
+            {/* Error message for step 3 */}
+            {errorMsg && (
+              <div className="text-red-400 text-sm font-arabic text-center">
+                {errorMsg}
+              </div>
+            )}
 
             <div className="flex gap-3">
               <button

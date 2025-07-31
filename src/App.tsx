@@ -41,6 +41,7 @@ export default function App() {
             <Route path="/control-room" element={<ControlRoom />} />
             <Route path="/join" element={<Join />} />
             <Route path="/lobby" element={<Lobby />} />
+            <Route path="/lobby/:gameId" element={<Lobby />} />
             <Route path="/quiz" element={<QuizRoom />} />
             <Route path="/scores" element={<FinalScores />} />
             <Route path="*" element={<NotFound />} />

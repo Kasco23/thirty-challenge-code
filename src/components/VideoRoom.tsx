@@ -25,6 +25,12 @@ export default function VideoRoom({
 
   const joinCall = useCallback(async () => {
     if (!callFrameRef.current) return;
+    
+    // Prevent duplicate call creation
+    if (callObjectRef.current) {
+      console.log('Call already exists, skipping creation');
+      return;
+    }
 
     setIsJoining(true);
     setError('');
@@ -96,8 +102,13 @@ export default function VideoRoom({
         startAudioOff: false,
       });
 
-      // Append to DOM
-      callFrameRef.current.appendChild((callObject as any).iframe());
+      // Append to DOM safely
+      const iframe = (callObject as any).iframe();
+      if (callFrameRef.current && iframe) {
+        // Clear any existing content first
+        callFrameRef.current.innerHTML = '';
+        callFrameRef.current.appendChild(iframe);
+      }
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to join video call';
@@ -134,6 +145,11 @@ export default function VideoRoom({
         await (callObjectRef.current as any).destroy();
         callObjectRef.current = null;
         setCallState('left');
+        
+        // Clear the iframe container
+        if (callFrameRef.current) {
+          callFrameRef.current.innerHTML = '';
+        }
       } catch (error) {
         console.error('Error leaving call:', error);
       }
