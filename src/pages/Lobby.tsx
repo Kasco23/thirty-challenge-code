@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
@@ -25,6 +25,13 @@ export default function TrueLobby() {
   const [showSessionStartModal, setShowSessionStartModal] = useState(false);
   const [isStartingSession, setIsStartingSession] = useState(false);
 
+  // Function to show alerts
+  const showAlertMessage = useCallback((message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
+    setAlertMessage(message);
+    setAlertType(type);
+    setShowAlert(true);
+  }, []);
+
   // Automatically create the video room when the host PC opens the lobby
   useEffect(() => {
     if (
@@ -38,6 +45,28 @@ export default function TrueLobby() {
       );
     }
   }, [myParticipant, state.videoRoomCreated, gameId, createVideoRoom]);
+
+  // Automatically create video room when first player joins if host hasn't created it yet
+  useEffect(() => {
+    if (
+      myParticipant?.type === 'player' &&
+      !state.videoRoomCreated &&
+      gameId &&
+      !isCreatingRoom
+    ) {
+      console.log('Player joining without video room - creating room automatically');
+      setIsCreatingRoom(true);
+      createVideoRoom(gameId)
+        .then((result) => {
+          if (result.success) {
+            showAlertMessage('تم إنشاء غرفة الفيديو تلقائياً', 'success');
+          } else {
+            showAlertMessage('فشل في إنشاء غرفة الفيديو', 'error');
+          }
+        })
+        .finally(() => setIsCreatingRoom(false));
+    }
+  }, [myParticipant, state.videoRoomCreated, gameId, createVideoRoom, isCreatingRoom, showAlertMessage]);
 
   // Use global video room state
   const videoRoomCreated = state.videoRoomCreated || false;
@@ -78,20 +107,15 @@ export default function TrueLobby() {
         type: 'host-mobile',
         isConnected: true,
       };
-    } else if (
-      (role === 'playerA' || role === 'playerB') &&
-      name &&
-      flag &&
-      club
-    ) {
-      // Player
+    } else if (role === 'playerA' || role === 'playerB') {
+      // Player - try to set participant even if some data is missing from URL
       participant = {
         id: role,
-        name,
+        name: name || 'لاعب',
         type: 'player',
         playerId: role,
-        flag,
-        club,
+        flag: flag || undefined,
+        club: club || undefined,
         isConnected: true,
       };
 
@@ -163,13 +187,6 @@ export default function TrueLobby() {
     }
   };
 
-  // Function to show alerts
-  const showAlertMessage = (message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
-    setAlertMessage(message);
-    setAlertType(type);
-    setShowAlert(true);
-  };
-
   // Track player connections and show alerts
   const previousConnectedPlayerIds = useRef<Set<string>>(new Set());
   const hasShownSessionStartModal = useRef(false);
@@ -206,7 +223,17 @@ export default function TrueLobby() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 flex items-center justify-center">
         <div className="text-white text-center font-arabic">
-          جاري تحميل الصالة...
+          <div className="w-8 h-8 border-2 border-accent2 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg mb-2">جاري تحميل الصالة...</p>
+          {!gameId && <p className="text-sm text-white/70">لا يوجد معرف للعبة</p>}
+          {!myParticipant && gameId && (
+            <div className="text-sm text-white/70">
+              <p>جاري تحديد هويتك...</p>
+              <p className="text-xs mt-1">
+                الدور: {searchParams.get('role') || 'غير محدد'}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -309,11 +336,35 @@ export default function TrueLobby() {
 
               <button
                 onClick={handleStartGame}
-                disabled={connectedPlayers < 2 || !videoRoomCreated}
+                disabled={connectedPlayers < 1 || !videoRoomCreated}
                 className="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-arabic transition-colors"
               >
-                {connectedPlayers < 2 ? 'في انتظار اللاعبين...' : 'بدء اللعبة'}
+                {connectedPlayers < 1 
+                  ? 'في انتظار اللاعبين...' 
+                  : !videoRoomCreated 
+                    ? 'في انتظار غرفة الفيديو...'
+                    : 'بدء اللعبة'}
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Player notification when no video room exists */}
+        {myParticipant.type === 'player' && !videoRoomCreated && (
+          <div className="mb-8 bg-orange-500/20 rounded-xl p-6 border border-orange-500/30">
+            <h3 className="text-xl font-bold text-orange-300 mb-4 font-arabic text-center">
+              إشعار للاعب
+            </h3>
+            <div className="text-center text-white">
+              <p className="font-arabic mb-3">
+                لا توجد غرفة فيديو حالياً. 
+                {isCreatingRoom 
+                  ? ' جاري إنشاء غرفة الفيديو تلقائياً...' 
+                  : ' يرجى انتظار المقدم لإنشاء الغرفة أو سيتم إنشاؤها تلقائياً.'}
+              </p>
+              {isCreatingRoom && (
+                <div className="w-6 h-6 border-2 border-orange-300 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              )}
             </div>
           </div>
         )}
