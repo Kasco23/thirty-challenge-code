@@ -2,8 +2,6 @@ import DailyIframe, {
   DailyCall,
   DailyEventObjectParticipant,
   DailyParticipant,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-unused-vars
-  DailyEventObjectAppMessage, // handy generic event type
 } from '@daily-co/daily-js';
 import { useEffect, useRef, useState } from 'react';
 
