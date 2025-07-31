@@ -146,7 +146,12 @@ export default function Join() {
       }
 
       // Navigate to lobby
-      navigate(`/lobby/${sessionId}?role=${playerRole}`);
+      try {
+        navigate(`/lobby/${sessionId}?role=${playerRole}`);
+      } catch (navError) {
+        console.error('Navigation error:', navError);
+        setErrorMsg('فشل في الانتقال إلى الردهة. حاول مرة أخرى.');
+      }
     } catch (error) {
       console.error('Error joining game:', error);
       setErrorMsg('حدث خطأ أثناء الانضمام للعبة');
