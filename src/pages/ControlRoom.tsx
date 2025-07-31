@@ -7,17 +7,9 @@ import { useGameState, useGameActions } from '@/hooks/useGameAtoms';
  */
 export default function ControlRoom() {
   const state = useGameState();
-  const { startGame, createVideoRoom, endVideoRoom } = useGameActions();
+  const { startGame } = useGameActions();
 
-  const handleCreate = async () => {
-    if (!state.gameId) return;
-    await createVideoRoom(state.gameId);
-  };
 
-  const handleEnd = async () => {
-    if (!state.gameId) return;
-    await endVideoRoom(state.gameId);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 p-6">
@@ -44,21 +36,19 @@ export default function ControlRoom() {
         >
           ابدأ اللعبة
         </button>
-        {!state.videoRoomCreated ? (
-          <button
-            onClick={handleCreate}
-            className="px-6 py-3 bg-accent2 hover:bg-accent text-white rounded-lg font-arabic"
-          >
-            إنشاء غرفة الفيديو
-          </button>
-        ) : (
-          <button
-            onClick={handleEnd}
-            className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg font-arabic"
-          >
-            إنهاء غرفة الفيديو
-          </button>
-        )}
+        
+        {/* Video room status display only */}
+        <div className={`px-6 py-3 rounded-lg font-arabic ${
+          state.videoRoomCreated 
+            ? 'bg-green-600 text-white' 
+            : 'bg-gray-600 text-white/70'
+        }`}>
+          {state.videoRoomCreated ? '✓ غرفة الفيديو جاهزة' : 'لا توجد غرفة فيديو'}
+        </div>
+        
+        <div className="px-6 py-3 bg-blue-600/20 border border-blue-600/30 rounded-lg font-arabic text-blue-300 text-sm">
+          💡 لإدارة غرفة الفيديو، اذهب إلى صالة الانتظار
+        </div>
       </div>
 
       {/* Video tiles grid - Display only, ControlRoom doesn't join video */}
