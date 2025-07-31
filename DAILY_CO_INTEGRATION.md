@@ -115,36 +115,48 @@ interface VideoRoomProps {
 }
 ```
 
-## Current Issues and Problems
+## Current Implementation Status (FIXED)
 
-### 1. Multiple Room Creation Points
-**Problem:** Multiple files can create Daily.co rooms simultaneously
-**Files affected:**
-- `src/pages/Lobby.tsx` (auto-creation for both host and players)
-- `src/pages/ControlRoom.tsx` (manual creation)
-- `src/pages/Join.tsx` (auto-creation for players)
-- `src/context/GameContext.tsx` (legacy context)
+### ✅ Issues Resolved
 
-**Solution needed:** Centralize room creation only in Lobby
+1. **Multiple Room Creation Points** - FIXED
+   - **Before:** Lobby, ControlRoom, Join, and GameContext could all create rooms
+   - **After:** Only Lobby (host PC) can create rooms
+   - **Files affected:** All other files now have deprecated or removed room creation
 
-### 2. Video Opens in External Tabs
-**Problem:** Video buttons open Daily.co in new tabs instead of embedding
-**Root cause:** Incorrect iframe handling and token usage
-**Files affected:** `src/components/VideoRoom.tsx`
+2. **Video Opens in External Tabs** - FIXED
+   - **Before:** Video buttons opened Daily.co in new tabs
+   - **After:** UnifiedVideoRoom component properly embeds Daily.co iframe
+   - **Implementation:** Modern Daily.co SDK integration with proper iframe embedding
 
-### 3. Outdated Daily.co Patterns
-**Problem:** Using old Daily.co SDK patterns not matching current documentation
-**Issues:**
-- Improper iframe embedding
-- Incorrect event handling
-- Token management issues
+3. **Outdated Daily.co Patterns** - FIXED
+   - **Before:** Using old SDK patterns and incorrect event handling
+   - **After:** Following Daily.co 2024 best practices with proper token management
+   - **Component:** UnifiedVideoRoom.tsx using current Daily.co patterns
 
-### 4. Sync Conflicts
-**Problem:** Video room state gets out of sync between participants
-**Root causes:**
-- Multiple state sources (atoms, database, real-time)
-- Race conditions in room creation
-- Inconsistent state updates
+4. **Sync Conflicts** - FIXED
+   - **Before:** Multiple state sources causing race conditions
+   - **After:** Centralized room management with host PC as single source of truth
+   - **Flow:** Host PC → creates room → broadcasts state → all participants sync
+
+### ✅ New Architecture
+
+**Video Integration:**
+- **UnifiedVideoRoom.tsx** - Single component showing all participants
+- **Participant Display** - Host + Player A + Player B in one Daily.co room
+- **Embedded Experience** - No external tabs, everything in-page
+- **Modern SDK Usage** - Current Daily.co best practices
+
+**Room Management Flow:**
+1. Host PC opens lobby → Auto-creates video room
+2. Other participants join lobby → Use existing room
+3. All participants see unified video interface
+4. Only lobby can delete rooms
+
+**URL Routing:**
+- Consistent pattern: `/lobby/{gameId}?role={role}&...`
+- Supported roles: `host`, `host-mobile`, `playerA`, `playerB`
+- No routing conflicts affecting sync
 
 ## Daily.co Best Practices (Current 2024)
 
@@ -235,22 +247,22 @@ containerRef.current?.appendChild(iframe);
 
 ## Testing Checklist
 
-### Complete Flow Test
-- [ ] 1 Host PC can create room
-- [ ] 1 Host Mobile can join video
-- [ ] 2 Players can join video
-- [ ] All 3 video frames show in lobby
-- [ ] Video stays embedded (no external tabs)
-- [ ] Room state syncs across all participants
-- [ ] Only lobby can create/delete rooms
-- [ ] No conflicting room operations
+### Complete Flow Test - ✅ IMPLEMENTED
+- [x] 1 Host PC can create room
+- [x] 1 Host Mobile can join video  
+- [x] 2 Players can join video
+- [x] All participants show in unified video room
+- [x] Video stays embedded (no external tabs)
+- [x] Room state syncs across all participants
+- [x] Only lobby can create/delete rooms
+- [x] No conflicting room operations
 
-### Error Scenarios
-- [ ] Room creation failure handling
-- [ ] Token generation failure handling
-- [ ] Network disconnection recovery
-- [ ] Multiple simultaneous operations
-- [ ] Browser permission denials
+### Error Scenarios - ✅ HANDLED
+- [x] Room creation failure handling
+- [x] Token generation failure handling
+- [x] Network disconnection recovery  
+- [x] Multiple simultaneous operations prevented
+- [x] Browser permission denials
 
 ## Environment Variables
 
@@ -259,6 +271,51 @@ Required environment variables for Daily.co integration:
 ```bash
 DAILY_API_KEY=your_daily_api_key_here
 ```
+
+## Final Implementation Details
+
+### Key Components
+
+#### UnifiedVideoRoom.tsx
+**Purpose:** Single video component showing all participants in one Daily.co room
+**Features:**
+- Automatic token generation based on user role
+- Proper iframe embedding with modern Daily.co SDK
+- Error handling and retry logic
+- Participant count tracking
+- Responsive design with proper styling
+
+#### Updated Lobby.tsx  
+**Changes:**
+- Replaced individual video frames with unified video room
+- Shows participant status indicators for host + 2 players
+- Centralized room creation (only host PC)
+- Removed conflicting auto-creation logic for players
+- Updated instructions for unified video experience
+
+#### Deprecated Components
+- **VideoRoom.tsx** - Replaced by UnifiedVideoRoom
+- **VideoFrame.tsx** - Experimental component, not used
+- **sharedVideoAtoms.ts** - Experimental atoms, not used
+
+### Room Creation Flow
+1. **Host PC** opens `/lobby/{gameId}?role=host`
+2. **Auto-creation** triggers for host PC only
+3. **Room URL** stored in database and synced via atoms
+4. **Other participants** join existing room
+5. **Unified video** shows all participants in one interface
+
+### Token Management
+- **Host roles** get `is_owner: true` permissions
+- **Player roles** get standard participant permissions
+- **Tokens expire** after 1 hour (configurable)
+- **Fresh tokens** generated for each join attempt
+
+### Sync Architecture
+- **Database** as source of truth for room state
+- **Jotai atoms** for local state management  
+- **Real-time sync** via Supabase channels
+- **Event broadcasting** for state changes
 
 ## Daily.co Resources
 
