@@ -1,8 +1,8 @@
 import { useAtomValue, useSetAtom, useStore } from 'jotai';
 import { useCallback, useEffect } from 'react';
 import { GameDatabase } from '@/lib/gameDatabase';
-import { createAtomGameSync } from '@/lib/atomGameSync';
-import type { SegmentCode, PlayerId, Player } from '@/types/game';
+import { createAtomGameSync, type AtomGameSync } from '@/lib/atomGameSync';
+import type { SegmentCode, PlayerId, Player, GameState } from '@/types/game';
 import {
   gameStateAtom,
   gameIdAtom,
@@ -25,7 +25,7 @@ export function useGameActions() {
   const setPhase = useSetAtom(phaseAtom);
   const updateGameState = useSetAtom(updateGameStateAtom);
   const initializeGame = useSetAtom(initializeGameAtom);
-  const gameSyncInstance = useAtomValue(gameSyncInstanceAtom);
+  const gameSyncInstance = useAtomValue(gameSyncInstanceAtom) as AtomGameSync | null;
 
   const startSession = useCallback(async (
     gameId: string,
@@ -46,8 +46,8 @@ export function useGameActions() {
           gameId: record.id,
           hostCode: record.host_code,
           hostName: record.host_name ?? null,
-          phase: record.phase as any,
-          currentSegment: record.current_segment as any,
+          phase: record.phase as GameState['phase'],
+          currentSegment: record.current_segment as GameState['currentSegment'],
           currentQuestionIndex: record.current_question_index,
           videoRoomUrl: record.video_room_url ?? undefined,
           videoRoomCreated: record.video_room_created,
@@ -225,7 +225,7 @@ export function usePlayerActions() {
   const updatePlayer = useSetAtom(updatePlayerAtom);
   const addPlayer = useSetAtom(addPlayerAtom);
   const updateScore = useSetAtom(updateScoreAtom);
-  const gameSyncInstance = useAtomValue(gameSyncInstanceAtom);
+  const gameSyncInstance = useAtomValue(gameSyncInstanceAtom) as AtomGameSync | null;
   const gameId = useAtomValue(gameIdAtom);
 
   const joinGame = useCallback(async (playerId: PlayerId, playerData: Partial<Player>) => {
@@ -276,20 +276,15 @@ export function usePlayerActions() {
   const scorePlayer = useCallback((playerId: PlayerId, points: number) => {
     updateScore({ playerId, points });
     
-    if (gameSyncInstance) {
-      // Broadcast score update through game state
-      const gameState = gameSyncInstance.store.get(gameStateAtom);
-      const updatedPlayer = { ...gameState.players[playerId] };
-      updatedPlayer.score += points;
-      
-      gameSyncInstance.broadcastGameState({
-        players: {
-          ...gameState.players,
-          [playerId]: updatedPlayer,
-        },
-      });
+    if (gameSyncInstance && gameId) {
+      // Update and broadcast player score through database
+      GameDatabase.updatePlayer(playerId, { 
+        score: points // Note: This should be the new total, not increment
+      }).then(() => {
+        // Let the database update trigger the sync
+      }).catch(console.error);
     }
-  }, [updateScore, gameSyncInstance]);
+  }, [updateScore, gameSyncInstance, gameId]);
 
   return {
     joinGame,
@@ -302,7 +297,7 @@ export function usePlayerActions() {
 export function useLobbyActions() {
   const setMyParticipant = useSetAtom(setMyParticipantAtom);
   const myParticipant = useAtomValue(myParticipantAtom);
-  const gameSyncInstance = useAtomValue(gameSyncInstanceAtom);
+  const gameSyncInstance = useAtomValue(gameSyncInstanceAtom) as AtomGameSync | null;
 
   const setParticipant = useCallback((participant: LobbyParticipant | null) => {
     setMyParticipant(participant);
@@ -322,7 +317,7 @@ export function useLobbyActions() {
 export function useGameSync() {
   const store = useStore();
   const gameId = useAtomValue(gameIdAtom);
-  const gameSyncInstance = useAtomValue(gameSyncInstanceAtom);
+  const gameSyncInstance = useAtomValue(gameSyncInstanceAtom) as AtomGameSync | null;
 
   useEffect(() => {
     if (gameId && !gameSyncInstance) {

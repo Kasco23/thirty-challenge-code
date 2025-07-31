@@ -1,6 +1,7 @@
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import type { GameRecord, PlayerRecord } from '@/lib/gameDatabase';
 import type { GameState, PlayerId, Player } from '@/types/game';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import { createStore } from 'jotai';
 type Store = ReturnType<typeof createStore>;
 import { 
@@ -48,8 +49,8 @@ function mapRecordToState(record: GameRecord): Partial<GameState> {
 export class AtomGameSync {
   private gameId: string;
   private store: Store;
-  private channel: any = null;
-  private gameSubscription: any = null;
+  private channel: RealtimeChannel | null = null;
+  private gameSubscription: RealtimeChannel | null = null;
 
   constructor(gameId: string, store: Store) {
     this.gameId = gameId;
@@ -74,7 +75,7 @@ export class AtomGameSync {
 
       // Listen for game state broadcasts
       this.channel.on(
-        'broadcast',
+        'broadcast' as any,
         { event: 'game_state_update' },
         (payload: { gameState?: Partial<GameState> }) => {
           if (payload.gameState) {
@@ -85,9 +86,9 @@ export class AtomGameSync {
 
       // Listen for player events
       this.channel.on(
-        'broadcast',
+        'broadcast' as any,
         { event: 'player_join' },
-        (payload: { playerId?: PlayerId; playerData?: any }) => {
+        (payload: { playerId?: PlayerId; playerData?: unknown }) => {
           if (payload.playerId && payload.playerData) {
             this.store.set(addPlayerAtom, payload.playerData as Player);
           }
@@ -95,7 +96,7 @@ export class AtomGameSync {
       );
 
       this.channel.on(
-        'broadcast',
+        'broadcast' as any,
         { event: 'player_leave' },
         (payload: { playerId?: PlayerId }) => {
           if (payload.playerId) {
@@ -192,15 +193,16 @@ export class AtomGameSync {
     const presenceState = this.channel.presenceState();
     const participants: LobbyParticipant[] = [];
 
-    Object.values(presenceState).forEach((presence: any) => {
-      presence.forEach((participant: any) => {
+    Object.values(presenceState).forEach((presence: unknown) => {
+      (presence as unknown[]).forEach((participant: unknown) => {
+        const p = participant as LobbyParticipant;
         participants.push({
-          id: participant.id,
-          name: participant.name,
-          type: participant.type,
-          playerId: participant.playerId,
-          flag: participant.flag,
-          club: participant.club,
+          id: p.id,
+          name: p.name,
+          type: p.type,
+          playerId: p.playerId,
+          flag: p.flag,
+          club: p.club,
           isConnected: true,
         });
       });

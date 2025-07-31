@@ -4,7 +4,7 @@ import type { PlayerId } from '@/types/game';
 // Connection and sync atoms
 export const isConnectedToSupabaseAtom = atom<boolean>(false);
 export const connectionErrorAtom = atom<string | null>(null);
-export const gameSyncInstanceAtom = atom<any>(null); // Will hold GameSync instance
+export const gameSyncInstanceAtom = atom<unknown>(null); // Will hold AtomGameSync instance
 
 // Presence tracking atoms
 export interface LobbyParticipant {
@@ -21,7 +21,7 @@ export const lobbyParticipantsAtom = atom<LobbyParticipant[]>([]);
 export const myParticipantAtom = atom<LobbyParticipant | null>(null);
 
 // Real-time event atoms
-export const lastBroadcastAtom = atom<{ event: string; payload: any; timestamp: number } | null>(null);
+export const lastBroadcastAtom = atom<{ event: string; payload: unknown; timestamp: number } | null>(null);
 
 // Derived atoms
 export const connectedParticipantsAtom = atom<LobbyParticipant[]>(
@@ -87,7 +87,7 @@ export const setMyParticipantAtom = atom(
 // Broadcast events
 export const broadcastEventAtom = atom(
   null,
-  (_get, set, { event, payload }: { event: string; payload: any }) => {
+  (_get, set, { event, payload }: { event: string; payload: unknown }) => {
     set(lastBroadcastAtom, {
       event,
       payload,
