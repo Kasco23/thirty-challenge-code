@@ -74,8 +74,9 @@ export class AtomGameSync {
       });
 
       // Listen for game state broadcasts
-      this.channel.on(
-        'broadcast' as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.channel as any).on(
+        'broadcast',
         { event: 'game_state_update' },
         (payload: { gameState?: Partial<GameState> }) => {
           if (payload.gameState) {
@@ -85,8 +86,9 @@ export class AtomGameSync {
       );
 
       // Listen for player events
-      this.channel.on(
-        'broadcast' as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.channel as any).on(
+        'broadcast',
         { event: 'player_join' },
         (payload: { playerId?: PlayerId; playerData?: unknown }) => {
           if (payload.playerId && payload.playerData) {
@@ -95,8 +97,9 @@ export class AtomGameSync {
         }
       );
 
-      this.channel.on(
-        'broadcast' as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.channel as any).on(
+        'broadcast',
         { event: 'player_leave' },
         (payload: { playerId?: PlayerId }) => {
           if (payload.playerId) {
