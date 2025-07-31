@@ -7,8 +7,6 @@ interface VideoRoomProps {
   userName: string;
   userRole: 'host-mobile' | 'playerA' | 'playerB';
   className?: string;
-  /** If true, this will show all participants instead of just local user */
-  showAllParticipants?: boolean;
 }
 
 export default function VideoRoom({
@@ -16,7 +14,6 @@ export default function VideoRoom({
   userName,
   userRole,
   className = '',
-  showAllParticipants = false,
 }: VideoRoomProps) {
   const state = useGameState();
   const { generateDailyToken } = useGameActions();

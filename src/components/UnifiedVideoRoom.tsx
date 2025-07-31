@@ -1,5 +1,20 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useGameState, useGameActions } from '@/hooks/useGameAtoms';
+
+// Daily.co TypeScript interfaces for better event typing
+interface DailyEvent {
+  participant?: {
+    user_id?: string;
+    user_name?: string;
+    local?: boolean;
+  };
+}
+
+interface DailyError {
+  errorMsg?: string;
+  message?: string;
+}
 
 interface UnifiedVideoRoomProps {
   gameId: string;
@@ -13,7 +28,7 @@ export default function UnifiedVideoRoom({
   const state = useGameState();
   const { generateDailyToken } = useGameActions();
   const callFrameRef = useRef<HTMLDivElement>(null);
-  const callObjectRef = useRef<unknown>(null);
+  const callObjectRef = useRef<any>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [callState, setCallState] = useState<string>('new');
   const [error, setError] = useState<string>('');
@@ -124,25 +139,25 @@ export default function UnifiedVideoRoom({
           setCallState('left');
           setParticipantCount(0);
         })
-        .on('error', (error: unknown) => {
+        .on('error', (error?: DailyError) => {
           console.error(`[UnifiedVideoRoom] Daily.co error:`, error);
           const errorMsg =
-            (error as { errorMsg?: string })?.errorMsg || 
-            (error as { message?: string })?.message || 
+            error?.errorMsg || 
+            error?.message || 
             'Video call error';
           setError(errorMsg);
           setIsJoining(false);
           setCallState('error');
         })
-        .on('participant-joined', (event: unknown) => {
+        .on('participant-joined', (event?: DailyEvent) => {
           console.log(`[UnifiedVideoRoom] Participant joined:`, event);
           setParticipantCount(prev => prev + 1);
         })
-        .on('participant-left', (event: unknown) => {
+        .on('participant-left', (event?: DailyEvent) => {
           console.log(`[UnifiedVideoRoom] Participant left:`, event);
           setParticipantCount(prev => Math.max(0, prev - 1));
         })
-        .on('participant-updated', (event: unknown) => {
+        .on('participant-updated', (event?: DailyEvent) => {
           console.log(`[UnifiedVideoRoom] Participant updated:`, event);
         });
 
