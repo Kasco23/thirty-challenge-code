@@ -12,6 +12,8 @@
   "src/components/LazyImage.tsx": [],
   "src/components/Scoreboard.tsx": [],
   "src/components/Timer.tsx": [],
+  "src/components/UnifiedVideoRoom.tsx": [],
+  "src/components/VideoFrame.tsx": [],
   "src/components/VideoRoom.tsx": [],
   "src/context/GameContext.tsx": [
     "src/context/defaults.ts",
@@ -68,6 +70,7 @@
     "src/state/syncAtoms.ts",
     "src/state/videoAtoms.ts"
   ],
+  "src/state/sharedVideoAtoms.ts": [],
   "src/state/syncAtoms.ts": [],
   "src/state/videoAtoms.ts": [],
   "src/types/game.ts": [],
