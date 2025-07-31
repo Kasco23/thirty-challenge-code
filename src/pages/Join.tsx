@@ -5,6 +5,7 @@ import { getAllTeams, searchTeams, searchFlags, type Team } from '@/utils/teamUt
 import { GameDatabase } from '@/lib/gameDatabase';
 import { getSupabase } from '@/lib/supabaseLazy';
 import LazyImage from '@/components/LazyImage';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 export default function Join() {
   const navigate = useNavigate();
@@ -21,6 +22,13 @@ export default function Join() {
   const [teamSearch, setTeamSearch] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [allTeams, setAllTeams] = useState<Team[]>([]);
+  
+  // Confirmation modal state
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showCreateRoomModal, setShowCreateRoomModal] = useState(false);
+  const [playerRole, setPlayerRole] = useState<string>('');
+  const [isJoining, setIsJoining] = useState(false);
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
 
   // Load teams lazily when component mounts
   useEffect(() => {
@@ -82,17 +90,134 @@ export default function Join() {
     e.preventDefault();
     if (!name.trim() || !selectedFlag || !selectedTeam) return;
 
-    const playerRole = 'playerA'; // TODO: choose open slot dynamically
+    setErrorMsg('');
     const sessionId = gameId.toUpperCase();
 
-    await GameDatabase.addPlayer(playerRole, sessionId, {
-      name,
-      flag: selectedFlag,
-      club: selectedTeam,
-      role: playerRole,
-    });
+    try {
+      // Check existing players to find available slot
+      const existingPlayers = await GameDatabase.getGamePlayers(sessionId);
+      const takenRoles = existingPlayers.map(p => p.role);
+      
+      let availableRole: string;
+      if (!takenRoles.includes('playerA')) {
+        availableRole = 'playerA';
+      } else if (!takenRoles.includes('playerB')) {
+        availableRole = 'playerB';
+      } else {
+        setErrorMsg('اللعبة ممتلئة! لا يمكن انضمام المزيد من اللاعبين');
+        return;
+      }
 
-    navigate(`/lobby/${sessionId}?role=${playerRole}`);
+      // Check if video room exists
+      const game = await GameDatabase.getGame(sessionId);
+      if (!game?.video_room_created) {
+        // Set role and show create room modal
+        setPlayerRole(availableRole);
+        setShowCreateRoomModal(true);
+        return;
+      }
+
+      // Set role and show confirmation modal
+      setPlayerRole(availableRole);
+      setShowConfirmModal(true);
+    } catch (error) {
+      console.error('Error checking game:', error);
+      setErrorMsg('حدث خطأ أثناء التحقق من اللعبة');
+    }
+  };
+
+  const handleConfirmJoin = async () => {
+    setIsJoining(true);
+    const sessionId = gameId.toUpperCase();
+
+    try {
+      const result = await GameDatabase.addPlayer(playerRole, sessionId, {
+        name,
+        flag: selectedFlag,
+        club: selectedTeam,
+        role: playerRole,
+      });
+
+      if (!result) {
+        setErrorMsg('فشل في الانضمام للعبة. حاول مرة أخرى');
+        setShowConfirmModal(false);
+        setIsJoining(false);
+        return;
+      }
+
+      // Navigate to lobby
+      try {
+        navigate(`/lobby/${sessionId}?role=${playerRole}`);
+      } catch (navError) {
+        console.error('Navigation error:', navError);
+        setErrorMsg('فشل في الانتقال إلى الردهة. حاول مرة أخرى.');
+      }
+    } catch (error) {
+      console.error('Error joining game:', error);
+      setErrorMsg('حدث خطأ أثناء الانضمام للعبة');
+      setShowConfirmModal(false);
+      setIsJoining(false);
+    }
+  };
+
+  const handleCreateRoom = async () => {
+    setIsCreatingRoom(true);
+    const sessionId = gameId.toUpperCase();
+
+    try {
+      // First, verify the game exists
+      const game = await GameDatabase.getGame(sessionId);
+      if (!game) {
+        setErrorMsg('لا توجد جلسة بهذا الرمز');
+        setIsCreatingRoom(false);
+        setShowCreateRoomModal(false);
+        return;
+      }
+
+      // Create the video room
+      const result = await fetch(`/.netlify/functions/create-daily-room`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomName: sessionId }),
+      });
+      
+      const data = await result.json() as { url?: string; error?: string };
+      
+      if (data.url) {
+        // Update the game with video room info
+        await GameDatabase.updateGame(sessionId, {
+          video_room_url: data.url,
+          video_room_created: true,
+        });
+
+        // Now add the player
+        const playerResult = await GameDatabase.addPlayer(playerRole, sessionId, {
+          name,
+          flag: selectedFlag,
+          club: selectedTeam,
+          role: playerRole,
+        });
+
+        if (!playerResult) {
+          setErrorMsg('فشل في الانضمام للعبة بعد إنشاء الغرفة');
+          setIsCreatingRoom(false);
+          setShowCreateRoomModal(false);
+          return;
+        }
+
+        // Navigate to lobby
+        navigate(`/lobby/${sessionId}?role=${playerRole}`);
+      } else {
+        setErrorMsg('فشل في إنشاء غرفة الفيديو: ' + (data.error || 'خطأ غير معروف'));
+        setIsCreatingRoom(false);
+        setShowCreateRoomModal(false);
+      }
+    } catch (error) {
+      console.error('Error creating room:', error);
+      setErrorMsg('حدث خطأ أثناء إنشاء غرفة الفيديو');
+      setIsCreatingRoom(false);
+      setShowCreateRoomModal(false);
+    }
   };
 
   return (
@@ -337,6 +462,13 @@ export default function Join() {
               </div>
             </div>
 
+            {/* Error message for step 3 */}
+            {errorMsg && (
+              <div className="text-red-400 text-sm font-arabic text-center">
+                {errorMsg}
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button
                 type="button"
@@ -356,6 +488,30 @@ export default function Join() {
           </form>
         )}
       </motion.div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleConfirmJoin}
+        title="تأكيد الانضمام للعبة"
+        message={`أنت على وشك الانضمام للعبة ${gameId} كـ${playerRole === 'playerA' ? 'لاعب أول' : 'لاعب ثاني'}. سيتم نقلك إلى صالة الانتظار لبدء الفيديو والانتظار حتى يبدأ المقدم اللعبة.`}
+        confirmText="انضم للعبة"
+        cancelText="إلغاء"
+        isLoading={isJoining}
+      />
+
+      {/* Create Room Modal */}
+      <ConfirmationModal
+        isOpen={showCreateRoomModal}
+        onClose={() => setShowCreateRoomModal(false)}
+        onConfirm={handleCreateRoom}
+        title="إنشاء غرفة الفيديو"
+        message={`لا توجد غرفة فيديو للعبة ${gameId}. هل تريد إنشاء غرفة فيديو جديدة والانضمام كـ${playerRole === 'playerA' ? 'لاعب أول' : 'لاعب ثاني'}؟`}
+        confirmText="إنشاء غرفة والانضمام"
+        cancelText="إلغاء"
+        isLoading={isCreatingRoom}
+      />
     </div>
   );
 }

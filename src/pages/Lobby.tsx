@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
 import VideoRoom from '@/components/VideoRoom';
+import AlertBanner from '@/components/AlertBanner';
 import type { LobbyParticipant } from '@/state';
 
 export default function TrueLobby() {
@@ -17,6 +18,9 @@ export default function TrueLobby() {
   useGameSync();
 
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertType, setAlertType] = useState<'info' | 'success' | 'warning' | 'error'>('info');
+  const [showAlert, setShowAlert] = useState(false);
 
   // Automatically create the video room when the host PC opens the lobby
   useEffect(() => {
@@ -106,11 +110,13 @@ export default function TrueLobby() {
       const result = await createVideoRoom(gameId);
       if (!result.success) {
         console.error('Failed to create room:', result.error);
-        alert('فشل في إنشاء غرفة الفيديو: ' + result.error);
+        showAlertMessage(`فشل في إنشاء غرفة الفيديو: ${result.error}`, 'error');
+      } else {
+        showAlertMessage('تم إنشاء غرفة الفيديو بنجاح', 'success');
       }
     } catch (error) {
       console.error('Error creating room:', error);
-      alert('خطأ في إنشاء غرفة الفيديو');
+      showAlertMessage('خطأ في إنشاء غرفة الفيديو', 'error');
     } finally {
       setIsCreatingRoom(false);
     }
@@ -121,15 +127,43 @@ export default function TrueLobby() {
 
     try {
       await endVideoRoom(gameId);
+      showAlertMessage('تم إنهاء غرفة الفيديو', 'info');
     } catch (error) {
       console.error('Error ending room:', error);
-      alert('خطأ في إنهاء غرفة الفيديو');
+      showAlertMessage('خطأ في إنهاء غرفة الفيديو', 'error');
     }
   };
 
   const handleStartGame = () => {
     navigate(`/game/${gameId}?role=host`);
   };
+
+  // Function to show alerts
+  const showAlertMessage = (message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
+    setAlertMessage(message);
+    setAlertType(type);
+    setShowAlert(true);
+  };
+
+  // Track player connections and show alerts
+  const previousConnectedPlayerIds = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (myParticipant?.type === 'host-pc') {
+      const currentConnectedPlayers = Object.values(state.players).filter(p => p.isConnected && p.name);
+      const currentConnectedPlayerIds = new Set(currentConnectedPlayers.map(p => p.id));
+
+      // Detect newly joined players
+      currentConnectedPlayers.forEach(player => {
+        if (!previousConnectedPlayerIds.current.has(player.id)) {
+          showAlertMessage(`انضم ${player.name} للعبة`, 'success');
+        }
+      });
+
+      // Update the previous state
+      previousConnectedPlayerIds.current = currentConnectedPlayerIds;
+    }
+  }, [state.players, myParticipant]);
 
   if (!myParticipant || !gameId) {
     return (
@@ -148,6 +182,14 @@ export default function TrueLobby() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 p-4">
+      {/* Alert Banner */}
+      <AlertBanner
+        message={alertMessage}
+        type={alertType}
+        isVisible={showAlert}
+        onClose={() => setShowAlert(false)}
+      />
+
       <div className="max-w-7xl mx-auto">
         {/* Header - Same for everyone */}
         <div className="text-center mb-8">

@@ -1,5 +1,4 @@
 import { useGameState, useGameActions } from '@/hooks/useGameAtoms';
-import VideoRoom from '@/components/VideoRoom';
 
 /**
  * Host control interface shown on the PC. Displays join codes,
@@ -62,7 +61,7 @@ export default function ControlRoom() {
         )}
       </div>
 
-      {/* Video tiles grid */}
+      {/* Video tiles grid - Display only, ControlRoom doesn't join video */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {(
           [
@@ -87,11 +86,30 @@ export default function ControlRoom() {
             <h3 className="text-center text-white font-arabic mb-2">
               {p.label}
             </h3>
-            <VideoRoom
-              gameId={state.gameId}
-              userName={p.name}
-              userRole={p.id as 'host-mobile' | 'playerA' | 'playerB'}
-            />
+            <div className="aspect-video bg-black/30 rounded-lg overflow-hidden">
+              {state.videoRoomCreated ? (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="text-center text-white/50">
+                    <div className="text-4xl mb-2">📹</div>
+                    <p className="text-sm font-arabic">
+                      {p.id === 'host-mobile' ? 'فيديو المقدم' : `فيديو ${p.label}`}
+                    </p>
+                    <p className="text-xs text-white/30 font-arabic mt-2">
+                      يمكنك رؤية الفيديو في Daily.co dashboard
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <div className="text-center text-white/50">
+                    <div className="text-4xl mb-2">📱</div>
+                    <p className="text-sm font-arabic">
+                      أنشئ غرفة الفيديو أولاً
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         ))}
       </div>
