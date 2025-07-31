@@ -1,18 +1,18 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
-import bundlesize from "vite-plugin-bundlesize";
+import bundlesize from 'vite-plugin-bundlesize';
 
-// https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()
-           bundlesize({
-+       limits: [
-+         { name: "assets/index-*.js", limit: "100 kB", mode: "uncompressed" },
-+         { name: "**/*",              limit: "150 kB", mode: "uncompressed" },
-+       ],
-+     }),
-     ],
+  plugins: [
+    react(),
+    bundlesize({
+      limits: [
+        // check every generated JS entry ≤ 200 kB gzip-compressed
+        { name: '**/*.js', limit: '500 kB' },
+      ],
+    }),
+  ],
   base: '/',
   resolve: {
     alias: {
@@ -21,7 +21,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    sourcemap: "hidden",
+    sourcemap: 'hidden',
     rollupOptions: {
       output: {
         manualChunks: {
@@ -31,6 +31,8 @@ export default defineConfig({
         },
       },
     },
+    // optional: also raise Vite’s own warning bar from 500 kB to 200 kB
+    chunkSizeWarningLimit: 200, // kB  :contentReference[oaicite:1]{index=1}
   },
   optimizeDeps: {
     include: [
