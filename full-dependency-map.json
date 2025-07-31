@@ -4,6 +4,7 @@
   "netlify/functions/delete-daily-room.ts": [],
   "netlify/functions/game-event.ts": [],
   "src/App.tsx": [],
+  "src/api/supabaseClient.ts": [],
   "src/components/Buzzer.tsx": [],
   "src/components/ConnectionBanner.tsx": [],
   "src/components/Scoreboard.tsx": [],
