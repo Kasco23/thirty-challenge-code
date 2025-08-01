@@ -290,16 +290,53 @@ export function useGameActions() {
     }
   }, [updateGameState, gameSyncInstance]);
 
+  const checkVideoRoomExists = useCallback(async (roomName: string) => {
+    try {
+      const result = await fetch(`/.netlify/functions/check-daily-room`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomName }),
+      });
+      
+      const data = await result.json() as { 
+        exists: boolean; 
+        roomName?: string; 
+        url?: string; 
+        created?: string;
+        participants?: unknown[];
+        error?: string; 
+      };
+      
+      if (data.error) {
+        console.error('Error checking room:', data.error);
+        return { success: false, error: data.error };
+      }
+      
+      return { 
+        success: true, 
+        exists: data.exists,
+        roomName: data.roomName,
+        url: data.url,
+        created: data.created,
+        participants: data.participants || []
+      };
+    } catch (error) {
+      console.error('Failed to check video room:', error);
+      return { success: false, error: 'Network error' };
+    }
+  }, []);
+
   const generateDailyToken = useCallback(async (
     room: string,
     user: string,
     isHost: boolean,
+    isObserver: boolean = false,
   ): Promise<string | null> => {
     try {
       const res = await fetch('/.netlify/functions/create-daily-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ room, user, isHost }),
+        body: JSON.stringify({ room, user, isHost, isObserver }),
       });
       const json = await res.json() as { token?: string; error?: string };
       if (!json.token) throw new Error(json.error || 'No token');
@@ -420,6 +457,7 @@ export function useGameActions() {
     advanceQuestion,
     createVideoRoom,
     endVideoRoom,
+    checkVideoRoomExists,
     generateDailyToken,
     setHostConnected,
     loadGameState,

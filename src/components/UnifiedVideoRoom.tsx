@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useGameState, useGameActions } from '@/hooks/useGameAtoms';
+import SimpleVideoFrame from './SimpleVideoFrame';
 
 // Daily.co TypeScript interfaces for better event typing
 interface DailyEvent {
@@ -35,9 +36,11 @@ export default function UnifiedVideoRoom({
   const [callState, setCallState] = useState<string>('new');
   const [error, setError] = useState<string>('');
   const [participantCount, setParticipantCount] = useState(0);
+  const [useFallback, setUseFallback] = useState(false);
+  const retryCountRef = useRef(0);
+  const maxRetries = 2;
 
   // Determine user role and info from current context
-  // This could be passed as props or derived from URL/state
   const getUserInfo = useCallback(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const role = urlParams.get('role');
@@ -96,6 +99,7 @@ export default function UnifiedVideoRoom({
         gameId,
         userInfo.userName,
         userInfo.isHost,
+        userInfo.isObserver, // Pass observer flag
       );
       if (!token) {
         throw new Error('Failed to get access token');
@@ -217,7 +221,17 @@ export default function UnifiedVideoRoom({
       const errorMessage =
         error instanceof Error ? error.message : 'Failed to join video call';
       console.error(`[UnifiedVideoRoom] Failed to join call:`, error);
-      setError(errorMessage);
+      
+      retryCountRef.current += 1;
+      
+      if (retryCountRef.current >= maxRetries) {
+        console.log(`[UnifiedVideoRoom] Max retries reached, falling back to iframe approach`);
+        setUseFallback(true);
+        setError('');
+      } else {
+        setError(errorMessage);
+      }
+      
       setIsJoining(false);
       setCallState('error');
     }
@@ -269,6 +283,20 @@ export default function UnifiedVideoRoom({
     };
   }, [leaveCall]);
 
+  // If SDK approach failed, use simple iframe fallback
+  if (useFallback) {
+    const userInfo = getUserInfo();
+    return (
+      <SimpleVideoFrame
+        gameId={gameId}
+        className={className}
+        userName={userInfo.userName}
+        isHost={userInfo.isHost}
+        isObserver={userInfo.isObserver}
+      />
+    );
+  }
+
   if (error) {
     return (
       <div className={`bg-red-500/20 border border-red-500/30 rounded-xl p-6 ${className}`}>
@@ -278,10 +306,17 @@ export default function UnifiedVideoRoom({
           </div>
           <div className="text-red-300 text-sm mb-4 font-arabic">{error}</div>
           <button
-            onClick={joinCall}
+            onClick={() => {
+              if (retryCountRef.current >= maxRetries) {
+                setUseFallback(true);
+                setError('');
+              } else {
+                joinCall();
+              }
+            }}
             className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-arabic transition-colors"
           >
-            إعادة المحاولة
+            {retryCountRef.current >= maxRetries ? 'استخدام الطريقة البديلة' : 'إعادة المحاولة'}
           </button>
         </div>
       </div>

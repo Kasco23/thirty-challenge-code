@@ -37,39 +37,10 @@ export default function CreateSession() {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string>('');
 
-  // Generate session ID and create initial game record in CONFIG phase
+  // Generate session ID on component mount
   useEffect(() => {
-    const createInitialSession = async () => {
-      const sessionId = Math.random().toString(36).substring(2, 8).toUpperCase();
-      setGameId(sessionId);
-      
-      try {
-        setIsCreating(true);
-        setError('');
-        
-        // Create initial game record in CONFIG phase
-        const result = await GameDatabase.createGame(
-          sessionId,
-          '', // Host code will be set later
-          null, // Host name will be set later
-          segmentSettings
-        );
-        
-        if (!result) {
-          setError('فشل في إنشاء الجلسة. يرجى المحاولة مرة أخرى.');
-          return;
-        }
-        
-        console.log('Initial game session created:', result);
-      } catch (err) {
-        console.error('Error creating initial session:', err);
-        setError('خطأ في إنشاء الجلسة. يرجى المحاولة مرة أخرى.');
-      } finally {
-        setIsCreating(false);
-      }
-    };
-
-    createInitialSession();
+    const sessionId = Math.random().toString(36).substring(2, 8).toUpperCase();
+    setGameId(sessionId);
   }, []); // Empty dependency array - we only want this to run once on mount
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,6 +55,19 @@ export default function CreateSession() {
       setIsCreating(true);
       setError('');
       
+      // Create game record and update to LOBBY phase in one step
+      const result = await GameDatabase.createGame(
+        gameId,
+        hostCode,
+        hostName,
+        segmentSettings
+      );
+      
+      if (!result) {
+        setError('فشل في إنشاء الجلسة. يرجى المحاولة مرة أخرى.');
+        return;
+      }
+      
       // Update game to LOBBY phase with host details
       await updateToLobbyPhase(gameId, hostCode, hostName, segmentSettings);
       
@@ -96,7 +80,7 @@ export default function CreateSession() {
         } 
       });
     } catch (err) {
-      console.error('Failed to finalize session:', err);
+      console.error('Failed to create and setup session:', err);
       setError('فشل في إنهاء إعداد الجلسة. يرجى المحاولة مرة أخرى.');
     } finally {
       setIsCreating(false);
@@ -122,10 +106,11 @@ export default function CreateSession() {
         )}
 
         {/* Session ID Display */}
-        {gameId && (
+        {gameId && !isCreating && (
           <div className="text-center p-4 bg-green-500/20 rounded-lg border border-green-500/30">
-            <p className="text-green-300 font-arabic text-sm mb-1">تم إنشاء الجلسة بنجاح</p>
+            <p className="text-green-300 font-arabic text-sm mb-1">معرف الجلسة جاهز</p>
             <p className="text-white font-mono text-lg">{gameId}</p>
+            <p className="text-green-200 font-arabic text-xs mt-1">املأ البيانات واضغط تأكيد لإنشاء الجلسة</p>
           </div>
         )}
 

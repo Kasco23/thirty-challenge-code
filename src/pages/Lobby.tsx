@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAtomValue } from 'jotai';
@@ -15,7 +15,7 @@ export default function TrueLobby() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const state = useGameState();
-  const { startGame, createVideoRoom, endVideoRoom, generateDailyToken, loadGameState, setHostConnected } = useGameActions();
+  const { startGame, createVideoRoom, endVideoRoom, generateDailyToken, loadGameState, setHostConnected, checkVideoRoomExists } = useGameActions();
   const { myParticipant, setParticipant } = useLobbyActions();
   
   // Initialize game sync
@@ -48,6 +48,8 @@ export default function TrueLobby() {
 
   // Automatically create the video room when the host PC opens the lobby
   useEffect(() => {
+    let isMounted = true; // Prevent state updates if component unmounts
+    
     if (
       myParticipant?.type === 'host-pc' &&
       !state.videoRoomCreated &&
@@ -56,51 +58,102 @@ export default function TrueLobby() {
     ) {
       console.log('Host PC auto-creating video room...');
       setIsCreatingRoom(true);
-      createVideoRoom(gameId)
-        .then((result) => {
-          if (result.success) {
-            showAlertMessage('تم إنشاء غرفة الفيديو تلقائياً', 'success');
+      
+      // Check if room already exists first
+      checkVideoRoomExists(gameId)
+        .then((checkResult) => {
+          if (!isMounted) return;
+          
+          if (checkResult.success && checkResult.exists && checkResult.url) {
+            // Room already exists, update state
+            showAlertMessage('غرفة الفيديو موجودة مسبقاً', 'info');
+            // Note: This would normally update the database and state, but we'll let the sync handle it
           } else {
+            // Room doesn't exist, create it
+            return createVideoRoom(gameId);
+          }
+        })
+        .then((result) => {
+          if (!isMounted) return;
+          
+          if (result && result.success) {
+            showAlertMessage('تم إنشاء غرفة الفيديو تلقائياً', 'success');
+          } else if (result && !result.success) {
             showAlertMessage(`فشل في إنشاء غرفة الفيديو: ${result.error}`, 'error');
           }
         })
-        .finally(() => setIsCreatingRoom(false));
+        .catch((error) => {
+          if (!isMounted) return;
+          console.error('Error in auto-creating video room:', error);
+          showAlertMessage('خطأ في إنشاء غرفة الفيديو', 'error');
+        })
+        .finally(() => {
+          if (isMounted) {
+            setIsCreatingRoom(false);
+          }
+        });
     }
-  }, [myParticipant?.type, state.videoRoomCreated, gameId, createVideoRoom, isCreatingRoom, showAlertMessage]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [myParticipant?.type, state.videoRoomCreated, gameId, isCreatingRoom, createVideoRoom, checkVideoRoomExists, showAlertMessage]);
 
   // Use global video room state
   const videoRoomCreated = state.videoRoomCreated || false;
 
-  // Initialize game and determine my role
+  // Initialize game and determine my role - use stable refs to prevent loops
+  const loadGameStateRef = useRef(loadGameState);
+  const setParticipantRef = useRef(setParticipant);
+  const setHostConnectedRef = useRef(setHostConnected);
+  const showAlertMessageRef = useRef(showAlertMessage);
+  
+  // Memoize search params to avoid re-parsing on every render
+  const searchParamsObj = useMemo(() => ({
+    role: searchParams.get('role'),
+    name: searchParams.get('name'),
+    flag: searchParams.get('flag'),
+    club: searchParams.get('club'),
+    hostName: searchParams.get('hostName'),
+  }), [searchParams]);
+  
+  // Update refs when functions change
+  useEffect(() => {
+    loadGameStateRef.current = loadGameState;
+    setParticipantRef.current = setParticipant;
+    setHostConnectedRef.current = setHostConnected;
+    showAlertMessageRef.current = showAlertMessage;
+  });
+
   useEffect(() => {
     if (!gameId) return;
+
+    let isMounted = true; // Prevent state updates if component unmounts
 
     // Load game state from database if needed
     const initializeGameState = async () => {
       if (state.gameId !== gameId) {
         console.log('Loading game state for:', gameId);
         try {
-          const result = await loadGameState(gameId);
+          const result = await loadGameStateRef.current(gameId);
+          if (!isMounted) return;
+          
           if (!result.success) {
             console.error('Failed to load game state:', result.error);
-            showAlertMessage(`فشل في تحميل بيانات الجلسة: ${result.error}`, 'error');
+            showAlertMessageRef.current(`فشل في تحميل بيانات الجلسة: ${result.error}`, 'error');
           }
         } catch (error) {
+          if (!isMounted) return;
           console.error('Error loading game state:', error);
-          showAlertMessage('خطأ في تحميل بيانات الجلسة', 'error');
+          showAlertMessageRef.current('خطأ في تحميل بيانات الجلسة', 'error');
         }
       }
     };
 
     initializeGameState();
 
-    // Determine my role from URL parameters
-    const role = searchParams.get('role');
-    const name = searchParams.get('name');
-    const flag = searchParams.get('flag');
-    const club = searchParams.get('club');
-    const hostName = searchParams.get('hostName');
-    const autoJoin = searchParams.get('autoJoin') === 'true';
+    // Determine my role from URL parameters - only do this once per gameId
+    const { role, name, flag, club, hostName } = searchParamsObj;
 
     let participant: LobbyParticipant | null = null;
 
@@ -113,7 +166,7 @@ export default function TrueLobby() {
         isConnected: true,
       };
       // Mark host as connected
-      setHostConnected(true);
+      setHostConnectedRef.current(true);
     } else if (role === 'host-mobile') {
       // Mobile Host (with video)
       participant = {
@@ -123,7 +176,7 @@ export default function TrueLobby() {
         isConnected: true,
       };
       // Mark host as connected
-      setHostConnected(true);
+      setHostConnectedRef.current(true);
     } else if (role === 'playerA' || role === 'playerB') {
       // Player - try to set participant even if some data is missing from URL
       participant = {
@@ -135,32 +188,33 @@ export default function TrueLobby() {
         club: club || undefined,
         isConnected: true,
       };
-
-      // Auto-join logic for players
-      if (autoJoin) {
-        console.log('Auto-joining player:', { role, name, flag, club });
-        // This is handled by the database insertion in Join.tsx
-        // The real-time sync will update the player state here
-      }
     }
 
-    setParticipant(participant);
+    if (participant && isMounted) {
+      setParticipantRef.current(participant);
+    }
     
-    // Set up cleanup when user leaves the page
+    return () => {
+      isMounted = false;
+    };
+  }, [gameId, searchParamsObj, state.gameId, state.hostName]); // Include dependencies but memoize searchParams
+
+  // Set up cleanup when user leaves the page - separate effect to avoid dependencies
+  useEffect(() => {
     const handleBeforeUnload = () => {
-      if (participant && gameSyncInstance) {
+      if (myParticipant && gameSyncInstance) {
         // Mark participant as disconnected
         gameSyncInstance.disconnect().catch(console.error);
         
         // Mark host as disconnected if this is a host
-        if (participant.type === 'host-pc' || participant.type === 'host-mobile') {
+        if (myParticipant.type === 'host-pc' || myParticipant.type === 'host-mobile') {
           setHostConnected(false);
         }
       }
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && participant && gameSyncInstance) {
+      if (document.visibilityState === 'hidden' && myParticipant && gameSyncInstance) {
         // User switched tabs or minimized - may indicate they're leaving
         // Don't disconnect immediately, but mark as potentially leaving
         setTimeout(() => {
@@ -184,7 +238,7 @@ export default function TrueLobby() {
         setHostConnected(false);
       }
     };
-  }, [gameId, searchParams, state.gameId, state.hostName, loadGameState, setParticipant, gameSyncInstance, showAlertMessage, myParticipant, setHostConnected]);
+  }, [myParticipant, gameSyncInstance, setHostConnected]);
 
   // Create video room when host PC clicks button
   const handleCreateVideoRoom = async () => {
@@ -243,12 +297,10 @@ export default function TrueLobby() {
     }
   };
 
-  // Track player connections and show alerts
-  const previousConnectedPlayerIds = useRef<Set<string>>(new Set());
-  const hasShownSessionStartModal = useRef(false);
-  const previousVideoRoomState = useRef<{ created: boolean; url?: string }>({ created: false });
 
-  // Track video room state changes
+  // Track video room state changes - memoized to prevent loops
+  const previousVideoRoomState = useRef<{ created: boolean; url?: string }>({ created: false });
+  
   useEffect(() => {
     const currentState = { created: state.videoRoomCreated, url: state.videoRoomUrl };
     const previousState = previousVideoRoomState.current;
@@ -268,6 +320,10 @@ export default function TrueLobby() {
     previousVideoRoomState.current = currentState;
   }, [state.videoRoomCreated, state.videoRoomUrl, showAlertMessage]);
 
+  // Track player connections and show alerts - optimized to prevent loops
+  const previousConnectedPlayerIds = useRef<Set<string>>(new Set());
+  const hasShownSessionStartModal = useRef(false);
+  
   useEffect(() => {
     if (myParticipant?.type === 'host-pc') {
       const currentConnectedPlayers = Object.values(state.players).filter(p => p.isConnected && p.name);
@@ -294,7 +350,7 @@ export default function TrueLobby() {
       // Update the previous state
       previousConnectedPlayerIds.current = currentConnectedPlayerIds;
     }
-  }, [state.players, state.videoRoomCreated, state.phase, myParticipant, showAlertMessage]);
+  }, [state.players, state.videoRoomCreated, state.phase, myParticipant?.type, showAlertMessage]);
 
   if (!myParticipant || !gameId) {
     return (
@@ -513,7 +569,8 @@ export default function TrueLobby() {
                     const token = await generateDailyToken(
                       gameId,
                       myParticipant.name,
-                      myParticipant.type === 'host-mobile'
+                      myParticipant.type === 'host-mobile',
+                      false // Not observer mode for manual join
                     );
                     
                     if (token && state.videoRoomUrl) {

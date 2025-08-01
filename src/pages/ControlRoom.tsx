@@ -171,10 +171,10 @@ export default function ControlRoom() {
         </div>
       )}
 
-      {/* Legacy video tiles grid - kept as reference */}
+      {/* Legacy video tiles grid - TODO: Remove after video integration testing */}
       <details className="mb-6">
         <summary className="text-white/70 font-arabic cursor-pointer hover:text-white mb-4">
-          عرض معلومات إضافية للمطورين (للمرجع)
+          عرض معلومات إضافية للمطورين (للمرجع) - سيتم حذف هذا القسم
         </summary>
         <div className="bg-gray-800/50 rounded-lg p-4 text-sm text-white/60 font-arabic">
           <p className="mb-2">معلومات المشاركين:</p>
@@ -182,6 +182,9 @@ export default function ControlRoom() {
             <div>المقدم: {state.hostName ?? 'غير محدد'}</div>
             <div>اللاعب الأول: {state.players.playerA.name || 'لم ينضم بعد'}</div>
             <div>اللاعب الثاني: {state.players.playerB.name || 'لم ينضم بعد'}</div>
+          </div>
+          <div className="mt-3 text-xs text-yellow-400">
+            ⚠️ هذا القسم مخصص للمطورين فقط وسيتم حذفه بعد التأكد من عمل الفيديو
           </div>
         </div>
       </details>
