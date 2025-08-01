@@ -56,6 +56,7 @@
   "src/hooks/useGameAtoms.ts": [],
   "src/hooks/useSupabaseFetch.ts": [],
   "src/lib/atomGameSync.ts": [],
+  "src/lib/dailyConfig.ts": [],
   "src/lib/dailyLazy.ts": [],
   "src/lib/gameDatabase.ts": [
     "src/lib/supabaseLazy.ts"
