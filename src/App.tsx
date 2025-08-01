@@ -13,6 +13,11 @@ const ControlRoom = lazy(() => import('@/pages/ControlRoom'));
 const FinalScores = lazy(() => import('@/pages/FinalScores'));
 const NotFound = lazy(() => import('@/pages/NotFound'));
 
+// Alpha Quiz components
+const AlphaEntry = lazy(() => import('@/alphaquiz/pages/AlphaEntry'));
+const AlphaHost = lazy(() => import('@/alphaquiz/pages/AlphaHost'));
+const AlphaPlayer = lazy(() => import('@/alphaquiz/pages/AlphaPlayer'));
+
 // Loading component for suspense fallback
 function PageLoader() {
   return (
@@ -44,6 +49,10 @@ export default function App() {
             <Route path="/lobby/:gameId" element={<Lobby />} />
             <Route path="/quiz" element={<QuizRoom />} />
             <Route path="/scores" element={<FinalScores />} />
+            {/* Alpha Quiz Routes */}
+            <Route path="/alpha-quiz" element={<AlphaEntry />} />
+            <Route path="/alpha-quiz/host" element={<AlphaHost />} />
+            <Route path="/alpha-quiz/player" element={<AlphaPlayer />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
