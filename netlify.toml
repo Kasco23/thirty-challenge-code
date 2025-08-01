@@ -16,3 +16,10 @@
   from   = "/*"
   to     = "/index.html"
   status = 200
+
+[dev]
+  framework = "vite"
+  command    = "npm run dev"
+  port       = 8888        # Netlify’s public port
+  targetPort = 5173        # where Vite actually listens
+  autoLaunch = false

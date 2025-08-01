@@ -53,9 +53,9 @@ export default defineConfig({
   },
   // Add server configuration for development
   server: {
-    port: 3000,
+    port: 5173,
     host: true, // Allow external connections
-    open: true, // Open browser on start
+    open: true,
   },
   // Preview configuration
   preview: {
