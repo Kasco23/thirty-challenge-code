@@ -1,22 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGameState, useGameActions, useGameSync } from '@/hooks/useGameAtoms';
-import SimpleVideoRoom from '@/components/SimpleVideoRoom';
 
 /**
- * Host control interface shown on the PC. Displays join codes,
- * lets the host create or end the Daily video room, and offers
+ * Host control interface shown on the PC. Displays join codes and offers
  * quick controls for starting the game or advancing questions.
- * Redirects to Lobby for better unified experience.
+ * This is a control-only interface without video broadcast functionality.
+ * Video functionality is handled exclusively by the Lobby component.
  */
 export default function ControlRoom() {
   const location = useLocation();
   const navigate = useNavigate();
   const state = useGameState();
-  const { loadGameState, startGame, setHostConnected, createVideoRoom, endVideoRoom, checkVideoRoomExists, generateDailyToken } = useGameActions();
+  const { loadGameState, startGame, setHostConnected } = useGameActions();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
-  const [roomStatusMessage, setRoomStatusMessage] = useState<string>('');
 
   // Initialize game sync to receive real-time updates
   useGameSync();
@@ -148,7 +146,7 @@ export default function ControlRoom() {
           {state.phase === 'LOBBY' ? 'ابدأ اللعبة' : state.phase === 'CONFIG' ? 'في انتظار تأكيد البيانات...' : 'اللعبة بدأت فعلاً'}
         </button>
         
-        {/* Video room status display only */}
+        {/* Control panel redirect to lobby for video management */}
         <div className={`px-6 py-3 rounded-lg font-arabic ${
           state.videoRoomCreated 
             ? 'bg-green-600 text-white' 
@@ -156,238 +154,44 @@ export default function ControlRoom() {
         }`}>
           {state.videoRoomCreated ? '✓ غرفة الفيديو جاهزة' : 'لا توجد غرفة فيديو'}
         </div>
+        
+        <button
+          onClick={() => {
+            navigate(`/lobby/${state.gameId}?role=host&hostName=${encodeURIComponent(state.hostName || 'المقدم')}`);
+          }}
+          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-arabic transition-colors"
+        >
+          إدارة الفيديو في الصالة
+        </button>
       </div>
 
-      {/* Control Panel for Room Management */}
-      <div className="mb-8 bg-slate-800/40 rounded-xl p-6 border border-slate-600/30">
-        <h3 className="text-xl font-bold text-slate-300 mb-4 font-arabic text-center">
-          لوحة التحكم - إدارة الغرفة والمشاركين
+      {/* Instructions for using lobby for video management */}
+      <div className="mb-8 bg-blue-500/20 rounded-xl p-6 border border-blue-500/30">
+        <h3 className="text-xl font-bold text-blue-300 mb-4 font-arabic text-center">
+          معلومات هامة - التحكم في الفيديو
         </h3>
-        
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <button
-            onClick={async () => {
-              if (!state.gameId) return;
-              setIsLoading(true);
-              try {
-                const result = await createVideoRoom(state.gameId);
-                if (result.success) {
-                  setError('');
-                } else {
-                  setError(`فشل في إنشاء الغرفة: ${result.error}`);
-                }
-              } catch (error) {
-                console.error('Error creating video room:', error);
-                setError('خطأ في إنشاء الغرفة');
-              } finally {
-                setIsLoading(false);
-              }
-            }}
-            disabled={state.videoRoomCreated || isLoading}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-arabic transition-colors"
-          >
-            إنشاء غرفة فيديو
-          </button>
-
-          <button
-            onClick={async () => {
-              if (!state.gameId) return;
-              setIsLoading(true);
-              try {
-                const result = await endVideoRoom(state.gameId);
-                if (!result.success) {
-                  setError(`فشل في حذف الغرفة: ${result.error}`);
-                }
-              } catch (error) {
-                console.error('Error ending video room:', error);
-                setError('خطأ في حذف الغرفة');
-              } finally {
-                setIsLoading(false);
-              }
-            }}
-            disabled={!state.videoRoomCreated || isLoading}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-arabic transition-colors"
-          >
-            حذف غرفة الفيديو
-          </button>
-
-          <button
-            onClick={async () => {
-              if (!state.gameId) return;
-              try {
-                const result = await checkVideoRoomExists(state.gameId);
-                if (result.success) {
-                  setRoomStatusMessage(`حالة الغرفة: ${result.exists ? 'موجودة' : 'غير موجودة'} | المشاركين: ${result.participants?.length || 0}`);
-                } else {
-                  setRoomStatusMessage(`خطأ: ${result.error}`);
-                }
-              } catch (error) {
-                console.error('Error checking room status:', error);
-                setRoomStatusMessage('خطأ في فحص الغرفة');
-              }
-            }}
-            className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-arabic transition-colors"
-          >
-            فحص حالة الغرفة
-          </button>
-
-          <button
-            onClick={async () => {
-              if (!state.gameId) return;
-              try {
-                const token = await generateDailyToken(
-                  state.gameId,
-                  'Controller-PC',
-                  false,
-                  true // Observer mode
-                );
-                if (token) {
-                  navigator.clipboard.writeText(token);
-                  alert('تم نسخ رمز المراقب إلى الحافظة');
-                } else {
-                  alert('فشل في إنشاء رمز المراقب');
-                }
-              } catch (error) {
-                console.error('Error generating observer token:', error);
-                alert('خطأ في إنشاء رمز المراقب');
-              }
-            }}
-            className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-arabic transition-colors"
-          >
-            إنشاء رمز مراقب
-          </button>
-
-          <button
-            onClick={async () => {
-              if (!state.gameId) return;
-              try {
-                const token = await generateDailyToken(
-                  state.gameId,
-                  'Host-Mobile',
-                  true,
-                  false // Normal participant
-                );
-                if (token) {
-                  navigator.clipboard.writeText(token);
-                  alert('تم نسخ رمز المقدم إلى الحافظة');
-                } else {
-                  alert('فشل في إنشاء رمز المقدم');
-                }
-              } catch (error) {
-                console.error('Error generating host token:', error);
-                alert('خطأ في إنشاء رمز المقدم');
-              }
-            }}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-arabic transition-colors"
-          >
-            إنشاء رمز مقدم
-          </button>
-
-          <button
-            onClick={async () => {
-              if (!state.gameId) return;
-              try {
-                const token = await generateDailyToken(
-                  state.gameId,
-                  'Player-Test',
-                  false,
-                  false // Normal participant
-                );
-                if (token) {
-                  navigator.clipboard.writeText(token);
-                  alert('تم نسخ رمز لاعب إلى الحافظة');
-                } else {
-                  alert('فشل في إنشاء رمز لاعب');
-                }
-              } catch (error) {
-                console.error('Error generating player token:', error);
-                alert('خطأ في إنشاء رمز لاعب');
-              }
-            }}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-arabic transition-colors"
-          >
-            إنشاء رمز لاعب
-          </button>
-
-          <button
-            onClick={async () => {
-              if (!state.gameId) return;
-              try {
-                const result = await loadGameState(state.gameId);
-                if (result.success) {
-                  alert('تم تحديث حالة اللعبة من قاعدة البيانات');
-                } else {
-                  alert(`فشل في التحديث: ${result.error}`);
-                }
-              } catch (error) {
-                console.error('Error reloading game state:', error);
-                alert('خطأ في تحديث حالة اللعبة');
-              }
-            }}
-            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-arabic transition-colors"
-          >
-            تحديث من قاعدة البيانات
-          </button>
-
+        <div className="text-center text-white">
+          <p className="font-arabic mb-3">
+            هذه غرفة التحكم للعبة فقط - لا تحتوي على إعدادات الفيديو
+          </p>
+          <p className="font-arabic mb-4">
+            لإدارة الفيديو والمشاركة مع اللاعبين، يرجى استخدام صالة الانتظار
+          </p>
           <button
             onClick={() => {
               navigate(`/lobby/${state.gameId}?role=host&hostName=${encodeURIComponent(state.hostName || 'المقدم')}`);
             }}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-arabic transition-colors"
+            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-arabic transition-colors"
           >
-            الذهاب للوبي
+            الذهاب لصالة الانتظار
           </button>
-        </div>
-
-        {/* Room Status Message */}
-        {roomStatusMessage && (
-          <div className="mt-4 p-4 bg-blue-900/50 rounded-lg border border-blue-500/30">
-            <p className="text-blue-200 font-arabic text-center">{roomStatusMessage}</p>
-          </div>
-        )}
-
-        <div className="text-center text-sm text-white/60 font-arabic">
-          استخدم هذه الأزرار لإدارة غرفة الفيديو واختبار وظائف Daily.co
         </div>
       </div>
 
-      {/* Unified Video Room - Observer Mode for Host PC */}
-      {state.videoRoomCreated && (
-        <div className="mb-8 bg-gradient-to-br from-blue-800/30 to-purple-800/30 rounded-xl p-6 border border-blue-500/30">
-          <h3 className="text-xl font-bold text-blue-300 mb-4 font-arabic text-center">
-            غرفة الفيديو - وضع المراقبة للمقدم
-          </h3>
-          <div className="mb-4">
-            <SimpleVideoRoom 
-              gameId={state.gameId}
-              className="w-full aspect-video"
-              observerMode={true}
-            />
-          </div>
-          <div className="text-center text-sm text-white/70 font-arabic">
-            تراقب غرفة الفيديو بدون إظهار كاميرا أو صوت • يمكنك مراقبة جميع المشاركين
-          </div>
-        </div>
-      )}
-
-      {/* Video room status when not created */}
-      {!state.videoRoomCreated && (
-        <div className="mb-8 bg-gray-500/20 border border-gray-500/30 rounded-xl p-6">
-          <div className="text-center">
-            <div className="text-gray-400 text-lg font-bold mb-2 font-arabic">
-              غرفة الفيديو غير متاحة
-            </div>
-            <div className="text-gray-300 text-sm font-arabic">
-              يجب إنشاء غرفة الفيديو من صالة الانتظار أولاً
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Legacy video tiles grid - TODO: Remove after video integration testing */}
+      {/* Legacy information for developers */}
       <details className="mb-6">
         <summary className="text-white/70 font-arabic cursor-pointer hover:text-white mb-4">
-          عرض معلومات إضافية للمطورين (للمرجع) - سيتم حذف هذا القسم
+          عرض معلومات المشاركين (للمرجع)
         </summary>
         <div className="bg-gray-800/50 rounded-lg p-4 text-sm text-white/60 font-arabic">
           <p className="mb-2">معلومات المشاركين:</p>
@@ -397,7 +201,7 @@ export default function ControlRoom() {
             <div>اللاعب الثاني: {state.players.playerB.name || 'لم ينضم بعد'}</div>
           </div>
           <div className="mt-3 text-xs text-yellow-400">
-            ⚠️ هذا القسم مخصص للمطورين فقط وسيتم حذفه بعد التأكد من عمل الفيديو
+            💡 للتفاعل مع الفيديو والمشاركين، استخدم صالة الانتظار
           </div>
         </div>
       </details>
