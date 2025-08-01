@@ -9,7 +9,13 @@ This document provides a comprehensive overview of Daily.co video integration in
 1. **Netlify Functions** - Server-side Daily.co API interactions
 2. **Client Libraries** - Browser SDK integration
 3. **State Management** - Jotai atoms for video state
-4. **React Components** - Video UI components
+4. **React Components** - Video UI components (lobby only)
+
+### Customized SDK Architecture
+The app uses a **customized SDK approach** where video functionality is separated by role:
+- **Lobby Component** - Handles all video broadcast functionality for all participants
+- **Controller (ControlRoom)** - Control-only interface without video broadcast
+- **This separation** simplifies code and clarifies the separation of concerns
 
 ## Netlify Functions (Server-side)
 
@@ -276,8 +282,8 @@ DAILY_API_KEY=your_daily_api_key_here
 
 ### Key Components
 
-#### UnifiedVideoRoom.tsx
-**Purpose:** Single video component showing all participants in one Daily.co room
+#### SimpleVideoRoom.tsx
+**Purpose:** Single video component showing all participants in one Daily.co room (used only in Lobby)
 **Features:**
 - Automatic token generation based on user role
 - Proper iframe embedding with modern Daily.co SDK
@@ -285,16 +291,25 @@ DAILY_API_KEY=your_daily_api_key_here
 - Participant count tracking
 - Responsive design with proper styling
 
-#### Updated Lobby.tsx  
+#### Lobby.tsx  
 **Changes:**
-- Replaced individual video frames with unified video room
-- Shows participant status indicators for host + 2 players
+- Contains all video functionality for the application
+- Shows unified video room with all participants (host + 2 players)
 - Centralized room creation (only host PC)
-- Removed conflicting auto-creation logic for players
+- Handles video room creation, deletion, and management
 - Updated instructions for unified video experience
 
+#### ControlRoom.tsx
+**Changes:**
+- **REMOVED all video functionality** to create customized SDK
+- No longer imports SimpleVideoRoom component
+- No longer has video-related controls or display
+- Control-only interface for game management
+- Redirects to lobby for video-related functionality
+- Simplified interface focused purely on game control
+
 #### Deprecated Components
-- **VideoRoom.tsx** - Replaced by UnifiedVideoRoom
+- **VideoRoom.tsx** - Replaced by UnifiedVideoRoom (not used)
 - **VideoFrame.tsx** - Experimental component, not used
 - **sharedVideoAtoms.ts** - Experimental atoms, not used
 
@@ -304,6 +319,12 @@ DAILY_API_KEY=your_daily_api_key_here
 3. **Room URL** stored in database and synced via atoms
 4. **Other participants** join existing room
 5. **Unified video** shows all participants in one interface
+6. **Controller** has no video functionality - control only
+
+### Video Interface Distribution
+- **Lobby Component** - Full video functionality for all participants
+- **Controller Component** - No video functionality, control only
+- **This separation** creates a customized SDK approach
 
 ### Token Management
 - **Host roles** get `is_owner: true` permissions
