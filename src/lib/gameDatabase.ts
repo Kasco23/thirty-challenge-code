@@ -12,6 +12,7 @@ export interface GameRecord {
   id: string;
   host_code: string; // Host code used for auth; non-unique
   host_name: string | null;
+  host_is_connected: boolean; // Track host connection status
   phase: string; // 'CONFIG' | 'LOBBY' | 'PLAYING' | 'COMPLETED'
   current_segment: string | null;
   current_question_index: number;

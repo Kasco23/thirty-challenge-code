@@ -15,7 +15,7 @@ export default function TrueLobby() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const state = useGameState();
-  const { startGame, createVideoRoom, endVideoRoom, generateDailyToken, loadGameState } = useGameActions();
+  const { startGame, createVideoRoom, endVideoRoom, generateDailyToken, loadGameState, setHostConnected } = useGameActions();
   const { myParticipant, setParticipant } = useLobbyActions();
   
   // Initialize game sync
@@ -112,6 +112,8 @@ export default function TrueLobby() {
         type: 'host-pc',
         isConnected: true,
       };
+      // Mark host as connected
+      setHostConnected(true);
     } else if (role === 'host-mobile') {
       // Mobile Host (with video)
       participant = {
@@ -120,6 +122,8 @@ export default function TrueLobby() {
         type: 'host-mobile',
         isConnected: true,
       };
+      // Mark host as connected
+      setHostConnected(true);
     } else if (role === 'playerA' || role === 'playerB') {
       // Player - try to set participant even if some data is missing from URL
       participant = {
@@ -147,6 +151,11 @@ export default function TrueLobby() {
       if (participant && gameSyncInstance) {
         // Mark participant as disconnected
         gameSyncInstance.disconnect().catch(console.error);
+        
+        // Mark host as disconnected if this is a host
+        if (participant.type === 'host-pc' || participant.type === 'host-mobile') {
+          setHostConnected(false);
+        }
       }
     };
 
@@ -169,8 +178,13 @@ export default function TrueLobby() {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      
+      // Mark host as disconnected when leaving lobby
+      if (myParticipant && (myParticipant.type === 'host-pc' || myParticipant.type === 'host-mobile')) {
+        setHostConnected(false);
+      }
     };
-  }, [gameId, searchParams, state.gameId, state.hostName, loadGameState, setParticipant, gameSyncInstance, showAlertMessage]);
+  }, [gameId, searchParams, state.gameId, state.hostName, loadGameState, setParticipant, gameSyncInstance, showAlertMessage, myParticipant, setHostConnected]);
 
   // Create video room when host PC clicks button
   const handleCreateVideoRoom = async () => {

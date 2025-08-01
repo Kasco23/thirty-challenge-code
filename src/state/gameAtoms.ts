@@ -41,6 +41,7 @@ const defaultSegmentSettings: Record<SegmentCode, number> = {
 export const gameIdAtom = atom<string>('');
 export const hostCodeAtom = atom<string>('');
 export const hostNameAtom = atom<string | null>(null);
+export const hostIsConnectedAtom = atom<boolean>(false);
 
 // Game phase and progress atoms
 export const phaseAtom = atom<GamePhase>('CONFIG');
@@ -69,6 +70,7 @@ export const gameStateAtom = atom<GameState>((get) => ({
   gameId: get(gameIdAtom),
   hostCode: get(hostCodeAtom),
   hostName: get(hostNameAtom),
+  hostIsConnected: get(hostIsConnectedAtom),
   phase: get(phaseAtom),
   currentSegment: get(currentSegmentAtom),
   currentQuestionIndex: get(currentQuestionIndexAtom),
@@ -88,6 +90,7 @@ export const updateGameStateAtom = atom(
     if (update.gameId !== undefined) set(gameIdAtom, update.gameId);
     if (update.hostCode !== undefined) set(hostCodeAtom, update.hostCode);
     if (update.hostName !== undefined) set(hostNameAtom, update.hostName);
+    if (update.hostIsConnected !== undefined) set(hostIsConnectedAtom, update.hostIsConnected);
     if (update.phase !== undefined) set(phaseAtom, update.phase);
     if (update.currentSegment !== undefined) set(currentSegmentAtom, update.currentSegment);
     if (update.currentQuestionIndex !== undefined) set(currentQuestionIndexAtom, update.currentQuestionIndex);

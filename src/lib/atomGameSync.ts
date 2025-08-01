@@ -36,6 +36,7 @@ function mapRecordToState(record: GameRecord): Partial<GameState> {
     gameId: record.id,
     hostCode: record.host_code,
     hostName: record.host_name ?? null,
+    hostIsConnected: record.host_is_connected ?? false,
     phase: record.phase as GameState['phase'],
     currentSegment: record.current_segment as GameState['currentSegment'],
     currentQuestionIndex: record.current_question_index,

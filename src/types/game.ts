@@ -52,6 +52,7 @@ export interface GameState {
   gameId: string;
   hostCode: string;
   hostName: string | null;
+  hostIsConnected: boolean; // Track host connection status
 
   // progress
   phase: GamePhase;

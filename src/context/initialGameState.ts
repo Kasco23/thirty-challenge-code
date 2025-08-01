@@ -5,6 +5,7 @@ export const initialGameState: GameState = {
   gameId: '',
   hostCode: '',
   hostName: '',
+  hostIsConnected: false,
   phase: 'CONFIG',
   currentSegment: null,
   currentQuestionIndex: 0,
