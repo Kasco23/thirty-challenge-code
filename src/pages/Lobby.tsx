@@ -15,7 +15,7 @@ export default function TrueLobby() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const state = useGameState();
-  const { startGame, createVideoRoom, endVideoRoom, generateDailyToken } = useGameActions();
+  const { startGame, createVideoRoom, endVideoRoom, generateDailyToken, loadGameState } = useGameActions();
   const { myParticipant, setParticipant } = useLobbyActions();
   
   // Initialize game sync
@@ -75,11 +75,24 @@ export default function TrueLobby() {
   useEffect(() => {
     if (!gameId) return;
 
-    // Initialize game if needed
-    if (state.gameId !== gameId) {
-      // For now, just update the atoms - we'll handle game loading separately
-      startGame();
-    }
+    // Load game state from database if needed
+    const initializeGameState = async () => {
+      if (state.gameId !== gameId) {
+        console.log('Loading game state for:', gameId);
+        try {
+          const result = await loadGameState(gameId);
+          if (!result.success) {
+            console.error('Failed to load game state:', result.error);
+            showAlertMessage(`فشل في تحميل بيانات الجلسة: ${result.error}`, 'error');
+          }
+        } catch (error) {
+          console.error('Error loading game state:', error);
+          showAlertMessage('خطأ في تحميل بيانات الجلسة', 'error');
+        }
+      }
+    };
+
+    initializeGameState();
 
     // Determine my role from URL parameters
     const role = searchParams.get('role');
@@ -157,7 +170,7 @@ export default function TrueLobby() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [gameId, searchParams, state.gameId, state.hostName, startGame, setParticipant, gameSyncInstance]);
+  }, [gameId, searchParams, state.gameId, state.hostName, loadGameState, setParticipant, gameSyncInstance, showAlertMessage]);
 
   // Create video room when host PC clicks button
   const handleCreateVideoRoom = async () => {
@@ -257,7 +270,7 @@ export default function TrueLobby() {
       if (
         currentConnectedPlayers.length >= 1 && 
         state.videoRoomCreated && 
-        state.phase === 'CONFIG' &&
+        state.phase === 'LOBBY' &&
         !hasShownSessionStartModal.current
       ) {
         setShowSessionStartModal(true);

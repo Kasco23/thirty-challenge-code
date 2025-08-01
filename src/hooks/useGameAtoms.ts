@@ -109,26 +109,90 @@ export function useGameActions() {
     }
   }, [store, initializeGame]);
 
+  const updateToLobbyPhase = useCallback(async (
+    gameId: string,
+    hostCode: string,
+    hostName: string,
+    segmentSettings: Record<SegmentCode, number>,
+  ) => {
+    try {
+      // Update database first with host details and LOBBY phase
+      const updatedGame = await GameDatabase.updateGame(gameId, {
+        host_code: hostCode,
+        host_name: hostName,
+        phase: 'LOBBY',
+        segment_settings: segmentSettings,
+      });
+      
+      if (!updatedGame) {
+        throw new Error('Failed to update game to LOBBY phase');
+      }
+      
+      // Update local state
+      updateGameState({
+        hostCode,
+        hostName,
+        phase: 'LOBBY',
+        segmentSettings,
+      });
+      
+      // Broadcast the change
+      if (gameSyncInstance) {
+        await gameSyncInstance.broadcastGameState({
+          hostCode,
+          hostName,
+          phase: 'LOBBY',
+          segmentSettings,
+        });
+      }
+      
+      console.log('Game updated to LOBBY phase:', updatedGame);
+    } catch (error) {
+      console.error('Failed to update to LOBBY phase:', error);
+      throw error;
+    }
+  }, [updateGameState, gameSyncInstance]);
+
   const startGame = useCallback(async () => {
     if (!gameId) return;
     
     try {
-      // Update database first
-      await GameDatabase.updateGame(gameId, { phase: 'PLAYING' });
+      // Update database first to PLAYING phase
+      const updatedGame = await GameDatabase.updateGame(gameId, { 
+        phase: 'PLAYING',
+        current_segment: 'WSHA', // Start with first segment
+        current_question_index: 0,
+      });
+      
+      if (!updatedGame) {
+        throw new Error('Failed to update game to PLAYING phase');
+      }
       
       // Update local state
       setPhase('PLAYING');
+      updateGameState({
+        phase: 'PLAYING',
+        currentSegment: 'WSHA',
+        currentQuestionIndex: 0,
+      });
       
       // Broadcast the change
       if (gameSyncInstance) {
-        await gameSyncInstance.broadcastGameState({ phase: 'PLAYING' });
+        await gameSyncInstance.broadcastGameState({ 
+          phase: 'PLAYING',
+          currentSegment: 'WSHA',
+          currentQuestionIndex: 0,
+        });
       }
+      
+      console.log('Game started and moved to PLAYING phase:', updatedGame);
     } catch (error) {
       console.error('Failed to start game:', error);
       // Revert local state on error
-      setPhase('CONFIG');
+      setPhase('LOBBY');
+      throw error;
     }
-  }, [setPhase, gameSyncInstance, gameId]);
+  }, [setPhase, gameSyncInstance, gameId, updateGameState]);
 
   const advanceQuestion = useCallback(async () => {
     if (!gameSyncInstance || !gameId) return;
@@ -320,6 +384,7 @@ export function useGameActions() {
 
   return {
     startSession,
+    updateToLobbyPhase,
     startGame,
     advanceQuestion,
     createVideoRoom,

@@ -407,6 +407,147 @@ export class GameDatabase {
   // UTILITY FUNCTIONS
   // =====================================
 
+  /**
+   * Check if a game exists and is in a specific phase
+   */
+  static async checkGamePhase(gameId: string): Promise<{ exists: boolean; phase?: string; game?: GameRecord }> {
+    if (!this.isConfigured()) {
+      return { exists: false };
+    }
+
+    try {
+      const game = await this.getGame(gameId);
+      if (!game) {
+        return { exists: false };
+      }
+
+      return {
+        exists: true,
+        phase: game.phase,
+        game,
+      };
+    } catch (error) {
+      console.error('Error checking game phase:', error);
+      return { exists: false };
+    }
+  }
+
+  /**
+   * Get game statistics for monitoring
+   */
+  static async getGameStats(gameId: string): Promise<{
+    playerCount: number;
+    connectedPlayers: number;
+    totalQuestions: number;
+    currentProgress: number;
+    averageScore: number;
+  } | null> {
+    if (!this.isConfigured()) return null;
+
+    try {
+      const [game, players] = await Promise.all([
+        this.getGame(gameId),
+        this.getPlayers(gameId),
+      ]);
+
+      if (!game) return null;
+
+      const totalQuestions = Object.values(game.segment_settings).reduce((sum, count) => sum + (count as number), 0);
+      const connectedPlayers = players.filter(p => p.is_connected).length;
+      const averageScore = players.length > 0 
+        ? players.reduce((sum, p) => sum + p.score, 0) / players.length 
+        : 0;
+
+      return {
+        playerCount: players.length,
+        connectedPlayers,
+        totalQuestions,
+        currentProgress: game.current_question_index,
+        averageScore,
+      };
+    } catch (error) {
+      console.error('Error getting game stats:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Cleanup old games (for maintenance)
+   */
+  static async cleanupOldGames(olderThanHours: number = 24): Promise<number> {
+    if (!this.isConfigured()) return 0;
+
+    try {
+      const cutoffTime = new Date();
+      cutoffTime.setHours(cutoffTime.getHours() - olderThanHours);
+
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from('games')
+        .delete()
+        .lt('created_at', cutoffTime.toISOString())
+        .select('id');
+
+      if (error) {
+        console.error('Error cleaning up old games:', error);
+        return 0;
+      }
+
+      return data?.length || 0;
+    } catch (error) {
+      console.error('Error cleaning up old games:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Reset a game to CONFIG phase (for testing/development)
+   */
+  static async resetGameToConfig(gameId: string): Promise<boolean> {
+    if (!this.isConfigured()) return false;
+
+    try {
+      const updated = await this.updateGame(gameId, {
+        phase: 'CONFIG',
+        current_segment: null,
+        current_question_index: 0,
+        timer: 0,
+        is_timer_running: false,
+      });
+
+      return !!updated;
+    } catch (error) {
+      console.error('Error resetting game to CONFIG:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get all games with their current status (for admin/monitoring)
+   */
+  static async getAllGames(limit: number = 50): Promise<GameRecord[]> {
+    if (!this.isConfigured()) return [];
+
+    try {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from('games')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.error('Error fetching all games:', error);
+        return [];
+      }
+
+      return data as GameRecord[];
+    } catch (error) {
+      console.error('Error fetching all games:', error);
+      return [];
+    }
+  }
+
   static async logGameEvent(
     gameId: string,
     eventType: string,

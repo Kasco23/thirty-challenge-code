@@ -47,4 +47,19 @@ export default defineConfig({
       'flag-icons',
     ],
   },
+  define: {
+    // Ensure environment variables are available at build time
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
+  // Add server configuration for development
+  server: {
+    port: 3000,
+    host: true, // Allow external connections
+    open: true, // Open browser on start
+  },
+  // Preview configuration
+  preview: {
+    port: 3000,
+    host: true,
+  },
 });
