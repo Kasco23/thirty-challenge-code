@@ -3,7 +3,7 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAtomValue } from 'jotai';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
-import { gameSyncInstanceAtom } from '@/state';
+import { gameSyncInstanceAtom, lobbyParticipantsAtom } from '@/state';
 import type { AtomGameSync } from '@/lib/atomGameSync';
 import UnifiedVideoRoom from '@/components/UnifiedVideoRoom';
 import AlertBanner from '@/components/AlertBanner';
@@ -372,9 +372,23 @@ export default function TrueLobby() {
     );
   }
 
-  const connectedPlayers = Object.values(state.players).filter(
-    (p) => p.isConnected,
-  ).length;
+  // Get lobby participants to properly count connections
+  const lobbyParticipants = useAtomValue(lobbyParticipantsAtom);
+  
+  const connectedPlayers = useMemo(() => {
+    // Count connected players from game state
+    const gamePlayersCount = Object.values(state.players).filter(
+      (p) => p.isConnected && (p.id === 'playerA' || p.id === 'playerB'),
+    ).length;
+    
+    // Count players who are actually connected via lobby presence
+    const lobbyPlayersCount = lobbyParticipants.filter(
+      (p) => p.isConnected && p.type === 'player'
+    ).length;
+    
+    // Use the higher count of the two systems for accuracy
+    return Math.max(gamePlayersCount, lobbyPlayersCount);
+  }, [state.players, lobbyParticipants]);
   const hostMobileConnected = myParticipant.type === 'host-mobile' || false; // TODO: Track this in global state
 
   return (
@@ -600,6 +614,72 @@ export default function TrueLobby() {
                 className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm font-arabic transition-colors"
               >
                 تحديث الصفحة
+              </button>
+
+              <button
+                onClick={async () => {
+                  if (!gameId) return;
+                  try {
+                    const result = await checkVideoRoomExists(gameId);
+                    if (result.success) {
+                      showAlertMessage(`حالة الغرفة: ${result.exists ? 'موجودة' : 'غير موجودة'}`, 'info');
+                    } else {
+                      showAlertMessage(`خطأ في فحص الغرفة: ${result.error}`, 'error');
+                    }
+                  } catch (error) {
+                    console.error('Error checking room:', error);
+                    showAlertMessage('خطأ في فحص الغرفة', 'error');
+                  }
+                }}
+                className="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded text-sm font-arabic transition-colors"
+              >
+                فحص حالة الغرفة
+              </button>
+
+              <button
+                onClick={async () => {
+                  if (!gameId || !myParticipant) return;
+                  try {
+                    const token = await generateDailyToken(
+                      gameId,
+                      myParticipant.name,
+                      false, // Not host
+                      true   // Observer mode
+                    );
+                    
+                    if (token) {
+                      showAlertMessage(`تم إنشاء رمز مراقب: ${token.substring(0, 20)}...`, 'success');
+                    } else {
+                      showAlertMessage('فشل في إنشاء رمز المراقب', 'error');
+                    }
+                  } catch (error) {
+                    console.error('Error generating observer token:', error);
+                    showAlertMessage('خطأ في إنشاء رمز المراقب', 'error');
+                  }
+                }}
+                className="px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded text-sm font-arabic transition-colors"
+              >
+                إنشاء رمز مراقب
+              </button>
+
+              <button
+                onClick={async () => {
+                  if (!gameId) return;
+                  try {
+                    const result = await loadGameState(gameId);
+                    if (result.success) {
+                      showAlertMessage('تم تحديث حالة اللعبة من قاعدة البيانات', 'success');
+                    } else {
+                      showAlertMessage(`فشل في تحديث حالة اللعبة: ${result.error}`, 'error');
+                    }
+                  } catch (error) {
+                    console.error('Error reloading game state:', error);
+                    showAlertMessage('خطأ في تحديث حالة اللعبة', 'error');
+                  }
+                }}
+                className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded text-sm font-arabic transition-colors"
+              >
+                تحديث من قاعدة البيانات
               </button>
             </div>
 
