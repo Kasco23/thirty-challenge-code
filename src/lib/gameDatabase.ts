@@ -311,6 +311,31 @@ export class GameDatabase {
     }
   }
 
+  /**
+   * Get all players for a specific game
+   */
+  static async getPlayers(gameId: string): Promise<PlayerRecord[]> {
+    if (!this.isConfigured()) return [];
+
+    try {
+      const supabase = await getSupabase();
+      const { data, error } = await supabase
+        .from('players')
+        .select('*')
+        .eq('game_id', gameId);
+
+      if (error) {
+        console.error('Error fetching players:', error);
+        return [];
+      }
+
+      return data as PlayerRecord[];
+    } catch (error) {
+      console.error('Error fetching players:', error);
+      return [];
+    }
+  }
+
   // =====================================
   // REAL-TIME SUBSCRIPTIONS
   // =====================================

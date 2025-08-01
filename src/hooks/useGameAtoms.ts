@@ -3,6 +3,21 @@ import { useCallback, useEffect } from 'react';
 import { GameDatabase } from '@/lib/gameDatabase';
 import { createAtomGameSync, type AtomGameSync } from '@/lib/atomGameSync';
 import type { SegmentCode, PlayerId, Player, GameState } from '@/types/game';
+
+// Helper function to map player records (copied from atomGameSync)
+function mapPlayerRecord(record: any): Player {
+  return {
+    id: record.id as PlayerId,
+    name: record.name,
+    flag: record.flag ?? undefined,
+    club: record.club ?? undefined,
+    role: record.role,
+    score: record.score,
+    strikes: record.strikes,
+    isConnected: record.is_connected,
+    specialButtons: record.special_buttons as Player['specialButtons'],
+  };
+}
 import {
   gameStateAtom,
   gameIdAtom,
@@ -13,6 +28,7 @@ import {
   addPlayerAtom,
   updateScoreAtom,
   currentQuestionIndexAtom,
+  playersAtom,
   gameSyncInstanceAtom,
   myParticipantAtom,
   setMyParticipantAtom,
@@ -93,21 +109,44 @@ export function useGameActions() {
     }
   }, [store, initializeGame]);
 
-  const startGame = useCallback(() => {
-    setPhase('PLAYING');
-    if (gameSyncInstance && gameId) {
-      gameSyncInstance.broadcastGameState({ phase: 'PLAYING' });
-      GameDatabase.updateGame(gameId, { phase: 'PLAYING' });
+  const startGame = useCallback(async () => {
+    if (!gameId) return;
+    
+    try {
+      // Update database first
+      await GameDatabase.updateGame(gameId, { phase: 'PLAYING' });
+      
+      // Update local state
+      setPhase('PLAYING');
+      
+      // Broadcast the change
+      if (gameSyncInstance) {
+        await gameSyncInstance.broadcastGameState({ phase: 'PLAYING' });
+      }
+    } catch (error) {
+      console.error('Failed to start game:', error);
+      // Revert local state on error
+      setPhase('CONFIG');
     }
   }, [setPhase, gameSyncInstance, gameId]);
 
-  const advanceQuestion = useCallback(() => {
-    if (gameSyncInstance && gameId) {
+  const advanceQuestion = useCallback(async () => {
+    if (!gameSyncInstance || !gameId) return;
+    
+    try {
       const currentIndex = store.get(currentQuestionIndexAtom);
       const newIndex = currentIndex + 1;
+      
+      // Update database first
+      await GameDatabase.updateGame(gameId, { current_question_index: newIndex });
+      
+      // Update local state
       updateGameState({ currentQuestionIndex: newIndex });
-      gameSyncInstance.broadcastGameState({ currentQuestionIndex: newIndex });
-      GameDatabase.updateGame(gameId, { current_question_index: newIndex });
+      
+      // Broadcast the change
+      await gameSyncInstance.broadcastGameState({ currentQuestionIndex: newIndex });
+    } catch (error) {
+      console.error('Failed to advance question:', error);
     }
   }, [gameSyncInstance, gameId, store, updateGameState]);
 
@@ -122,18 +161,21 @@ export function useGameActions() {
       const data = await result.json() as { url?: string; error?: string };
       
       if (data.url) {
+        // Update database first
         await GameDatabase.updateGame(gameId, {
           video_room_url: data.url,
           video_room_created: true,
         });
         
+        // Update local state
         updateGameState({
           videoRoomUrl: data.url,
           videoRoomCreated: true,
         });
         
+        // Broadcast the change
         if (gameSyncInstance) {
-          gameSyncInstance.broadcastGameState({
+          await gameSyncInstance.broadcastGameState({
             videoRoomUrl: data.url,
             videoRoomCreated: true,
           });
@@ -156,18 +198,21 @@ export function useGameActions() {
         body: JSON.stringify({ roomName: gameId }),
       });
       
+      // Update database first
       await GameDatabase.updateGame(gameId, {
         video_room_created: false,
         video_room_url: null,
       });
       
+      // Update local state
       updateGameState({
         videoRoomCreated: false,
         videoRoomUrl: undefined,
       });
       
+      // Broadcast the change
       if (gameSyncInstance) {
-        gameSyncInstance.broadcastGameState({
+        await gameSyncInstance.broadcastGameState({
           videoRoomCreated: false,
           videoRoomUrl: undefined,
         });
@@ -200,6 +245,79 @@ export function useGameActions() {
     }
   }, []);
 
+  const loadGameState = useCallback(async (gameId: string) => {
+    try {
+      // Load game data from database
+      const gameRecord = await GameDatabase.getGame(gameId);
+      if (!gameRecord) {
+        console.error('Game not found:', gameId);
+        return { success: false, error: 'Game not found' };
+      }
+
+      // Convert to game state format
+      const gameState = {
+        gameId: gameRecord.id,
+        hostCode: gameRecord.host_code,
+        hostName: gameRecord.host_name ?? null,
+        phase: gameRecord.phase as GameState['phase'],
+        currentSegment: gameRecord.current_segment as GameState['currentSegment'],
+        currentQuestionIndex: gameRecord.current_question_index,
+        videoRoomUrl: gameRecord.video_room_url ?? undefined,
+        videoRoomCreated: gameRecord.video_room_created,
+        timer: gameRecord.timer,
+        isTimerRunning: gameRecord.is_timer_running,
+        segmentSettings: gameRecord.segment_settings,
+        players: {
+          playerA: {
+            id: 'playerA' as PlayerId,
+            name: '',
+            score: 0,
+            strikes: 0,
+            isConnected: false,
+            specialButtons: {
+              LOCK_BUTTON: false,
+              TRAVELER_BUTTON: false,
+              PIT_BUTTON: false,
+            },
+          },
+          playerB: {
+            id: 'playerB' as PlayerId,
+            name: '',
+            score: 0,
+            strikes: 0,
+            isConnected: false,
+            specialButtons: {
+              LOCK_BUTTON: false,
+              TRAVELER_BUTTON: false,
+              PIT_BUTTON: false,
+            },
+          },
+        },
+        scoreHistory: [],
+      };
+
+      // Load players from database
+      const players = await GameDatabase.getPlayers(gameId);
+      players.forEach(playerRecord => {
+        const player = mapPlayerRecord(playerRecord);
+        if (player.id === 'playerA' || player.id === 'playerB') {
+          gameState.players[player.id] = {
+            ...player,
+            strikes: player.strikes ?? 0, // Ensure strikes is defined
+          };
+        }
+      });
+
+      // Initialize game state
+      initializeGame(gameState);
+
+      return { success: true, gameState };
+    } catch (error) {
+      console.error('Failed to load game state:', error);
+      return { success: false, error: 'Failed to load game' };
+    }
+  }, [initializeGame]);
+
   return {
     startSession,
     startGame,
@@ -207,6 +325,7 @@ export function useGameActions() {
     createVideoRoom,
     endVideoRoom,
     generateDailyToken,
+    loadGameState,
   };
 }
 
@@ -222,6 +341,7 @@ export function useGameField<K extends keyof ReturnType<typeof useGameState>>(
 }
 
 export function usePlayerActions() {
+  const store = useStore();
   const updatePlayer = useSetAtom(updatePlayerAtom);
   const addPlayer = useSetAtom(addPlayerAtom);
   const updateScore = useSetAtom(updateScoreAtom);
@@ -245,46 +365,92 @@ export function usePlayerActions() {
       },
     };
 
-    addPlayer(player);
+    try {
+      if (gameId) {
+        // Add to database first
+        await GameDatabase.addPlayer(playerId, gameId, {
+          name: player.name,
+          flag: player.flag,
+          club: player.club,
+          role: player.role,
+        });
 
-    if (gameId) {
-      await GameDatabase.addPlayer(playerId, gameId, {
-        name: player.name,
-        flag: player.flag,
-        club: player.club,
-        role: player.role,
-      });
+        // Update local state
+        addPlayer(player);
 
-      if (gameSyncInstance) {
-        gameSyncInstance.broadcastPlayerJoin(playerId, player);
+        // Broadcast the change
+        if (gameSyncInstance) {
+          await gameSyncInstance.broadcastPlayerJoin(playerId, player);
+        }
+      } else {
+        // No gameId, just update local state
+        addPlayer(player);
       }
+    } catch (error) {
+      console.error('Failed to join game:', error);
+      throw error;
     }
   }, [addPlayer, gameId, gameSyncInstance]);
 
   const leaveGame = useCallback(async (playerId: PlayerId) => {
-    updatePlayer({ playerId, update: { isConnected: false } });
+    try {
+      if (gameId) {
+        // Update database first
+        await GameDatabase.updatePlayer(playerId, { 
+          is_connected: false,
+          last_active: new Date().toISOString()
+        });
 
-    if (gameId) {
-      await GameDatabase.updatePlayer(playerId, { is_connected: false });
+        // Update local state
+        updatePlayer({ playerId, update: { isConnected: false } });
 
-      if (gameSyncInstance) {
-        gameSyncInstance.broadcastPlayerLeave(playerId);
+        // Broadcast the change
+        if (gameSyncInstance) {
+          await gameSyncInstance.broadcastPlayerLeave(playerId);
+        }
+      } else {
+        // No gameId, just update local state
+        updatePlayer({ playerId, update: { isConnected: false } });
       }
+    } catch (error) {
+      console.error('Failed to leave game:', error);
     }
   }, [updatePlayer, gameId, gameSyncInstance]);
 
-  const scorePlayer = useCallback((playerId: PlayerId, points: number) => {
-    updateScore({ playerId, points });
-    
-    if (gameSyncInstance && gameId) {
-      // Update and broadcast player score through database
-      GameDatabase.updatePlayer(playerId, { 
-        score: points // Note: This should be the new total, not increment
-      }).then(() => {
-        // Let the database update trigger the sync
-      }).catch(console.error);
+  const scorePlayer = useCallback(async (playerId: PlayerId, points: number) => {
+    try {
+      // Update local state first for immediate feedback
+      updateScore({ playerId, points });
+      
+      if (gameSyncInstance && gameId) {
+        // Get the current player to calculate new total score
+        const currentPlayers = store.get(playersAtom);
+        const player = currentPlayers[playerId];
+        if (player) {
+          const newTotalScore = player.score + points;
+          
+          // Update database with the new total score
+          await GameDatabase.updatePlayer(playerId, { 
+            score: newTotalScore,
+            last_active: new Date().toISOString()
+          });
+          
+          // Broadcast the updated player data
+          await gameSyncInstance.broadcastGameState({
+            players: {
+              ...currentPlayers,
+              [playerId]: {
+                ...player,
+                score: newTotalScore
+              }
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update player score:', error);
     }
-  }, [updateScore, gameSyncInstance, gameId]);
+  }, [updateScore, gameSyncInstance, gameId, store]);
 
   return {
     joinGame,
@@ -299,11 +465,24 @@ export function useLobbyActions() {
   const myParticipant = useAtomValue(myParticipantAtom);
   const gameSyncInstance = useAtomValue(gameSyncInstanceAtom) as AtomGameSync | null;
 
-  const setParticipant = useCallback((participant: LobbyParticipant | null) => {
+  const setParticipant = useCallback(async (participant: LobbyParticipant | null) => {
     setMyParticipant(participant);
     
     if (participant && gameSyncInstance) {
-      gameSyncInstance.trackPresence(participant);
+      try {
+        // Track presence in real-time
+        await gameSyncInstance.trackPresence(participant);
+        
+        // If this is a player, also update their database record
+        if (participant.playerId && participant.type === 'player') {
+          await GameDatabase.updatePlayer(participant.playerId, {
+            is_connected: true,
+            last_active: new Date().toISOString()
+          });
+        }
+      } catch (error) {
+        console.error('Failed to set participant presence:', error);
+      }
     }
   }, [setMyParticipant, gameSyncInstance]);
 
