@@ -106,7 +106,7 @@ export default function UnifiedVideoRoom({
       console.log(`[UnifiedVideoRoom] Loading Daily.co SDK...`);
       const DailyIframe = await import('@daily-co/daily-js');
       
-      // Create Daily call object optimized for multiple participants
+      // Create Daily call object optimized for multiple participants and mobile
       const callObject = DailyIframe.default.createCallObject({
         iframeStyle: {
           position: 'relative',
@@ -120,6 +120,8 @@ export default function UnifiedVideoRoom({
         showFullscreenButton: true,
         showLocalVideo: !userInfo.isObserver, // Hide local video for observers
         showParticipantsBar: true,
+        activeSpeakerMode: true, // Better for mobile
+        url: state.videoRoomUrl, // Set URL directly for better mobile compatibility
         theme: {
           colors: {
             accent: '#3b82f6', // blue-500
@@ -186,20 +188,26 @@ export default function UnifiedVideoRoom({
         startAudioOff: userInfo.isObserver, // Observers start with audio off
       });
 
-      // Append iframe to DOM
+      // Append iframe to DOM with mobile-optimized styling
       const iframe = (callObject as any).iframe();
       if (callFrameRef.current && iframe) {
         // Clear any existing content
         callFrameRef.current.innerHTML = '';
         
-        // Style the iframe
+        // Mobile-optimized iframe styling
         iframe.style.width = '100%';
         iframe.style.height = '100%';
         iframe.style.border = 'none';
         iframe.style.borderRadius = '12px';
+        iframe.style.minHeight = '300px';
+        iframe.style.maxHeight = '80vh'; // Prevent overflow on mobile
+        
+        // Mobile viewport meta tag support
+        iframe.setAttribute('allow', 'camera; microphone; autoplay; display-capture; fullscreen');
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-forms allow-modals');
         
         callFrameRef.current.appendChild(iframe);
-        console.log(`[UnifiedVideoRoom] Iframe appended to DOM`);
+        console.log(`[UnifiedVideoRoom] Iframe appended to DOM with mobile optimizations`);
       } else {
         console.error(`[UnifiedVideoRoom] Failed to get iframe or container not available`);
         throw new Error('Failed to attach video interface');
@@ -315,20 +323,20 @@ export default function UnifiedVideoRoom({
     <div className={`relative ${className}`}>
       <div
         ref={callFrameRef}
-        className="w-full h-full min-h-[400px] bg-gray-800 rounded-xl overflow-hidden"
+        className="w-full h-full min-h-[300px] max-h-[80vh] bg-gray-800 rounded-xl overflow-hidden touch-auto"
         style={{ aspectRatio: '16/9' }}
       />
 
       {callState === 'joined' && (
-        <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-arabic">
+        <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-arabic z-10">
           متصل ({participantCount} مشارك)
         </div>
       )}
 
-      {/* Instructions overlay */}
-      <div className="absolute bottom-2 left-2 bg-black/70 text-white px-3 py-2 rounded text-sm font-arabic">
-        <div>جميع المشاركين في غرفة واحدة</div>
-        <div className="text-xs text-white/70">
+      {/* Instructions overlay - responsive for mobile */}
+      <div className="absolute bottom-2 left-2 bg-black/70 text-white px-3 py-2 rounded text-xs sm:text-sm font-arabic max-w-[200px] sm:max-w-none">
+        <div className="leading-tight">جميع المشاركين في غرفة واحدة</div>
+        <div className="text-xs text-white/70 leading-tight">
           {observerMode ? 'وضع المراقبة - المقدم + اللاعبان' : 'المقدم + اللاعبان'}
         </div>
       </div>

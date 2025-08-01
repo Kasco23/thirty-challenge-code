@@ -62,6 +62,7 @@ export function useGameActions() {
           gameId: record.id,
           hostCode: record.host_code,
           hostName: record.host_name ?? null,
+          hostIsConnected: record.host_is_connected ?? false,
           phase: record.phase as GameState['phase'],
           currentSegment: record.current_segment as GameState['currentSegment'],
           currentQuestionIndex: record.current_question_index,
@@ -309,6 +310,35 @@ export function useGameActions() {
     }
   }, []);
 
+  const setHostConnected = useCallback(async (isConnected: boolean) => {
+    if (!gameId) return { success: false, error: 'No game ID' };
+    
+    try {
+      // Update database
+      await GameDatabase.updateGame(gameId, {
+        host_is_connected: isConnected,
+      });
+      
+      // Update local state
+      updateGameState({
+        hostIsConnected: isConnected,
+      });
+      
+      // Broadcast the change
+      if (gameSyncInstance) {
+        await gameSyncInstance.broadcastGameState({
+          hostIsConnected: isConnected,
+        });
+      }
+      
+      console.log(`Host connection status updated to: ${isConnected}`);
+      return { success: true };
+    } catch (error) {
+      console.error('Failed to update host connection status:', error);
+      return { success: false, error: 'Network error' };
+    }
+  }, [gameId, updateGameState, gameSyncInstance]);
+
   const loadGameState = useCallback(async (gameId: string) => {
     try {
       // Load game data from database
@@ -323,6 +353,7 @@ export function useGameActions() {
         gameId: gameRecord.id,
         hostCode: gameRecord.host_code,
         hostName: gameRecord.host_name ?? null,
+        hostIsConnected: gameRecord.host_is_connected ?? false,
         phase: gameRecord.phase as GameState['phase'],
         currentSegment: gameRecord.current_segment as GameState['currentSegment'],
         currentQuestionIndex: gameRecord.current_question_index,
@@ -390,6 +421,7 @@ export function useGameActions() {
     createVideoRoom,
     endVideoRoom,
     generateDailyToken,
+    setHostConnected,
     loadGameState,
   };
 }
