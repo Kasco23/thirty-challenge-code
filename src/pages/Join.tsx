@@ -113,6 +113,24 @@ export default function Join() {
         return;
       }
 
+      // Double-check with Daily.co that the room actually exists
+      try {
+        const checkResult = await fetch(`/.netlify/functions/check-daily-room`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roomName: sessionId }),
+        });
+        const data = await checkResult.json();
+        
+        if (data && !data.exists) {
+          setErrorMsg('غرفة الفيديو غير موجودة على Daily.co. اتصل بالمقدم لإعادة إنشائها.');
+          return;
+        }
+      } catch (error) {
+        console.warn('Could not verify room exists on Daily.co:', error);
+        // Continue anyway since we have it in database
+      }
+
       // Set role and show confirmation modal
       setPlayerRole(availableRole);
       setShowConfirmModal(true);

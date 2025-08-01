@@ -37,7 +37,6 @@ export default function UnifiedVideoRoom({
   const [participantCount, setParticipantCount] = useState(0);
 
   // Determine user role and info from current context
-  // This could be passed as props or derived from URL/state
   const getUserInfo = useCallback(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const role = urlParams.get('role');
@@ -96,6 +95,7 @@ export default function UnifiedVideoRoom({
         gameId,
         userInfo.userName,
         userInfo.isHost,
+        userInfo.isObserver, // Pass observer flag
       );
       if (!token) {
         throw new Error('Failed to get access token');
