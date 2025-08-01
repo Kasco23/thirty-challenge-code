@@ -216,13 +216,13 @@ export default function ControlRoom() {
               try {
                 const result = await checkVideoRoomExists(state.gameId);
                 if (result.success) {
-                  alert(`حالة الغرفة: ${result.exists ? 'موجودة' : 'غير موجودة'}\nالمشاركين: ${result.participants?.length || 0}`);
+                  setRoomStatusMessage(`حالة الغرفة: ${result.exists ? 'موجودة' : 'غير موجودة'} | المشاركين: ${result.participants?.length || 0}`);
                 } else {
-                  alert(`خطأ: ${result.error}`);
+                  setRoomStatusMessage(`خطأ: ${result.error}`);
                 }
               } catch (error) {
                 console.error('Error checking room status:', error);
-                alert('خطأ في فحص الغرفة');
+                setRoomStatusMessage('خطأ في فحص الغرفة');
               }
             }}
             className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-arabic transition-colors"
