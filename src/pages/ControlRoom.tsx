@@ -175,7 +175,8 @@ export default function ControlRoom() {
                 } else {
                   setError(`فشل في إنشاء الغرفة: ${result.error}`);
                 }
-              } catch (err) {
+              } catch (error) {
+                console.error('Error creating video room:', error);
                 setError('خطأ في إنشاء الغرفة');
               } finally {
                 setIsLoading(false);
@@ -196,7 +197,8 @@ export default function ControlRoom() {
                 if (!result.success) {
                   setError(`فشل في حذف الغرفة: ${result.error}`);
                 }
-              } catch (err) {
+              } catch (error) {
+                console.error('Error ending video room:', error);
                 setError('خطأ في حذف الغرفة');
               } finally {
                 setIsLoading(false);
@@ -218,7 +220,8 @@ export default function ControlRoom() {
                 } else {
                   alert(`خطأ: ${result.error}`);
                 }
-              } catch (err) {
+              } catch (error) {
+                console.error('Error checking room status:', error);
                 alert('خطأ في فحص الغرفة');
               }
             }}
@@ -243,7 +246,8 @@ export default function ControlRoom() {
                 } else {
                   alert('فشل في إنشاء رمز المراقب');
                 }
-              } catch (err) {
+              } catch (error) {
+                console.error('Error generating observer token:', error);
                 alert('خطأ في إنشاء رمز المراقب');
               }
             }}
@@ -268,7 +272,8 @@ export default function ControlRoom() {
                 } else {
                   alert('فشل في إنشاء رمز المقدم');
                 }
-              } catch (err) {
+              } catch (error) {
+                console.error('Error generating host token:', error);
                 alert('خطأ في إنشاء رمز المقدم');
               }
             }}
@@ -293,7 +298,8 @@ export default function ControlRoom() {
                 } else {
                   alert('فشل في إنشاء رمز لاعب');
                 }
-              } catch (err) {
+              } catch (error) {
+                console.error('Error generating player token:', error);
                 alert('خطأ في إنشاء رمز لاعب');
               }
             }}
@@ -312,7 +318,8 @@ export default function ControlRoom() {
                 } else {
                   alert(`فشل في التحديث: ${result.error}`);
                 }
-              } catch (err) {
+              } catch (error) {
+                console.error('Error reloading game state:', error);
                 alert('خطأ في تحديث حالة اللعبة');
               }
             }}

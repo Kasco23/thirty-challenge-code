@@ -32,6 +32,23 @@ export default function TrueLobby() {
   const [isStartingSession, setIsStartingSession] = useState(false);
   const [roomStatusLog, setRoomStatusLog] = useState<string[]>([]);
 
+  // Get lobby participants to properly count connections (must be at top level)
+  const lobbyParticipants = useAtomValue(lobbyParticipantsAtom);
+  
+  const connectedPlayers = useMemo(() => {
+    // Count connected players from game state
+    const gamePlayersCount = Object.values(state.players).filter(
+      (p) => p.isConnected && (p.id === 'playerA' || p.id === 'playerB'),
+    ).length;
+    
+    // Count players who are actually connected via lobby presence
+    const lobbyPlayersCount = lobbyParticipants.filter(
+      (p) => p.isConnected && p.type === 'player'
+    ).length;
+    
+    // Use the higher count of the two systems for accuracy
+    return Math.max(gamePlayersCount, lobbyPlayersCount);
+  }, [state.players, lobbyParticipants]);
   // Function to show alerts and log room status
   const showAlertMessage = useCallback((message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
     setAlertMessage(message);
@@ -372,34 +389,33 @@ export default function TrueLobby() {
     );
   }
 
-  // Get lobby participants to properly count connections
-  const lobbyParticipants = useAtomValue(lobbyParticipantsAtom);
-  
-  const connectedPlayers = useMemo(() => {
-    // Count connected players from game state
-    const gamePlayersCount = Object.values(state.players).filter(
-      (p) => p.isConnected && (p.id === 'playerA' || p.id === 'playerB'),
-    ).length;
-    
-    // Count players who are actually connected via lobby presence
-    const lobbyPlayersCount = lobbyParticipants.filter(
-      (p) => p.isConnected && p.type === 'player'
-    ).length;
-    
-    // Use the higher count of the two systems for accuracy
-    return Math.max(gamePlayersCount, lobbyPlayersCount);
-  }, [state.players, lobbyParticipants]);
   const hostMobileConnected = myParticipant.type === 'host-mobile' || false; // TODO: Track this in global state
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 p-4">
-      {/* Alert Banner */}
-      <AlertBanner
-        message={alertMessage}
-        type={alertType}
-        isVisible={showAlert}
-        onClose={() => setShowAlert(false)}
-      />
+      {/* Handle missing gameId case */}
+      {!gameId ? (
+        <div className="flex items-center justify-center h-screen">
+          <div className="text-center text-white">
+            <div className="text-red-400 text-4xl mb-4">⚠️</div>
+            <p className="text-lg font-arabic mb-4">معرف الجلسة مفقود</p>
+            <button 
+              onClick={() => navigate('/')} 
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-arabic"
+            >
+              العودة للرئيسية
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Alert Banner */}
+          <AlertBanner
+            message={alertMessage}
+            type={alertType}
+            isVisible={showAlert}
+            onClose={() => setShowAlert(false)}
+          />
 
       <div className="max-w-7xl mx-auto">
         {/* Header - Same for everyone */}
@@ -863,6 +879,8 @@ export default function TrueLobby() {
         cancelText="انتظار المزيد"
         isLoading={isStartingSession}
       />
+      </>
+      )}
     </div>
   );
 }
