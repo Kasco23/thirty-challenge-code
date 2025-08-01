@@ -5,7 +5,7 @@ import { useAtomValue } from 'jotai';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
 import { gameSyncInstanceAtom, lobbyParticipantsAtom } from '@/state';
 import type { AtomGameSync } from '@/lib/atomGameSync';
-import UnifiedVideoRoom from '@/components/UnifiedVideoRoom';
+import SimpleVideoRoom from '@/components/SimpleVideoRoom';
 import AlertBanner from '@/components/AlertBanner';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import type { LobbyParticipant } from '@/state';
@@ -772,7 +772,7 @@ export default function TrueLobby() {
             </h3>
             
             <div className="mb-4">
-              <UnifiedVideoRoom 
+              <SimpleVideoRoom 
                 gameId={gameId}
                 className="w-full aspect-video"
               />

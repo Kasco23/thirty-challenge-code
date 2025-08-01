@@ -1,80 +1,46 @@
 import { atom } from 'jotai';
-import type { DailyCall, DailyParticipant } from '@/lib/dailyLazy';
 
-// Daily.co video call atoms
-export const dailyCallAtom = atom<DailyCall | null>(null);
-export const meetingStateAtom = atom<string>('new');
-export const participantsAtom = atom<Record<string, DailyParticipant>>({});
-
-// Video room management atoms
-export const isJoiningRoomAtom = atom<boolean>(false);
-export const isLeavingRoomAtom = atom<boolean>(false);
+// Simple video error tracking atom (non-duplicate)
 export const videoErrorAtom = atom<string | null>(null);
+export const isJoiningVideoAtom = atom<boolean>(false);
 
-// Derived atoms
-export const isInMeetingAtom = atom<boolean>(
-  (get) => get(meetingStateAtom) === 'joined-meeting'
-);
-
-export const participantCountAtom = atom<number>(
-  (get) => Object.keys(get(participantsAtom)).length
-);
-
-export const localParticipantAtom = atom<DailyParticipant | null>(
-  (get) => {
-    const participants = get(participantsAtom);
-    return Object.values(participants).find(p => p.local) || null;
-  }
-);
-
-// Actions for video functionality
-export const joinVideoRoomAtom = atom(
+// Action atom for testing Daily.co connectivity
+export const testDailyConnectionAtom = atom(
   null,
-  async (get, set, { roomUrl, token, userName }: { roomUrl: string; token?: string; userName?: string }) => {
-    // Lazy load Daily.co SDK when video is needed
-    const { createCall, joinRoom } = await import('@/lib/dailyLazy');
+  async (_get, set) => {
+    set(videoErrorAtom, null);
     
-    let call = get(dailyCallAtom);
-    if (!call) {
-      call = await createCall();
-      set(dailyCallAtom, call);
-    }
-
-    set(isJoiningRoomAtom, true);
-    set(videoErrorAtom, null);
-
     try {
-      await joinRoom(call, roomUrl, token, userName);
+      // Test room creation
+      const response = await fetch('/.netlify/functions/create-daily-room', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomName: `test-${Date.now()}`,
+          properties: { max_participants: 2 }
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create test room');
+      }
+      
+      const roomData = await response.json();
+      console.log('Daily.co test successful:', roomData.roomName);
+      
+      // Clean up test room
+      await fetch('/.netlify/functions/delete-daily-room', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomName: roomData.roomName })
+      });
+      
+      return true;
     } catch (error) {
-      console.error('Failed to join video room:', error);
-      set(videoErrorAtom, error instanceof Error ? error.message : 'Failed to join video room');
-    } finally {
-      set(isJoiningRoomAtom, false);
-    }
-  }
-);
-
-export const leaveVideoRoomAtom = atom(
-  null,
-  async (get, set) => {
-    const call = get(dailyCallAtom);
-    if (!call) return;
-
-    set(isLeavingRoomAtom, true);
-    set(videoErrorAtom, null);
-
-    try {
-      // Lazy load the leave function
-      const { leaveRoom } = await import('@/lib/dailyLazy');
-      await leaveRoom(call);
-      set(dailyCallAtom, null);
-      set(participantsAtom, {});
-      set(meetingStateAtom, 'new');
-    } catch (error) {
-      console.error('Failed to leave video room:', error);
-      set(videoErrorAtom, error instanceof Error ? error.message : 'Failed to leave video room');
-    } finally {
-      set(isLeavingRoomAtom, false);
+      console.error('Daily.co test failed:', error);
+      set(videoErrorAtom, error instanceof Error ? error.message : 'Connection test failed');
+      return false;
     }
   }
 );

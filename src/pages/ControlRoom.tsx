@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useGameState, useGameActions, useGameSync } from '@/hooks/useGameAtoms';
-import UnifiedVideoRoom from '@/components/UnifiedVideoRoom';
+import SimpleVideoRoom from '@/components/SimpleVideoRoom';
 
 /**
  * Host control interface shown on the PC. Displays join codes,
@@ -358,7 +358,7 @@ export default function ControlRoom() {
             غرفة الفيديو - وضع المراقبة للمقدم
           </h3>
           <div className="mb-4">
-            <UnifiedVideoRoom 
+            <SimpleVideoRoom 
               gameId={state.gameId}
               className="w-full aspect-video"
               observerMode={true}
