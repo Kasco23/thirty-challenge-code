@@ -46,6 +46,12 @@ export default function TrueLobby() {
       (p) => p.isConnected && p.type === 'player'
     ).length;
     
+    // Log if the counts differ to help identify and debug sync problems
+    if (gamePlayersCount !== lobbyPlayersCount) {
+      console.warn(
+        `[Lobby] Connected player count mismatch: gamePlayersCount=${gamePlayersCount}, lobbyPlayersCount=${lobbyPlayersCount}, gameId=${gameId}`
+      );
+    }
     // Use the higher count of the two systems for accuracy
     return Math.max(gamePlayersCount, lobbyPlayersCount);
   }, [state.players, lobbyParticipants]);
