@@ -1,5 +1,24 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useAtom, useSetAtom } from 'jotai';
 import { useGameState, useGameActions } from '@/hooks/useGameAtoms';
+import FakeVideoSimulator from './FakeVideoSimulator';
+import {
+  fakeHostAtom,
+  fakePlayerAAtom,
+  fakePlayerBAtom,
+  addFakeHostAtom,
+  addFakePlayerAAtom,
+  addFakePlayerBAtom,
+  updateFakeHostNameAtom,
+  updateFakePlayerANameAtom,
+  updateFakePlayerBNameAtom,
+  toggleFakeHostConnectionAtom,
+  toggleFakePlayerAConnectionAtom,
+  toggleFakePlayerBConnectionAtom,
+  removeFakeHostAtom,
+  removeFakePlayerAAtom,
+  removeFakePlayerBAtom
+} from '@/state/fakeParticipantsAtoms';
 
 interface IndividualVideoFrameProps {
   gameId: string;
@@ -24,6 +43,91 @@ export default function IndividualVideoFrame({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [videoUrl, setVideoUrl] = useState<string>('');
+
+  // Fake participant state management
+  const [fakeHost] = useAtom(fakeHostAtom);
+  const [fakePlayerA] = useAtom(fakePlayerAAtom);
+  const [fakePlayerB] = useAtom(fakePlayerBAtom);
+  
+  const addFakeHost = useSetAtom(addFakeHostAtom);
+  const addFakePlayerA = useSetAtom(addFakePlayerAAtom);
+  const addFakePlayerB = useSetAtom(addFakePlayerBAtom);
+  
+  const updateFakeHostName = useSetAtom(updateFakeHostNameAtom);
+  const updateFakePlayerAName = useSetAtom(updateFakePlayerANameAtom);
+  const updateFakePlayerBName = useSetAtom(updateFakePlayerBNameAtom);
+  
+  const toggleFakeHostConnection = useSetAtom(toggleFakeHostConnectionAtom);
+  const toggleFakePlayerAConnection = useSetAtom(toggleFakePlayerAConnectionAtom);
+  const toggleFakePlayerBConnection = useSetAtom(toggleFakePlayerBConnectionAtom);
+  
+  const removeFakeHost = useSetAtom(removeFakeHostAtom);
+  const removeFakePlayerA = useSetAtom(removeFakePlayerAAtom);
+  const removeFakePlayerB = useSetAtom(removeFakePlayerBAtom);
+
+  // Get the current fake participant for this frame
+  const currentFakeParticipant = 
+    participantType === 'host' ? fakeHost :
+    participantType === 'playerA' ? fakePlayerA :
+    participantType === 'playerB' ? fakePlayerB : null;
+
+  // Handler functions for fake participants
+  const handleAddFakeParticipant = () => {
+    const aspectRatio = 16/9; // Default aspect ratio
+    switch (participantType) {
+      case 'host':
+        addFakeHost(aspectRatio);
+        break;
+      case 'playerA':
+        addFakePlayerA(aspectRatio);
+        break;
+      case 'playerB':
+        addFakePlayerB(aspectRatio);
+        break;
+    }
+  };
+
+  const handleNameChange = (newName: string) => {
+    switch (participantType) {
+      case 'host':
+        updateFakeHostName(newName);
+        break;
+      case 'playerA':
+        updateFakePlayerAName(newName);
+        break;
+      case 'playerB':
+        updateFakePlayerBName(newName);
+        break;
+    }
+  };
+
+  const handleConnectionToggle = () => {
+    switch (participantType) {
+      case 'host':
+        toggleFakeHostConnection();
+        break;
+      case 'playerA':
+        toggleFakePlayerAConnection();
+        break;
+      case 'playerB':
+        toggleFakePlayerBConnection();
+        break;
+    }
+  };
+
+  const handleRemoveFakeParticipant = () => {
+    switch (participantType) {
+      case 'host':
+        removeFakeHost();
+        break;
+      case 'playerA':
+        removeFakePlayerA();
+        break;
+      case 'playerB':
+        removeFakePlayerB();
+        break;
+    }
+  };
 
   // Get user info from URL parameters for current user
   const getCurrentUserInfo = useCallback(() => {
@@ -153,6 +257,41 @@ export default function IndividualVideoFrame({
 
   const colors = getColorScheme();
 
+  // If there's a fake participant for this frame, show the simulator instead of real video
+  if (currentFakeParticipant) {
+    return (
+      <FakeVideoSimulator
+        participant={currentFakeParticipant}
+        onNameChange={handleNameChange}
+        onConnectionToggle={handleConnectionToggle}
+        onRemove={handleRemoveFakeParticipant}
+        className={className}
+      />
+    );
+  }
+
+  // Show "Add Fake Participant" button if no real video room and no fake participant
+  if (!state.videoRoomCreated) {
+    return (
+      <div className={`${colors.bg} border ${colors.border} rounded-xl p-4 ${className}`}>
+        <div className="text-center">
+          <div className={`${colors.text} text-lg font-bold mb-2 font-arabic`}>
+            {participantName}
+          </div>
+          <div className="text-gray-400 text-sm mb-4 font-arabic">
+            في انتظار إنشاء غرفة الفيديو...
+          </div>
+          <button
+            onClick={handleAddFakeParticipant}
+            className={`px-4 py-2 ${colors.accent} hover:opacity-80 text-white rounded-lg font-arabic transition-colors`}
+          >
+            إضافة مشارك وهمي للاختبار
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className={`${colors.bg} border ${colors.border} rounded-xl p-4 ${className}`}>
@@ -195,9 +334,15 @@ export default function IndividualVideoFrame({
           <div className={`${colors.text} text-lg font-bold mb-2 font-arabic`}>
             {participantName}
           </div>
-          <div className="text-gray-400 text-sm font-arabic">
+          <div className="text-gray-400 text-sm mb-4 font-arabic">
             جاري تحضير الفيديو...
           </div>
+          <button
+            onClick={handleAddFakeParticipant}
+            className={`px-4 py-2 ${colors.accent} hover:opacity-80 text-white rounded-lg font-arabic transition-colors`}
+          >
+            إضافة مشارك وهمي للاختبار
+          </button>
         </div>
       </div>
     );
@@ -215,9 +360,17 @@ export default function IndividualVideoFrame({
             {participantName}
           </div>
         </div>
-        <div className="text-xs text-gray-400 font-arabic">
-          {participantType === 'host' ? 'المقدم' : 
-           participantType === 'playerA' ? 'لاعب 1' : 'لاعب 2'}
+        <div className="flex items-center gap-2">
+          <div className="text-xs text-gray-400 font-arabic">
+            {participantType === 'host' ? 'المقدم' : 
+             participantType === 'playerA' ? 'لاعب 1' : 'لاعب 2'}
+          </div>
+          <button
+            onClick={handleAddFakeParticipant}
+            className="px-2 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-xs rounded font-arabic transition-colors"
+          >
+            وهمي
+          </button>
         </div>
       </div>
 
@@ -237,6 +390,11 @@ export default function IndividualVideoFrame({
       {/* Status overlay */}
       <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-arabic">
         {isConnected ? 'متصل' : 'غير متصل'}
+      </div>
+      
+      {/* Real video indicator */}
+      <div className="absolute top-1 right-1 bg-green-500 text-white px-1 py-0.5 rounded text-xs font-bold">
+        حقيقي
       </div>
     </div>
   );
