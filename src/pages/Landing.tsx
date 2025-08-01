@@ -17,6 +17,10 @@ export default function Landing() {
     navigate('/join');
   };
 
+  const handleAlphaQuiz = () => {
+    navigate('/alpha-quiz');
+  };
+
   return (
     <motion.div
       className="flex flex-col items-center justify-center min-h-screen px-4"
@@ -68,6 +72,13 @@ export default function Landing() {
         >
           الانضمام لجلسة
         </button>
+        
+        <button
+          onClick={handleAlphaQuiz}
+          className="w-full px-6 py-3 text-lg rounded-xl font-bold bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-black border border-orange-400 transition-all font-arabic shadow-lg"
+        >
+          Alpha: Quiz 🚀
+        </button>
       </motion.div>
 
       <motion.div
@@ -81,6 +92,9 @@ export default function Landing() {
         </p>
         <p className="font-arabic mt-1">
           الانضمام لجلسة: ادخل كلاعب في جلسة موجودة
+        </p>
+        <p className="font-arabic mt-1 text-orange-300">
+          Alpha Quiz: نسخة مبسطة للاختبار (بدون فيديو)
         </p>
       </motion.div>
     </motion.div>
