@@ -1,4 +1,5 @@
 {
+  "netlify/functions/check-daily-room.ts": [],
   "netlify/functions/create-daily-room.ts": [],
   "netlify/functions/create-daily-token.ts": [],
   "netlify/functions/delete-daily-room.ts": [],
@@ -31,8 +32,11 @@
   "src/components/ConnectionBanner.tsx": [],
   "src/components/LazyImage.tsx": [],
   "src/components/Scoreboard.tsx": [],
+  "src/components/SimpleVideoFrame.tsx": [],
   "src/components/Timer.tsx": [],
-  "src/components/UnifiedVideoRoom.tsx": [],
+  "src/components/UnifiedVideoRoom.tsx": [
+    "src/components/SimpleVideoFrame.tsx"
+  ],
   "src/components/VideoFrame.tsx": [],
   "src/components/VideoRoom.tsx": [],
   "src/context/GameContext.tsx": [
