@@ -29,6 +29,7 @@
   "src/components/Buzzer.tsx": [],
   "src/components/ConfirmationModal.tsx": [],
   "src/components/ConnectionBanner.tsx": [],
+  "src/components/IndividualVideoFrame.tsx": [],
   "src/components/LazyImage.tsx": [],
   "src/components/Scoreboard.tsx": [],
   "src/components/SimpleVideoFrame.tsx": [],
