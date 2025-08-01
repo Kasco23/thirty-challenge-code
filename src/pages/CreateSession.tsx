@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGameActions } from '@/hooks/useGameAtoms';
 import { GameDatabase } from '@/lib/gameDatabase';
+import { getConfigurationError } from '@/lib/supabaseClient';
 import type { SegmentCode } from '@/types/game';
 
 const SEGMENTS: Record<SegmentCode, string> = {
@@ -13,10 +14,8 @@ const SEGMENTS: Record<SegmentCode, string> = {
 };
 
 /**
- * Page for creating a new game session. Allows the host to
- * choose a host name, optional host code, and customize the
- * number of questions for each segment. Creates initial game
- * record in CONFIG phase, then updates to LOBBY after confirmation.
+ * Enhanced session creation page with improved error handling and user feedback.
+ * Validates environment configuration and provides clear error messages.
  */
 export default function CreateSession() {
   const nav = useNavigate();
@@ -37,6 +36,14 @@ export default function CreateSession() {
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string>('');
 
+  // Check configuration on mount
+  useEffect(() => {
+    const configError = getConfigurationError();
+    if (configError) {
+      setError(`تحذير: ${configError}. قد لا تعمل بعض الميزات بشكل صحيح.`);
+    }
+  }, []);
+
   // Generate session ID on component mount
   useEffect(() => {
     const sessionId = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -48,6 +55,13 @@ export default function CreateSession() {
     
     if (!gameId) {
       setError('لم يتم إنشاء معرف الجلسة بعد. يرجى الانتظار.');
+      return;
+    }
+
+    // Check for configuration issues before attempting to create
+    const configError = getConfigurationError();
+    if (configError) {
+      setError(`لا يمكن إنشاء جلسة: ${configError}. يرجى التحقق من إعدادات النظام.`);
       return;
     }
 
@@ -64,8 +78,7 @@ export default function CreateSession() {
       );
       
       if (!result) {
-        setError('فشل في إنشاء الجلسة. يرجى المحاولة مرة أخرى.');
-        return;
+        throw new Error('Failed to create game record');
       }
       
       // Update game to LOBBY phase with host details
@@ -81,7 +94,21 @@ export default function CreateSession() {
       });
     } catch (err) {
       console.error('Failed to create and setup session:', err);
-      setError('فشل في إنهاء إعداد الجلسة. يرجى المحاولة مرة أخرى.');
+      
+      // Provide specific error messages based on error type
+      let errorMessage = 'فشل في إنشاء الجلسة. يرجى المحاولة مرة أخرى.';
+      
+      if (err instanceof Error) {
+        if (err.message.includes('fetch')) {
+          errorMessage = 'فشل في الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.';
+        } else if (err.message.includes('duplicate')) {
+          errorMessage = 'معرف الجلسة مستخدم بالفعل. يرجى تحديث الصفحة والمحاولة مرة أخرى.';
+        } else if (err.message.includes('timeout')) {
+          errorMessage = 'انتهت مهلة الاتصال. يرجى المحاولة مرة أخرى.';
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setIsCreating(false);
     }
@@ -114,10 +141,15 @@ export default function CreateSession() {
           </div>
         )}
 
-        {/* Error Display */}
+        {/* Enhanced Error Display */}
         {error && (
           <div className="text-center p-4 bg-red-500/20 rounded-lg border border-red-500/30">
             <p className="text-red-300 font-arabic text-sm">{error}</p>
+            {error.includes('تحذير') && (
+              <div className="mt-2 text-xs text-red-200 font-arabic">
+                يمكنك المتابعة ولكن قد تواجه مشاكل في المزامنة
+              </div>
+            )}
           </div>
         )}
 
@@ -130,7 +162,9 @@ export default function CreateSession() {
             onChange={(e) => setHostName(e.target.value)}
             required
             disabled={isCreating}
-            className="w-full px-4 py-2 rounded-lg bg-white/10 text-white disabled:opacity-50"
+            maxLength={50}
+            className="w-full px-4 py-2 rounded-lg bg-white/10 text-white disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-accent2"
+            placeholder="أدخل اسم المقدم"
           />
         </div>
 
@@ -144,8 +178,13 @@ export default function CreateSession() {
             placeholder="مثال: MUSAED"
             required
             disabled={isCreating}
-            className="w-full px-4 py-2 rounded-lg bg-white/10 text-white font-mono disabled:opacity-50"
+            maxLength={20}
+            pattern="[A-Z0-9]+"
+            className="w-full px-4 py-2 rounded-lg bg-white/10 text-white font-mono disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-accent2"
           />
+          <p className="text-xs text-white/60 mt-1 font-arabic">
+            استخدم أحرف إنجليزية وأرقام فقط
+          </p>
         </div>
 
         {Object.entries(SEGMENTS).map(([code, label]) => (
@@ -159,11 +198,11 @@ export default function CreateSession() {
               onChange={(e) =>
                 setSegmentSettings({
                   ...segmentSettings,
-                  [code]: Number(e.target.value),
+                  [code]: Math.max(1, Math.min(20, Number(e.target.value))),
                 })
               }
               disabled={isCreating}
-              className="w-20 px-2 py-1 rounded bg-white/10 text-white text-center disabled:opacity-50"
+              className="w-20 px-2 py-1 rounded bg-white/10 text-white text-center disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-accent2"
             />
           </div>
         ))}
@@ -171,10 +210,20 @@ export default function CreateSession() {
         <button
           type="submit"
           disabled={isCreating || !gameId || !hostName.trim() || !hostCode.trim()}
-          className="w-full py-3 bg-accent2 hover:bg-accent disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-arabic transition-colors"
+          className="w-full py-3 bg-accent2 hover:bg-accent disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-arabic transition-colors focus:outline-none focus:ring-2 focus:ring-accent2"
         >
           {isCreating ? 'جاري التحديث...' : gameId ? `تأكيد الجلسة — ${gameId}` : 'انتظار إنشاء الجلسة...'}
         </button>
+
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => nav('/')}
+            className="text-white/70 hover:text-white text-sm font-arabic underline"
+          >
+            العودة للصفحة الرئيسية
+          </button>
+        </div>
       </form>
     </div>
   );

@@ -192,6 +192,17 @@ export default function UnifiedVideoRoom({
         startAudioOff: userInfo.isObserver, // Observers start with audio off
       });
 
+      // For observer mode, disable audio output to prevent feedback
+      if (userInfo.isObserver) {
+        try {
+          // Set local audio output volume to 0 for observers
+          await (callObject as any).setLocalAudio(false);
+          console.log(`[UnifiedVideoRoom] Observer mode: disabled local audio input/output`);
+        } catch (audioError) {
+          console.warn(`[UnifiedVideoRoom] Could not disable audio for observer:`, audioError);
+        }
+      }
+
       // Append iframe to DOM with mobile-optimized styling
       const iframe = (callObject as any).iframe();
       if (callFrameRef.current && iframe) {

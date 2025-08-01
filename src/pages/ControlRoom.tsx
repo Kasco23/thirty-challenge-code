@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { useGameState, useGameActions } from '@/hooks/useGameAtoms';
+import { useGameState, useGameActions, useGameSync } from '@/hooks/useGameAtoms';
 import UnifiedVideoRoom from '@/components/UnifiedVideoRoom';
 
 /**
@@ -13,9 +13,13 @@ export default function ControlRoom() {
   const location = useLocation();
   const navigate = useNavigate();
   const state = useGameState();
-  const { loadGameState, startGame, setHostConnected } = useGameActions();
+  const { loadGameState, startGame, setHostConnected, createVideoRoom, endVideoRoom, checkVideoRoomExists, generateDailyToken } = useGameActions();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [roomStatusMessage, setRoomStatusMessage] = useState<string>('');
+
+  // Initialize game sync to receive real-time updates
+  useGameSync();
 
   // Get game ID from location state or navigate to lobby
   useEffect(() => {
@@ -97,7 +101,7 @@ export default function ControlRoom() {
         غرفة التحكم
       </h1>
 
-      {/* Display session codes and connection status */}
+      {/* Enhanced Status Display */}
       <div className="text-center mb-6 space-y-1">
         <p className="text-accent2 font-arabic">
           رمز اللاعبين: <span className="font-mono">{state.gameId}</span>
@@ -108,13 +112,29 @@ export default function ControlRoom() {
         <p className="text-white/70 font-arabic">
           المرحلة الحالية: <span className="font-mono">{state.phase}</span>
         </p>
-        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-arabic ${
-          state.hostIsConnected 
-            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-            : 'bg-red-500/20 text-red-400 border border-red-500/30'
-        }`}>
-          <div className={`w-2 h-2 rounded-full ${state.hostIsConnected ? 'bg-green-400' : 'bg-red-400'}`}></div>
-          {state.hostIsConnected ? 'المقدم متصل' : 'المقدم غير متصل'}
+        
+        {/* Host Connection Status */}
+        <div className="flex flex-wrap justify-center gap-4 mt-4">
+          <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-arabic ${
+            state.hostIsConnected 
+              ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+              : 'bg-red-500/20 text-red-400 border border-red-500/30'
+          }`}>
+            <div className={`w-2 h-2 rounded-full ${state.hostIsConnected ? 'bg-green-400' : 'bg-red-400'}`}></div>
+            {state.hostIsConnected ? 'المقدم متصل' : 'المقدم غير متصل'}
+          </div>
+
+          {/* Controller (PC) Status */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-arabic bg-blue-500/20 text-blue-400 border border-blue-500/30">
+            <div className="w-2 h-2 rounded-full bg-blue-400"></div>
+            تحكم PC نشط
+          </div>
+
+          {/* Real-time sync indicator */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-arabic bg-purple-500/20 text-purple-400 border border-purple-500/30">
+            <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></div>
+            متصل بالخادم
+          </div>
         </div>
       </div>
 
@@ -135,6 +155,199 @@ export default function ControlRoom() {
             : 'bg-gray-600 text-white/70'
         }`}>
           {state.videoRoomCreated ? '✓ غرفة الفيديو جاهزة' : 'لا توجد غرفة فيديو'}
+        </div>
+      </div>
+
+      {/* Control Panel for Room Management */}
+      <div className="mb-8 bg-slate-800/40 rounded-xl p-6 border border-slate-600/30">
+        <h3 className="text-xl font-bold text-slate-300 mb-4 font-arabic text-center">
+          لوحة التحكم - إدارة الغرفة والمشاركين
+        </h3>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          <button
+            onClick={async () => {
+              if (!state.gameId) return;
+              setIsLoading(true);
+              try {
+                const result = await createVideoRoom(state.gameId);
+                if (result.success) {
+                  setError('');
+                } else {
+                  setError(`فشل في إنشاء الغرفة: ${result.error}`);
+                }
+              } catch (error) {
+                console.error('Error creating video room:', error);
+                setError('خطأ في إنشاء الغرفة');
+              } finally {
+                setIsLoading(false);
+              }
+            }}
+            disabled={state.videoRoomCreated || isLoading}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-arabic transition-colors"
+          >
+            إنشاء غرفة فيديو
+          </button>
+
+          <button
+            onClick={async () => {
+              if (!state.gameId) return;
+              setIsLoading(true);
+              try {
+                const result = await endVideoRoom(state.gameId);
+                if (!result.success) {
+                  setError(`فشل في حذف الغرفة: ${result.error}`);
+                }
+              } catch (error) {
+                console.error('Error ending video room:', error);
+                setError('خطأ في حذف الغرفة');
+              } finally {
+                setIsLoading(false);
+              }
+            }}
+            disabled={!state.videoRoomCreated || isLoading}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg font-arabic transition-colors"
+          >
+            حذف غرفة الفيديو
+          </button>
+
+          <button
+            onClick={async () => {
+              if (!state.gameId) return;
+              try {
+                const result = await checkVideoRoomExists(state.gameId);
+                if (result.success) {
+                  setRoomStatusMessage(`حالة الغرفة: ${result.exists ? 'موجودة' : 'غير موجودة'} | المشاركين: ${result.participants?.length || 0}`);
+                } else {
+                  setRoomStatusMessage(`خطأ: ${result.error}`);
+                }
+              } catch (error) {
+                console.error('Error checking room status:', error);
+                setRoomStatusMessage('خطأ في فحص الغرفة');
+              }
+            }}
+            className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-arabic transition-colors"
+          >
+            فحص حالة الغرفة
+          </button>
+
+          <button
+            onClick={async () => {
+              if (!state.gameId) return;
+              try {
+                const token = await generateDailyToken(
+                  state.gameId,
+                  'Controller-PC',
+                  false,
+                  true // Observer mode
+                );
+                if (token) {
+                  navigator.clipboard.writeText(token);
+                  alert('تم نسخ رمز المراقب إلى الحافظة');
+                } else {
+                  alert('فشل في إنشاء رمز المراقب');
+                }
+              } catch (error) {
+                console.error('Error generating observer token:', error);
+                alert('خطأ في إنشاء رمز المراقب');
+              }
+            }}
+            className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg font-arabic transition-colors"
+          >
+            إنشاء رمز مراقب
+          </button>
+
+          <button
+            onClick={async () => {
+              if (!state.gameId) return;
+              try {
+                const token = await generateDailyToken(
+                  state.gameId,
+                  'Host-Mobile',
+                  true,
+                  false // Normal participant
+                );
+                if (token) {
+                  navigator.clipboard.writeText(token);
+                  alert('تم نسخ رمز المقدم إلى الحافظة');
+                } else {
+                  alert('فشل في إنشاء رمز المقدم');
+                }
+              } catch (error) {
+                console.error('Error generating host token:', error);
+                alert('خطأ في إنشاء رمز المقدم');
+              }
+            }}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-arabic transition-colors"
+          >
+            إنشاء رمز مقدم
+          </button>
+
+          <button
+            onClick={async () => {
+              if (!state.gameId) return;
+              try {
+                const token = await generateDailyToken(
+                  state.gameId,
+                  'Player-Test',
+                  false,
+                  false // Normal participant
+                );
+                if (token) {
+                  navigator.clipboard.writeText(token);
+                  alert('تم نسخ رمز لاعب إلى الحافظة');
+                } else {
+                  alert('فشل في إنشاء رمز لاعب');
+                }
+              } catch (error) {
+                console.error('Error generating player token:', error);
+                alert('خطأ في إنشاء رمز لاعب');
+              }
+            }}
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-arabic transition-colors"
+          >
+            إنشاء رمز لاعب
+          </button>
+
+          <button
+            onClick={async () => {
+              if (!state.gameId) return;
+              try {
+                const result = await loadGameState(state.gameId);
+                if (result.success) {
+                  alert('تم تحديث حالة اللعبة من قاعدة البيانات');
+                } else {
+                  alert(`فشل في التحديث: ${result.error}`);
+                }
+              } catch (error) {
+                console.error('Error reloading game state:', error);
+                alert('خطأ في تحديث حالة اللعبة');
+              }
+            }}
+            className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-arabic transition-colors"
+          >
+            تحديث من قاعدة البيانات
+          </button>
+
+          <button
+            onClick={() => {
+              navigate(`/lobby/${state.gameId}?role=host&hostName=${encodeURIComponent(state.hostName || 'المقدم')}`);
+            }}
+            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-arabic transition-colors"
+          >
+            الذهاب للوبي
+          </button>
+        </div>
+
+        {/* Room Status Message */}
+        {roomStatusMessage && (
+          <div className="mt-4 p-4 bg-blue-900/50 rounded-lg border border-blue-500/30">
+            <p className="text-blue-200 font-arabic text-center">{roomStatusMessage}</p>
+          </div>
+        )}
+
+        <div className="text-center text-sm text-white/60 font-arabic">
+          استخدم هذه الأزرار لإدارة غرفة الفيديو واختبار وظائف Daily.co
         </div>
       </div>
 
