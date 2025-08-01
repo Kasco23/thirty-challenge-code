@@ -5,7 +5,7 @@ import { createAtomGameSync, type AtomGameSync } from '@/lib/atomGameSync';
 import type { SegmentCode, PlayerId, Player, GameState } from '@/types/game';
 
 // Helper function to map player records (copied from atomGameSync)
-function mapPlayerRecord(record: any): Player {
+function mapPlayerRecord(record: { id: string; name: string; flag?: string | null; club?: string | null; role: string; score: number; strikes: number; is_connected: boolean; special_buttons: Record<string, boolean> }): Player {
   return {
     id: record.id as PlayerId,
     name: record.name,
