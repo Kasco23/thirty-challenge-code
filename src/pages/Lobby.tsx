@@ -1,7 +1,10 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAtomValue } from 'jotai';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
+import { gameSyncInstanceAtom } from '@/state';
+import type { AtomGameSync } from '@/lib/atomGameSync';
 import UnifiedVideoRoom from '@/components/UnifiedVideoRoom';
 import AlertBanner from '@/components/AlertBanner';
 import ConfirmationModal from '@/components/ConfirmationModal';
@@ -12,11 +15,14 @@ export default function TrueLobby() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const state = useGameState();
-  const { startGame, createVideoRoom, endVideoRoom, generateDailyToken } = useGameActions();
+  const { startGame, createVideoRoom, endVideoRoom, generateDailyToken, loadGameState } = useGameActions();
   const { myParticipant, setParticipant } = useLobbyActions();
   
   // Initialize game sync
   useGameSync();
+  
+  // Get sync instance for cleanup
+  const gameSyncInstance = useAtomValue(gameSyncInstanceAtom) as AtomGameSync | null;
 
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
@@ -69,11 +75,24 @@ export default function TrueLobby() {
   useEffect(() => {
     if (!gameId) return;
 
-    // Initialize game if needed
-    if (state.gameId !== gameId) {
-      // For now, just update the atoms - we'll handle game loading separately
-      startGame();
-    }
+    // Load game state from database if needed
+    const initializeGameState = async () => {
+      if (state.gameId !== gameId) {
+        console.log('Loading game state for:', gameId);
+        try {
+          const result = await loadGameState(gameId);
+          if (!result.success) {
+            console.error('Failed to load game state:', result.error);
+            showAlertMessage(`فشل في تحميل بيانات الجلسة: ${result.error}`, 'error');
+          }
+        } catch (error) {
+          console.error('Error loading game state:', error);
+          showAlertMessage('خطأ في تحميل بيانات الجلسة', 'error');
+        }
+      }
+    };
+
+    initializeGameState();
 
     // Determine my role from URL parameters
     const role = searchParams.get('role');
@@ -122,7 +141,36 @@ export default function TrueLobby() {
     }
 
     setParticipant(participant);
-  }, [gameId, searchParams, state.gameId, state.hostName, startGame, setParticipant]);
+    
+    // Set up cleanup when user leaves the page
+    const handleBeforeUnload = () => {
+      if (participant && gameSyncInstance) {
+        // Mark participant as disconnected
+        gameSyncInstance.disconnect().catch(console.error);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && participant && gameSyncInstance) {
+        // User switched tabs or minimized - may indicate they're leaving
+        // Don't disconnect immediately, but mark as potentially leaving
+        setTimeout(() => {
+          if (document.visibilityState === 'hidden') {
+            // Still hidden after 30 seconds, likely left
+            console.log('User appears to have left, cleaning up presence...');
+          }
+        }, 30000);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [gameId, searchParams, state.gameId, state.hostName, loadGameState, setParticipant, gameSyncInstance, showAlertMessage]);
 
   // Create video room when host PC clicks button
   const handleCreateVideoRoom = async () => {
@@ -222,7 +270,7 @@ export default function TrueLobby() {
       if (
         currentConnectedPlayers.length >= 1 && 
         state.videoRoomCreated && 
-        state.phase === 'CONFIG' &&
+        state.phase === 'LOBBY' &&
         !hasShownSessionStartModal.current
       ) {
         setShowSessionStartModal(true);

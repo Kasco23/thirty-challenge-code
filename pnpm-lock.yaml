@@ -114,6 +114,9 @@ importers:
       prettier:
         specifier: ^3.2.5
         version: 3.6.2
+      rollup-plugin-analyzer:
+        specifier: ^4.0.0
+        version: 4.0.0
       tailwindcss:
         specifier: ^3.4.3
         version: 3.4.17(ts-node@10.9.2(@types/node@24.1.0)(typescript@5.8.3))
@@ -132,6 +135,9 @@ importers:
       vite:
         specifier: ^7.0.6
         version: 7.0.6(@types/node@24.1.0)(jiti@1.21.7)(yaml@2.8.0)
+      vite-bundle-analyzer:
+        specifier: ^0.13.1
+        version: 0.13.1
       vite-plugin-bundlesize:
         specifier: ^0.2.0
         version: 0.2.0(vite@7.0.6(@types/node@24.1.0)(jiti@1.21.7)(yaml@2.8.0))
@@ -3636,6 +3642,10 @@ packages:
     resolution: {integrity: sha512-g6QUff04oZpHs0eG5p83rFLhHeV00ug/Yf9nZM6fLeUrPguBTkTQOdpAWWspMh55TZfVQDPaN3NQJfbVRAxdIw==}
     engines: {iojs: '>=1.0.0', node: '>=0.10.0'}
 
+  rollup-plugin-analyzer@4.0.0:
+    resolution: {integrity: sha512-LL9GEt3bkXp6Wa19SNR5MWcvHNMvuTFYg+eYBZN2OIFhSWN+pEJUQXEKu5BsOeABob3x9PDaLKW7w5iOJnsESQ==}
+    engines: {node: '>=8.0.0'}
+
   rollup@4.46.2:
     resolution: {integrity: sha512-WMmLFI+Boh6xbop+OAGo9cQ3OgX9MIg7xOQjn+pTCwOkk+FNDAeAemXkJ3HzDJrVXleLOFVa1ipuc1AmEx1Dwg==}
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
@@ -4121,6 +4131,9 @@ packages:
 
   validate-npm-package-license@3.0.4:
     resolution: {integrity: sha512-DpKm2Ui/xN7/HQKCtpZxoRWBhZ9Z0kqtygG8XCgNQ8ZlDnxuQmWhj566j8fN4Cu3/JmbhsDo7fcAJq4s9h27Ew==}
+
+  vite-bundle-analyzer@0.13.1:
+    resolution: {integrity: sha512-471KXy0cq8L9voQnkLwintkDewhUDxSOUfUq5qgCXalORVmMt4W5JbcLVR6ybEHG6K83afs9/pD7LAlnJYS4mQ==}
 
   vite-plugin-bundlesize@0.2.0:
     resolution: {integrity: sha512-2z4Z7vEL6JlSfRooy8YmIo0FDFt95+WLlkaYFWNFoRJZEe/WTQljtS0bRlkFH/q1Vw623gt584RDDHKtdMZumw==}
@@ -8314,6 +8327,8 @@ snapshots:
 
   reusify@1.1.0: {}
 
+  rollup-plugin-analyzer@4.0.0: {}
+
   rollup@4.46.2:
     dependencies:
       '@types/estree': 1.0.8
@@ -8898,6 +8913,8 @@ snapshots:
     dependencies:
       spdx-correct: 3.2.0
       spdx-expression-parse: 3.0.1
+
+  vite-bundle-analyzer@0.13.1: {}
 
   vite-plugin-bundlesize@0.2.0(vite@7.0.6(@types/node@24.1.0)(jiti@1.21.7)(yaml@2.8.0)):
     dependencies:
