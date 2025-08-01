@@ -28,7 +28,7 @@ export const handler: Handler = async (event) => {
     let requestBody;
     try {
       requestBody = JSON.parse(event.body || '{}');
-    } catch (parseError) {
+    } catch {
       return {
         statusCode: 400,
         headers: { 'Content-Type': 'application/json' },
