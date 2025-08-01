@@ -19,11 +19,13 @@ interface DailyError {
 interface UnifiedVideoRoomProps {
   gameId: string;
   className?: string;
+  observerMode?: boolean; // For host PC to observe without appearing in video
 }
 
 export default function UnifiedVideoRoom({
   gameId,
   className = '',
+  observerMode = false,
 }: UnifiedVideoRoomProps) {
   const state = useGameState();
   const { generateDailyToken } = useGameActions();
@@ -41,26 +43,39 @@ export default function UnifiedVideoRoom({
     const role = urlParams.get('role');
     const name = urlParams.get('name') || 'مستخدم';
     
+    // If observer mode is enabled, treat as host but hidden
+    if (observerMode) {
+      return {
+        userName: state.hostName || name,
+        isHost: true,
+        userRole: 'host-observer',
+        isObserver: true
+      };
+    }
+    
     if (role === 'host' || role === 'host-mobile') {
       return {
         userName: state.hostName || name,
         isHost: true,
-        userRole: 'host-mobile'
+        userRole: 'host-mobile',
+        isObserver: false
       };
     } else if (role === 'playerA' || role === 'playerB') {
       return {
         userName: name,
         isHost: false,
-        userRole: role
+        userRole: role,
+        isObserver: false
       };
     }
     
     return {
       userName: name,
       isHost: false,
-      userRole: 'guest'
+      userRole: 'guest',
+      isObserver: false
     };
-  }, [state.hostName]);
+  }, [state.hostName, observerMode]);
 
   const joinCall = useCallback(async () => {
     if (!callFrameRef.current || !state.videoRoomUrl) return;
@@ -101,9 +116,9 @@ export default function UnifiedVideoRoom({
           borderRadius: '12px',
           backgroundColor: '#1f2937', // gray-800
         },
-        showLeaveButton: true,
+        showLeaveButton: !userInfo.isObserver, // Hide leave button for observers
         showFullscreenButton: true,
-        showLocalVideo: true,
+        showLocalVideo: !userInfo.isObserver, // Hide local video for observers
         showParticipantsBar: true,
         theme: {
           colors: {
@@ -166,9 +181,9 @@ export default function UnifiedVideoRoom({
       await (callObject as any).join({
         url: state.videoRoomUrl,
         token,
-        userName: userInfo.userName,
-        startVideoOff: false,
-        startAudioOff: false,
+        userName: userInfo.isObserver ? `${userInfo.userName} (مراقب)` : userInfo.userName,
+        startVideoOff: userInfo.isObserver, // Observers start with video off
+        startAudioOff: userInfo.isObserver, // Observers start with audio off
       });
 
       // Append iframe to DOM
@@ -313,7 +328,9 @@ export default function UnifiedVideoRoom({
       {/* Instructions overlay */}
       <div className="absolute bottom-2 left-2 bg-black/70 text-white px-3 py-2 rounded text-sm font-arabic">
         <div>جميع المشاركين في غرفة واحدة</div>
-        <div className="text-xs text-white/70">المقدم + اللاعبان</div>
+        <div className="text-xs text-white/70">
+          {observerMode ? 'وضع المراقبة - المقدم + اللاعبان' : 'المقدم + اللاعبان'}
+        </div>
       </div>
     </div>
   );

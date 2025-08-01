@@ -1,5 +1,6 @@
 import { isSupabaseConfigured, getSupabase, createChannel } from '@/lib/supabaseLazy';
 import type { GameRecord, PlayerRecord } from '@/lib/gameDatabase';
+import { GameDatabase } from '@/lib/gameDatabase';
 import type { GameState, PlayerId, Player } from '@/types/game';
 import type { RealtimeChannel } from '@/lib/supabaseLazy';
 import { createStore } from 'jotai';
@@ -11,7 +12,7 @@ import {
   isConnectedToSupabaseAtom,
   connectionErrorAtom,
   gameSyncInstanceAtom,
-  addParticipantAtom,
+  lobbyParticipantsAtom,
   broadcastEventAtom,
   type LobbyParticipant
 } from '@/state';
@@ -214,10 +215,44 @@ export class AtomGameSync {
       });
     });
 
-    // Update participants atom (this will replace the entire list)
-    // Note: We might need a different approach to merge this properly
+    // Clear existing participants first, then add current ones
+    // This ensures we have accurate presence tracking
+    this.store.set(lobbyParticipantsAtom, participants);
+    
+    // Also update player connection status if they are tracked players
     participants.forEach(participant => {
-      this.store.set(addParticipantAtom, participant);
+      if (participant.playerId && (participant.playerId === 'playerA' || participant.playerId === 'playerB')) {
+        this.store.set(updatePlayerAtom, {
+          playerId: participant.playerId,
+          update: { isConnected: true, name: participant.name }
+        });
+        
+        // Update database to reflect connection status
+        GameDatabase.updatePlayer(participant.playerId, { 
+          is_connected: true,
+          last_active: new Date().toISOString()
+        }).catch(console.error);
+      }
+    });
+
+    // Mark players as disconnected if they're not in presence
+    const presentPlayerIds = new Set(participants
+      .filter(p => p.playerId)
+      .map(p => p.playerId));
+      
+    ['playerA', 'playerB'].forEach(playerId => {
+      if (!presentPlayerIds.has(playerId as PlayerId)) {
+        this.store.set(updatePlayerAtom, {
+          playerId: playerId as PlayerId,
+          update: { isConnected: false }
+        });
+        
+        // Update database to reflect disconnection
+        GameDatabase.updatePlayer(playerId, { 
+          is_connected: false,
+          last_active: new Date().toISOString()
+        }).catch(console.error);
+      }
     });
   }
 

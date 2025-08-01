@@ -1,4 +1,5 @@
 import { useGameState, useGameActions } from '@/hooks/useGameAtoms';
+import UnifiedVideoRoom from '@/components/UnifiedVideoRoom';
 
 /**
  * Host control interface shown on the PC. Displays join codes,
@@ -47,12 +48,49 @@ export default function ControlRoom() {
         </div>
         
         <div className="px-6 py-3 bg-blue-600/20 border border-blue-600/30 rounded-lg font-arabic text-blue-300 text-sm">
-          💡 لإدارة غرفة الفيديو، اذهب إلى صالة الانتظار
+          💡 غرفة الفيديو معروضة أدناه في وضع المراقبة
         </div>
       </div>
 
-      {/* Video tiles grid - Display only, ControlRoom doesn't join video */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Unified Video Room - Observer Mode for Host PC */}
+      {state.videoRoomCreated && (
+        <div className="mb-8 bg-gradient-to-br from-blue-800/30 to-purple-800/30 rounded-xl p-6 border border-blue-500/30">
+          <h3 className="text-xl font-bold text-blue-300 mb-4 font-arabic text-center">
+            غرفة الفيديو - وضع المراقبة
+          </h3>
+          <div className="mb-4">
+            <UnifiedVideoRoom 
+              gameId={state.gameId}
+              className="w-full aspect-video"
+              observerMode={true}
+            />
+          </div>
+          <div className="text-center text-sm text-white/70 font-arabic">
+            أنت تراقب غرفة الفيديو بدون إظهار كاميرا أو صوت
+          </div>
+        </div>
+      )}
+
+      {/* Video room status when not created */}
+      {!state.videoRoomCreated && (
+        <div className="mb-8 bg-gray-500/20 border border-gray-500/30 rounded-xl p-6">
+          <div className="text-center">
+            <div className="text-gray-400 text-lg font-bold mb-2 font-arabic">
+              غرفة الفيديو غير متاحة
+            </div>
+            <div className="text-gray-300 text-sm font-arabic mb-4">
+              اذهب إلى صالة الانتظار لإنشاء غرفة الفيديو
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Legacy video tiles grid for reference - kept as fallback */}
+      <details className="mb-6">
+        <summary className="text-white/70 font-arabic cursor-pointer hover:text-white mb-4">
+          عرض إطارات الفيديو المنفصلة (قديم)
+        </summary>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {(
           [
             {
@@ -102,7 +140,8 @@ export default function ControlRoom() {
             </div>
           </div>
         ))}
-      </div>
+        </div>
+      </details>
     </div>
   );
 }

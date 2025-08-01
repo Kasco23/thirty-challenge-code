@@ -1,7 +1,10 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAtomValue } from 'jotai';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
+import { gameSyncInstanceAtom } from '@/state';
+import type { AtomGameSync } from '@/lib/atomGameSync';
 import UnifiedVideoRoom from '@/components/UnifiedVideoRoom';
 import AlertBanner from '@/components/AlertBanner';
 import ConfirmationModal from '@/components/ConfirmationModal';
@@ -17,6 +20,9 @@ export default function TrueLobby() {
   
   // Initialize game sync
   useGameSync();
+  
+  // Get sync instance for cleanup
+  const gameSyncInstance = useAtomValue(gameSyncInstanceAtom) as AtomGameSync | null;
 
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
@@ -122,7 +128,36 @@ export default function TrueLobby() {
     }
 
     setParticipant(participant);
-  }, [gameId, searchParams, state.gameId, state.hostName, startGame, setParticipant]);
+    
+    // Set up cleanup when user leaves the page
+    const handleBeforeUnload = () => {
+      if (participant && gameSyncInstance) {
+        // Mark participant as disconnected
+        gameSyncInstance.disconnect().catch(console.error);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && participant && gameSyncInstance) {
+        // User switched tabs or minimized - may indicate they're leaving
+        // Don't disconnect immediately, but mark as potentially leaving
+        setTimeout(() => {
+          if (document.visibilityState === 'hidden') {
+            // Still hidden after 30 seconds, likely left
+            console.log('User appears to have left, cleaning up presence...');
+          }
+        }, 30000);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [gameId, searchParams, state.gameId, state.hostName, startGame, setParticipant, gameSyncInstance]);
 
   // Create video room when host PC clicks button
   const handleCreateVideoRoom = async () => {
