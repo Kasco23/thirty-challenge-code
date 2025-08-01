@@ -202,6 +202,15 @@ export class GameDatabase {
 
     try {
       const supabase = await getSupabase();
+      
+      // First, remove the player from any existing games to avoid primary key conflicts
+      // This allows players to switch between games
+      await supabase
+        .from('players')
+        .delete()
+        .eq('id', playerId);
+
+      // Now insert the player into the new game
       const { data, error } = await supabase
         .from('players')
         .insert({

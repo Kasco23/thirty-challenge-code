@@ -5,7 +5,7 @@ import { useAtomValue } from 'jotai';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
 import { gameSyncInstanceAtom, lobbyParticipantsAtom } from '@/state';
 import type { AtomGameSync } from '@/lib/atomGameSync';
-import SimpleVideoRoom from '@/components/SimpleVideoRoom';
+import IndividualVideoFrame from '@/components/IndividualVideoFrame';
 import AlertBanner from '@/components/AlertBanner';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import type { LobbyParticipant } from '@/state';
@@ -54,7 +54,7 @@ export default function TrueLobby() {
     }
     // Use the higher count of the two systems for accuracy
     return Math.max(gamePlayersCount, lobbyPlayersCount);
-  }, [state.players, lobbyParticipants]);
+  }, [state.players, lobbyParticipants, gameId]);
   // Function to show alerts and log room status
   const showAlertMessage = useCallback((message: string, type: 'info' | 'success' | 'warning' | 'error' = 'info') => {
     setAlertMessage(message);
@@ -764,67 +764,66 @@ export default function TrueLobby() {
           </div>
         )}
 
-        {/* Unified Video Conference - All participants in one room */}
+        {/* Separate Video Frames - Individual frames for each participant */}
         <div className="mb-8">
           <div className="bg-gradient-to-br from-blue-800/30 to-purple-800/30 rounded-xl p-6 border border-blue-500/30">
-            <h3 className="text-xl font-bold text-blue-300 mb-4 font-arabic text-center">
-              غرفة الفيديو الموحدة - جميع المشاركين
+            <h3 className="text-xl font-bold text-blue-300 mb-6 font-arabic text-center">
+              إطارات الفيديو المنفصلة - إطار لكل مشارك
             </h3>
             
-            <div className="mb-4">
-              <SimpleVideoRoom 
-                gameId={gameId}
-                className="w-full aspect-video"
-              />
+            {/* Video Frames Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Host Video Frame */}
+              <div className="space-y-2">
+                <h4 className="text-lg font-bold text-blue-300 font-arabic text-center">
+                  إطار المقدم
+                </h4>
+                <IndividualVideoFrame
+                  gameId={gameId!}
+                  participantType="host"
+                  participantName={state.hostName || 'المقدم'}
+                  isConnected={hostMobileConnected}
+                  className="w-full"
+                />
+              </div>
+              
+              {/* Player A Video Frame */}
+              <div className="space-y-2">
+                <h4 className="text-lg font-bold text-green-300 font-arabic text-center">
+                  إطار اللاعب الأول
+                </h4>
+                <IndividualVideoFrame
+                  gameId={gameId!}
+                  participantType="playerA"
+                  participantName={state.players.playerA.name || 'لاعب 1'}
+                  isConnected={state.players.playerA.isConnected}
+                  className="w-full"
+                />
+              </div>
+              
+              {/* Player B Video Frame */}
+              <div className="space-y-2">
+                <h4 className="text-lg font-bold text-purple-300 font-arabic text-center">
+                  إطار اللاعب الثاني
+                </h4>
+                <IndividualVideoFrame
+                  gameId={gameId!}
+                  participantType="playerB"
+                  participantName={state.players.playerB.name || 'لاعب 2'}
+                  isConnected={state.players.playerB.isConnected}
+                  className="w-full"
+                />
+              </div>
             </div>
             
-            {/* Participant status indicators */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              {/* Host Status */}
-              <div className="bg-blue-600/20 rounded-lg p-3 text-center">
-                <div className="text-blue-300 font-bold mb-1 font-arabic">المقدم</div>
-                <div className="text-white font-arabic">{state.hostName}</div>
-                <div className="flex items-center justify-center gap-2 mt-1">
-                  <div className={`w-2 h-2 rounded-full ${
-                    hostMobileConnected ? 'bg-green-500' : 'bg-gray-500'
-                  }`}></div>
-                  <span className="text-xs text-white/70 font-arabic">
-                    {hostMobileConnected ? 'متصل' : 'غير متصل'}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Player A Status */}
-              <div className="bg-green-600/20 rounded-lg p-3 text-center">
-                <div className="text-green-300 font-bold mb-1 font-arabic">لاعب 1</div>
-                <div className="text-white font-arabic">
-                  {state.players.playerA.name || 'لم ينضم بعد'}
-                </div>
-                <div className="flex items-center justify-center gap-2 mt-1">
-                  <div className={`w-2 h-2 rounded-full ${
-                    state.players.playerA.isConnected ? 'bg-green-500' : 'bg-gray-500'
-                  }`}></div>
-                  <span className="text-xs text-white/70 font-arabic">
-                    {state.players.playerA.isConnected ? 'متصل' : 'غير متصل'}
-                  </span>
-                </div>
-              </div>
-              
-              {/* Player B Status */}
-              <div className="bg-purple-600/20 rounded-lg p-3 text-center">
-                <div className="text-purple-300 font-bold mb-1 font-arabic">لاعب 2</div>
-                <div className="text-white font-arabic">
-                  {state.players.playerB.name || 'لم ينضم بعد'}
-                </div>
-                <div className="flex items-center justify-center gap-2 mt-1">
-                  <div className={`w-2 h-2 rounded-full ${
-                    state.players.playerB.isConnected ? 'bg-green-500' : 'bg-gray-500'
-                  }`}></div>
-                  <span className="text-xs text-white/70 font-arabic">
-                    {state.players.playerB.isConnected ? 'متصل' : 'غير متصل'}
-                  </span>
-                </div>
-              </div>
+            {/* Info note */}
+            <div className="mt-6 bg-blue-500/10 rounded-lg p-4 border border-blue-500/20">
+              <p className="text-blue-300 text-sm font-arabic text-center">
+                💡 كل إطار يظهر نفس غرفة الفيديو ولكن بتصميم منفصل لكل مشارك
+              </p>
+              <p className="text-blue-200 text-xs font-arabic text-center mt-1">
+                جميع المشاركين في نفس الغرفة، ولكن لكل منهم إطاره المخصص
+              </p>
             </div>
           </div>
         </div>
@@ -842,27 +841,27 @@ export default function TrueLobby() {
               {myParticipant.type === 'host-pc' && (
                 <>
                   <p>• هذا الجهاز للتحكم في اللعبة فقط</p>
-                  <p>• اضغط "إنشاء غرفة الفيديو" لبدء الفيديو الموحد</p>
+                  <p>• اضغط "إنشاء غرفة الفيديو" لبدء إطارات الفيديو المنفصلة</p>
                   <p>
                     • للمشاركة بالفيديو، انضم من هاتفك برمز المقدم{' '}
                     {state.hostCode}
                   </p>
-                  <p>• جميع المشاركين سيظهرون في غرفة واحدة</p>
+                  <p>• ستظهر إطارات منفصلة لكل مشارك (مقدم + لاعبان)</p>
                   <p>• انتظر انضمام اللاعبين ثم اضغط "بدء اللعبة"</p>
                 </>
               )}
               {myParticipant.type === 'host-mobile' && (
                 <>
-                  <p>• أنت متصل كمقدم في غرفة الفيديو الموحدة</p>
-                  <p>• يمكنك رؤية جميع المشاركين في نفس الغرفة</p>
+                  <p>• أنت متصل كمقدم ولديك إطار فيديو منفصل</p>
+                  <p>• يمكنك رؤية جميع المشاركين، كل في إطاره الخاص</p>
                   <p>• الفيديو مدمج في الصفحة، لا حاجة لفتح تطبيق منفصل</p>
                 </>
               )}
               {myParticipant.type === 'player' && (
                 <>
-                  <p>• أنت متصل كلاعب في غرفة الفيديو الموحدة</p>
+                  <p>• أنت متصل كلاعب ولديك إطار فيديو منفصل</p>
                   <p>• انتظر إنشاء غرفة الفيديو من المقدم</p>
-                  <p>• ستظهر في نفس الغرفة مع المقدم واللاعب الآخر</p>
+                  <p>• ستظهر في إطارك الخاص مع المقدم واللاعب الآخر</p>
                   <p>• انتظر بدء اللعبة من المقدم</p>
                 </>
               )}
