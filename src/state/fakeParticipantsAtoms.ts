@@ -41,7 +41,7 @@ export const createFakeParticipant = (type: 'host' | 'playerA' | 'playerB', aspe
 // Action atoms
 export const addFakeHostAtom = atom(
   null,
-  (get, set, aspectRatio: number = 16/9) => {
+  (_get, set, aspectRatio: number = 16/9) => {
     const newFakeHost = createFakeParticipant('host', aspectRatio);
     set(fakeHostAtom, newFakeHost);
     console.log('Added fake host:', newFakeHost);
@@ -50,7 +50,7 @@ export const addFakeHostAtom = atom(
 
 export const addFakePlayerAAtom = atom(
   null,
-  (get, set, aspectRatio: number = 16/9) => {
+  (_get, set, aspectRatio: number = 16/9) => {
     const newFakePlayerA = createFakeParticipant('playerA', aspectRatio);
     set(fakePlayerAAtom, newFakePlayerA);
     console.log('Added fake playerA:', newFakePlayerA);
@@ -59,7 +59,7 @@ export const addFakePlayerAAtom = atom(
 
 export const addFakePlayerBAtom = atom(
   null,
-  (get, set, aspectRatio: number = 16/9) => {
+  (_get, set, aspectRatio: number = 16/9) => {
     const newFakePlayerB = createFakeParticipant('playerB', aspectRatio);
     set(fakePlayerBAtom, newFakePlayerB);
     console.log('Added fake playerB:', newFakePlayerB);
@@ -131,7 +131,7 @@ export const toggleFakePlayerBConnectionAtom = atom(
 // Remove fake participant atoms
 export const removeFakeHostAtom = atom(
   null,
-  (get, set) => {
+  (_get, set) => {
     set(fakeHostAtom, null);
     console.log('Removed fake host');
   }
@@ -139,7 +139,7 @@ export const removeFakeHostAtom = atom(
 
 export const removeFakePlayerAAtom = atom(
   null,
-  (get, set) => {
+  (_get, set) => {
     set(fakePlayerAAtom, null);
     console.log('Removed fake playerA');
   }
@@ -147,7 +147,7 @@ export const removeFakePlayerAAtom = atom(
 
 export const removeFakePlayerBAtom = atom(
   null,
-  (get, set) => {
+  (_get, set) => {
     set(fakePlayerBAtom, null);
     console.log('Removed fake playerB');
   }
