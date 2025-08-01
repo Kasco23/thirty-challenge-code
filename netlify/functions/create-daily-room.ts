@@ -49,8 +49,8 @@ export const handler: Handler = async (event) => {
           enable_chat: true,
           start_video_off: false,
           start_audio_off: false,
-          enable_hidden_participants: true, // Allow hidden participants for host PC
           enable_recording: false,
+          exp: Math.round(Date.now() / 1000) + 3600, // Room expires in 1 hour
           ...properties,
         },
       }),

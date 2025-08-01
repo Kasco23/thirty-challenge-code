@@ -16,6 +16,7 @@ export default function ControlRoom() {
   const { loadGameState, startGame, setHostConnected, createVideoRoom, endVideoRoom, checkVideoRoomExists, generateDailyToken } = useGameActions();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
+  const [roomStatusMessage, setRoomStatusMessage] = useState<string>('');
 
   // Initialize game sync to receive real-time updates
   useGameSync();
@@ -337,6 +338,13 @@ export default function ControlRoom() {
             الذهاب للوبي
           </button>
         </div>
+
+        {/* Room Status Message */}
+        {roomStatusMessage && (
+          <div className="mt-4 p-4 bg-blue-900/50 rounded-lg border border-blue-500/30">
+            <p className="text-blue-200 font-arabic text-center">{roomStatusMessage}</p>
+          </div>
+        )}
 
         <div className="text-center text-sm text-white/60 font-arabic">
           استخدم هذه الأزرار لإدارة غرفة الفيديو واختبار وظائف Daily.co

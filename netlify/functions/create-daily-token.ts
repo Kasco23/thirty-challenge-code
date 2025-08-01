@@ -46,11 +46,11 @@ export const handler: Handler = async (event) => {
           room_name: room,
           user_name: user,
           is_owner: isHost,
-          is_hidden: isObserver, // Hidden participant mode for observers
           enable_screenshare: isHost && !isObserver, // Only non-observer hosts can screenshare
           enable_recording: false,
           start_video_off: isObserver, // Observers start with video off
           start_audio_off: isObserver, // Observers start with audio off
+          exp: Math.round(Date.now() / 1000) + 3600, // Token expires in 1 hour
         },
       }),
     });
