@@ -440,6 +440,17 @@ export default function TrueLobby() {
             <p className="text-white/70 font-arabic">
               اللاعبون المتصلون: {connectedPlayers}/2
             </p>
+            <div className="mt-4">
+              <button
+                onClick={() => {
+                  const params = new URLSearchParams(searchParams);
+                  navigate(`/lobby-test/${gameId}?${params.toString()}`);
+                }}
+                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-arabic transition-colors"
+              >
+                🧪 اختبار الفيديو المتقدم
+              </button>
+            </div>
           </div>
         </div>
 
