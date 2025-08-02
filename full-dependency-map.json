@@ -29,7 +29,6 @@
   "src/components/Buzzer.tsx": [],
   "src/components/ConfirmationModal.tsx": [],
   "src/components/ConnectionBanner.tsx": [],
-  "src/components/FakeVideoSimulator.tsx": [],
   "src/components/LazyImage.tsx": [],
   "src/components/Scoreboard.tsx": [],
   "src/components/Timer.tsx": [],
@@ -83,7 +82,6 @@
   "src/segments/useBellSegment.ts": [],
   "src/segments/useRemoSegment.ts": [],
   "src/segments/useSingSegment.ts": [],
-  "src/state/fakeParticipantsAtoms.ts": [],
   "src/state/gameAtoms.ts": [],
   "src/state/index.ts": [
     "src/state/gameAtoms.ts",

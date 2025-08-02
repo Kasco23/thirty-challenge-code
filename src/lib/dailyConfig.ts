@@ -1,10 +1,9 @@
 /**
- * Simplified Daily.co configuration for client-side video integration
+ * Simplified Daily.co configuration for horizontal video component
  */
 
 interface DailyConfig {
   isConfigured: boolean;
-  missingVars: string[];
   isDevelopmentMode: boolean;
   customDomain?: string;
 }
@@ -12,7 +11,6 @@ interface DailyConfig {
 function validateDailyEnvironment(): DailyConfig {
   // For client-side Daily.co integration, we only need to check if Netlify functions can create rooms
   // The DAILY_API_KEY is server-side only (in Netlify functions)
-  const missingVars: string[] = [];
   
   // In development mode, assume Daily.co is available with mock functionality
   const isDevMode = import.meta.env?.DEV === true;
@@ -24,12 +22,12 @@ function validateDailyEnvironment(): DailyConfig {
   const isConfigured = true; // We'll validate this dynamically when needed
 
   if (isDevMode) {
-    console.log('🔧 Daily.co Development Mode - Video features enabled with mock data');
+    console.log('🔧 Daily.co Development Mode - Video features enabled');
     if (customDomain) {
       console.log('🎯 Custom Daily.co domain configured:', customDomain);
     }
   } else {
-    console.log('✅ Daily.co Production Mode - Validating via API calls');
+    console.log('✅ Daily.co Production Mode');
     if (customDomain) {
       console.log('🎯 Custom Daily.co domain configured:', customDomain);
     }
@@ -37,7 +35,6 @@ function validateDailyEnvironment(): DailyConfig {
 
   return {
     isConfigured,
-    missingVars,
     isDevelopmentMode: isDevMode,
     customDomain,
   };
@@ -45,9 +42,6 @@ function validateDailyEnvironment(): DailyConfig {
 
 const dailyConfig = validateDailyEnvironment();
 
-/**
- * Returns the Daily.co domain to use (custom or default)
- */
 /**
  * Returns the Daily.co domain to use (custom or default), validating custom domains.
  */
@@ -60,6 +54,7 @@ function isValidDailyDomain(domain?: string): boolean {
 
 export const getDailyDomain = () =>
   isValidDailyDomain(dailyConfig.customDomain) ? dailyConfig.customDomain! : 'daily.co';
+
 /**
  * Returns `true` if we're in development mode.
  */
@@ -71,26 +66,6 @@ export const isDevelopmentMode = () => dailyConfig.isDevelopmentMode;
 export const isDailyConfigured = () => dailyConfig.isConfigured;
 
 /**
- * Returns a user-friendly error message for Daily.co configuration issues.
- */
-export const getDailyConfigurationError = (): string | null => {
-  if (dailyConfig.isConfigured) return null;
-  
-  if (dailyConfig.missingVars.length > 0) {
-    return `متغيرات Daily.co مفقودة: ${dailyConfig.missingVars.join(', ')}`;
-  }
-  
-  return 'إعدادات Daily.co غير صحيحة - ميزات الفيديو معطلة';
-};
-
-/**
- * Validates if Daily.co operations can be performed.
- */
-export const canUseDailyFeatures = (): boolean => {
-  return dailyConfig.isConfigured;
-};
-
-/**
  * Test Daily.co integration by attempting to create a test room
  */
 export const testDailyIntegration = async (): Promise<boolean> => {
@@ -100,7 +75,7 @@ export const testDailyIntegration = async (): Promise<boolean> => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         roomName: `test-${Date.now()}`,
-        properties: { max_participants: 2 }
+        properties: { max_participants: 10 }
       })
     });
     
