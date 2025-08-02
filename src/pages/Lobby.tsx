@@ -85,33 +85,44 @@ export default function TrueLobby() {
       // Check if room already exists first
       checkVideoRoomExists(gameId)
         .then((checkResult) => {
-          if (!isMounted) return;
+          if (!isMounted) return Promise.resolve(null);
+          
+          console.log('[AUTO-CREATE] Check result:', checkResult);
           
           if (checkResult.success && checkResult.exists && checkResult.url) {
             // Room already exists, update state
             showAlertMessage('غرفة الفيديو موجودة مسبقاً', 'info');
             // Note: This would normally update the database and state, but we'll let the sync handle it
+            return Promise.resolve({ success: true, roomUrl: checkResult.url });
           } else {
             // Room doesn't exist, create it
+            console.log('[AUTO-CREATE] Room does not exist, creating...');
+            showAlertMessage('إنشاء غرفة فيديو جديدة...', 'info');
             return createVideoRoom(gameId);
           }
         })
         .then((result) => {
-          if (!isMounted) return;
+          if (!isMounted || !result) {
+            console.log('[AUTO-CREATE] Skipping result processing:', { isMounted, result });
+            return;
+          }
           
-          if (result && result.success) {
+          console.log('[AUTO-CREATE] Create result:', result);
+          
+          if (result.success) {
             showAlertMessage('تم إنشاء غرفة الفيديو تلقائياً', 'success');
-          } else if (result && !result.success) {
+          } else {
             showAlertMessage(`فشل في إنشاء غرفة الفيديو: ${result.error}`, 'error');
           }
         })
         .catch((error) => {
           if (!isMounted) return;
-          console.error('Error in auto-creating video room:', error);
+          console.error('[AUTO-CREATE] Error in auto-creating video room:', error);
           showAlertMessage('خطأ في إنشاء غرفة الفيديو', 'error');
         })
         .finally(() => {
           if (isMounted) {
+            console.log('[AUTO-CREATE] Process completed, setting isCreatingRoom to false');
             setIsCreatingRoom(false);
           }
         });
