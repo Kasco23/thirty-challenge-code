@@ -48,8 +48,18 @@ const dailyConfig = validateDailyEnvironment();
 /**
  * Returns the Daily.co domain to use (custom or default)
  */
-export const getDailyDomain = () => dailyConfig.customDomain || 'daily.co';
+/**
+ * Returns the Daily.co domain to use (custom or default), validating custom domains.
+ */
+function isValidDailyDomain(domain?: string): boolean {
+  // Accepts subdomains like "myteam.daily.co" or "my-team.daily.co"
+  // Disallows protocol, slashes, or other domains
+  return typeof domain === 'string' &&
+    /^[a-zA-Z0-9-]+\.daily\.co$/.test(domain);
+}
 
+export const getDailyDomain = () =>
+  isValidDailyDomain(dailyConfig.customDomain) ? dailyConfig.customDomain! : 'daily.co';
 /**
  * Returns `true` if we're in development mode.
  */
