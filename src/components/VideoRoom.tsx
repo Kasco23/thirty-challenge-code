@@ -23,13 +23,27 @@ function ParticipantVideo({ participantId, className = '' }: ParticipantVideoPro
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Generic color scheme for all participants
-  const colors = {
-    border: 'border-blue-500/30',
-    bg: 'bg-blue-500/20',
-    text: 'text-blue-300',
-    accent: 'bg-blue-600'
-  };
+  // Dynamic color scheme based on participantId
+  const colorSchemes = [
+    { border: 'border-blue-500/30', bg: 'bg-blue-500/20', text: 'text-blue-300', accent: 'bg-blue-600' },
+    { border: 'border-green-500/30', bg: 'bg-green-500/20', text: 'text-green-300', accent: 'bg-green-600' },
+    { border: 'border-pink-500/30', bg: 'bg-pink-500/20', text: 'text-pink-300', accent: 'bg-pink-600' },
+    { border: 'border-yellow-500/30', bg: 'bg-yellow-500/20', text: 'text-yellow-300', accent: 'bg-yellow-600' },
+    { border: 'border-purple-500/30', bg: 'bg-purple-500/20', text: 'text-purple-300', accent: 'bg-purple-600' },
+    { border: 'border-red-500/30', bg: 'bg-red-500/20', text: 'text-red-300', accent: 'bg-red-600' },
+    { border: 'border-indigo-500/30', bg: 'bg-indigo-500/20', text: 'text-indigo-300', accent: 'bg-indigo-600' },
+    { border: 'border-teal-500/30', bg: 'bg-teal-500/20', text: 'text-teal-300', accent: 'bg-teal-600' },
+  ];
+  // Simple hash function to map participantId to a color scheme index
+  function hashStringToIndex(str: string, max: number) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0; // Convert to 32bit integer
+    }
+    return Math.abs(hash) % max;
+  }
+  const colors = colorSchemes[hashStringToIndex(participantId, colorSchemes.length)];
 
   // Set up video stream
   useEffect(() => {
