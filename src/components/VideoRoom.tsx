@@ -1,5 +1,11 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { useDaily, useParticipantIds, useParticipantProperty, DailyProvider } from '@daily-co/daily-react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import {
+  useDaily,
+  useParticipantIds,
+  useParticipantProperty,
+  DailyProvider,
+} from '@daily-co/daily-react';
+import DailyIframe, { type DailyCall } from '@daily-co/daily-js';
 import { useGameState, useGameActions } from '@/hooks/useGameAtoms';
 
 interface VideoRoomProps {
@@ -360,6 +366,32 @@ function VideoRoomContent({ gameId, className = '', observerMode = false }: Vide
 export default function VideoRoom(props: VideoRoomProps) {
   const state = useGameState();
 
+  // Memoize Daily call object so the same instance is reused across re-renders.
+  // Daily recommends creating a call object per room and disposing it when finished
+  // to avoid leaking video/audio resources.
+  const callObject = useMemo<DailyCall>(
+    () => DailyIframe.createCallObject(),
+    [],
+  );
+
+  // Destroy the Daily call object on unmount to free resources and prevent
+  // lingering connections that could leave the UI in a loading state.
+  useEffect(() => {
+    return () => {
+      // Only destroy if not already destroyed or destroying
+      const meetingState = callObject.meetingState();
+      // Only destroy if not in a state that doesn't require cleanup
+      if (
+        meetingState !== "left-meeting" &&
+        meetingState !== "error" &&
+        meetingState !== "new" &&
+        meetingState !== "loading"
+      ) {
+        callObject.destroy();
+      }
+    };
+  }, [callObject]);
+
   // Only render if video room is created
   if (!state.videoRoomCreated || !state.videoRoomUrl) {
     return (
@@ -377,7 +409,7 @@ export default function VideoRoom(props: VideoRoomProps) {
   }
 
   return (
-    <DailyProvider>
+    <DailyProvider callObject={callObject}>
       <VideoRoomContent {...props} />
     </DailyProvider>
   );
