@@ -30,14 +30,10 @@
   "src/components/ConfirmationModal.tsx": [],
   "src/components/ConnectionBanner.tsx": [],
   "src/components/FakeVideoSimulator.tsx": [],
-  "src/components/IndividualVideoFrame.tsx": [
-    "src/components/FakeVideoSimulator.tsx"
-  ],
   "src/components/LazyImage.tsx": [],
   "src/components/Scoreboard.tsx": [],
-  "src/components/SimpleVideoFrame.tsx": [],
-  "src/components/SimpleVideoRoom.tsx": [],
   "src/components/Timer.tsx": [],
+  "src/components/VideoRoom.tsx": [],
   "src/context/GameContext.tsx": [
     "src/context/defaults.ts",
     "src/context/gameReducer.ts",
