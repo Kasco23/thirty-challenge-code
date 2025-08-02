@@ -1,4 +1,14 @@
 import { isSupabaseConfigured, getSupabase } from './supabaseLazy';
+
+// Check if we're in development mode
+const isDevelopmentMode = () => import.meta.env?.DEV === true;
+
+// In-memory storage for development mode
+const developmentStorage = {
+  games: new Map<string, GameRecord>(),
+  players: new Map<string, PlayerRecord[]>(),
+};
+
 // GameState and PlayerId types are not needed in this module
 const FALLBACK_SEGMENT_SETTINGS: Record<string, number> = {
   WSHA: 4,
@@ -43,7 +53,7 @@ export interface PlayerRecord {
 export class GameDatabase {
   // Check if Supabase is configured
   static isConfigured(): boolean {
-    return isSupabaseConfigured();
+    return isSupabaseConfigured() || isDevelopmentMode();
   }
 
   // =====================================
@@ -64,7 +74,36 @@ export class GameDatabase {
     hostName: string | null = null,
     segmentSettings: Record<string, number> = {},
   ): Promise<GameRecord | null> {
-    if (!this.isConfigured()) {
+    // Development mode: use in-memory storage
+    if (isDevelopmentMode()) {
+      console.log('[DEV] Creating game in memory:', { gameId, hostCode, hostName });
+      
+      const gameRecord: GameRecord = {
+        id: gameId,
+        host_code: hostCode,
+        host_name: hostName,
+        host_is_connected: false,
+        phase: 'CONFIG',
+        current_segment: null,
+        current_question_index: 0,
+        timer: 0,
+        is_timer_running: false,
+        video_room_url: null,
+        video_room_created: false,
+        segment_settings: Object.keys(segmentSettings).length
+          ? segmentSettings
+          : FALLBACK_SEGMENT_SETTINGS,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      developmentStorage.games.set(gameId, gameRecord);
+      console.log('[DEV] Game created successfully in memory');
+      return gameRecord;
+    }
+
+    // Production mode: use Supabase
+    if (!isSupabaseConfigured()) {
       console.warn('Supabase not configured');
       return null;
     }
@@ -102,7 +141,21 @@ export class GameDatabase {
    * @param gameId The game ID to look up.
    */
   static async getGame(gameId: string): Promise<GameRecord | null> {
-    if (!this.isConfigured()) return null;
+    // Development mode: get from in-memory storage
+    if (isDevelopmentMode()) {
+      console.log('[DEV] Getting game from memory:', gameId);
+      const game = developmentStorage.games.get(gameId);
+      if (game) {
+        console.log('[DEV] Game found in memory:', game);
+        return game;
+      } else {
+        console.log('[DEV] Game not found in memory:', gameId);
+        return null;
+      }
+    }
+
+    // Production mode: use Supabase
+    if (!isSupabaseConfigured()) return null;
 
     try {
       const supabase = await getSupabase();
@@ -161,7 +214,29 @@ export class GameDatabase {
     gameId: string,
     updates: Partial<GameRecord>,
   ): Promise<GameRecord | null> {
-    if (!this.isConfigured()) return null;
+    // Development mode: update in-memory storage
+    if (isDevelopmentMode()) {
+      console.log('[DEV] Updating game in memory:', { gameId, updates });
+      
+      const existingGame = developmentStorage.games.get(gameId);
+      if (!existingGame) {
+        console.warn('[DEV] Game not found in memory:', gameId);
+        return null;
+      }
+      
+      const updatedGame: GameRecord = {
+        ...existingGame,
+        ...updates,
+        updated_at: new Date().toISOString(),
+      };
+      
+      developmentStorage.games.set(gameId, updatedGame);
+      console.log('[DEV] Game updated successfully in memory');
+      return updatedGame;
+    }
+
+    // Production mode: use Supabase
+    if (!isSupabaseConfigured()) return null;
 
     try {
       const supabase = await getSupabase();

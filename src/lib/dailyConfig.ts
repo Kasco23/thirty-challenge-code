@@ -5,6 +5,7 @@
 interface DailyConfig {
   isConfigured: boolean;
   missingVars: string[];
+  isDevelopmentMode: boolean;
 }
 
 function validateDailyEnvironment(): DailyConfig {
@@ -12,14 +13,14 @@ function validateDailyEnvironment(): DailyConfig {
   // The DAILY_API_KEY is server-side only (in Netlify functions)
   const missingVars: string[] = [];
   
-  // In development mode, assume Daily.co is available
+  // In development mode, assume Daily.co is available with mock functionality
   const isDevMode = import.meta.env?.DEV === true;
   
   // In production, we'll test the actual room creation via Netlify functions
   const isConfigured = true; // We'll validate this dynamically when needed
 
   if (isDevMode) {
-    console.log('🔧 Daily.co Development Mode - Video features enabled');
+    console.log('🔧 Daily.co Development Mode - Video features enabled with mock data');
   } else {
     console.log('✅ Daily.co Production Mode - Validating via API calls');
   }
@@ -27,10 +28,16 @@ function validateDailyEnvironment(): DailyConfig {
   return {
     isConfigured,
     missingVars,
+    isDevelopmentMode: isDevMode,
   };
 }
 
 const dailyConfig = validateDailyEnvironment();
+
+/**
+ * Returns `true` if we're in development mode.
+ */
+export const isDevelopmentMode = () => dailyConfig.isDevelopmentMode;
 
 /**
  * Returns `true` if Daily.co is properly configured.

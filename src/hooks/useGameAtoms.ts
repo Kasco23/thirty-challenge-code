@@ -2,6 +2,7 @@ import { useAtomValue, useSetAtom, useStore } from 'jotai';
 import { useCallback, useEffect } from 'react';
 import { GameDatabase } from '@/lib/gameDatabase';
 import { createAtomGameSync, type AtomGameSync } from '@/lib/atomGameSync';
+import { isDevelopmentMode } from '@/lib/dailyConfig';
 import type { SegmentCode, PlayerId, Player, GameState } from '@/types/game';
 
 // Helper function to map player records (copied from atomGameSync)
@@ -217,6 +218,44 @@ export function useGameActions() {
 
   const createVideoRoom = useCallback(async (gameId: string) => {
     try {
+      // Development mode: use mock video room
+      if (isDevelopmentMode()) {
+        console.log('[DEV] Creating mock video room for gameId:', gameId);
+        
+        const mockUrl = `https://daily.co/mock-room-${gameId}`;
+        
+        // Simulate async operation
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Update database first (if available)
+        try {
+          await GameDatabase.updateGame(gameId, {
+            video_room_url: mockUrl,
+            video_room_created: true,
+          });
+        } catch (dbError) {
+          console.warn('[DEV] Database update failed, continuing with local state only:', dbError);
+        }
+        
+        // Update local state
+        updateGameState({
+          videoRoomUrl: mockUrl,
+          videoRoomCreated: true,
+        });
+        
+        // Broadcast the change
+        if (gameSyncInstance) {
+          await gameSyncInstance.broadcastGameState({
+            videoRoomUrl: mockUrl,
+            videoRoomCreated: true,
+          });
+        }
+        
+        console.log('[DEV] Mock video room created successfully:', mockUrl);
+        return { success: true, roomUrl: mockUrl };
+      }
+
+      // Production mode: use real Daily.co API
       const result = await fetch(`/.netlify/functions/create-daily-room`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -257,6 +296,42 @@ export function useGameActions() {
 
   const endVideoRoom = useCallback(async (gameId: string) => {
     try {
+      // Development mode: mock deletion
+      if (isDevelopmentMode()) {
+        console.log('[DEV] Ending mock video room for gameId:', gameId);
+        
+        // Simulate async operation
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Update database first (if available)
+        try {
+          await GameDatabase.updateGame(gameId, {
+            video_room_created: false,
+            video_room_url: null,
+          });
+        } catch (dbError) {
+          console.warn('[DEV] Database update failed, continuing with local state only:', dbError);
+        }
+        
+        // Update local state
+        updateGameState({
+          videoRoomCreated: false,
+          videoRoomUrl: undefined,
+        });
+        
+        // Broadcast the change
+        if (gameSyncInstance) {
+          await gameSyncInstance.broadcastGameState({
+            videoRoomCreated: false,
+            videoRoomUrl: undefined,
+          });
+        }
+        
+        console.log('[DEV] Mock video room ended successfully');
+        return { success: true };
+      }
+
+      // Production mode: use real Daily.co API
       await fetch(`/.netlify/functions/delete-daily-room`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -292,6 +367,29 @@ export function useGameActions() {
 
   const checkVideoRoomExists = useCallback(async (roomName: string) => {
     try {
+      // Development mode: mock room check
+      if (isDevelopmentMode()) {
+        console.log('[DEV] Checking mock video room for roomName:', roomName);
+        
+        // Simulate async operation
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Mock response: assume room exists if it matches current game state
+        const currentState = store.get(gameStateAtom);
+        const exists = currentState.videoRoomCreated;
+        const url = exists ? `https://daily.co/mock-room-${roomName}` : undefined;
+        
+        return { 
+          success: true, 
+          exists,
+          roomName: exists ? roomName : undefined,
+          url,
+          created: exists ? new Date().toISOString() : undefined,
+          participants: []
+        };
+      }
+
+      // Production mode: use real Daily.co API
       const result = await fetch(`/.netlify/functions/check-daily-room`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -324,7 +422,7 @@ export function useGameActions() {
       console.error('Failed to check video room:', error);
       return { success: false, error: 'Network error' };
     }
-  }, []);
+  }, [store]);
 
   const generateDailyToken = useCallback(async (
     room: string,
@@ -333,6 +431,20 @@ export function useGameActions() {
     isObserver: boolean = false,
   ): Promise<string | null> => {
     try {
+      // Development mode: generate mock token
+      if (isDevelopmentMode()) {
+        console.log('[DEV] Generating mock Daily token for:', { room, user, isHost, isObserver });
+        
+        // Simulate async operation
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        // Generate mock token
+        const mockToken = `mock-token-${room}-${user}-${Date.now()}`;
+        console.log('[DEV] Mock token generated:', mockToken);
+        return mockToken;
+      }
+
+      // Production mode: use real Daily.co API
       const res = await fetch('/.netlify/functions/create-daily-token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
