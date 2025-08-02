@@ -71,7 +71,7 @@ function ParticipantVideo({ participantId, className = '' }: ParticipantVideoPro
     }
   }, [audioTrack, isLocal]);
 
-  if (!userName && !videoTrack && !audioTrack) {
+  if (!userName || !videoTrack || !audioTrack) {
     return (
       <div className={`${colors.bg} border ${colors.border} rounded-xl p-4 ${className}`}>
         <div className="text-center">
