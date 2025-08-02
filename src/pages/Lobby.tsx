@@ -5,7 +5,7 @@ import { useAtomValue } from 'jotai';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
 import { gameSyncInstanceAtom, lobbyParticipantsAtom } from '@/state';
 import type { AtomGameSync } from '@/lib/atomGameSync';
-import IndividualVideoFrame from '@/components/IndividualVideoFrame';
+import VideoRoom from '@/components/VideoRoom';
 import AlertBanner from '@/components/AlertBanner';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import type { LobbyParticipant } from '@/state';
@@ -395,8 +395,6 @@ export default function TrueLobby() {
     );
   }
 
-  const hostMobileConnected = myParticipant.type === 'host-mobile' || false; // TODO: Track this in global state
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 p-4">
       {/* Handle missing gameId case */}
@@ -764,68 +762,13 @@ export default function TrueLobby() {
           </div>
         )}
 
-        {/* Separate Video Frames - Individual frames for each participant */}
+        {/* Video Room - Native Daily.co implementation with individual streams */}
         <div className="mb-8">
-          <div className="bg-gradient-to-br from-blue-800/30 to-purple-800/30 rounded-xl p-6 border border-blue-500/30">
-            <h3 className="text-xl font-bold text-blue-300 mb-6 font-arabic text-center">
-              إطارات الفيديو المنفصلة - إطار لكل مشارك
-            </h3>
-            
-            {/* Video Frames Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Host Video Frame */}
-              <div className="space-y-2">
-                <h4 className="text-lg font-bold text-blue-300 font-arabic text-center">
-                  إطار المقدم
-                </h4>
-                <IndividualVideoFrame
-                  gameId={gameId!}
-                  participantType="host"
-                  participantName={state.hostName || 'المقدم'}
-                  isConnected={hostMobileConnected}
-                  className="w-full"
-                />
-              </div>
-              
-              {/* Player A Video Frame */}
-              <div className="space-y-2">
-                <h4 className="text-lg font-bold text-green-300 font-arabic text-center">
-                  إطار اللاعب الأول
-                </h4>
-                <IndividualVideoFrame
-                  gameId={gameId!}
-                  participantType="playerA"
-                  participantName={state.players.playerA.name || 'لاعب 1'}
-                  isConnected={state.players.playerA.isConnected}
-                  className="w-full"
-                />
-              </div>
-              
-              {/* Player B Video Frame */}
-              <div className="space-y-2">
-                <h4 className="text-lg font-bold text-purple-300 font-arabic text-center">
-                  إطار اللاعب الثاني
-                </h4>
-                <IndividualVideoFrame
-                  gameId={gameId!}
-                  participantType="playerB"
-                  participantName={state.players.playerB.name || 'لاعب 2'}
-                  isConnected={state.players.playerB.isConnected}
-                  className="w-full"
-                />
-              </div>
-            </div>
-            
-            {/* Info note */}
-            <div className="mt-6 bg-blue-500/10 rounded-lg p-4 border border-blue-500/20">
-              <p className="text-blue-300 text-sm font-arabic text-center">
-                💡 كل إطار يظهر نفس غرفة الفيديو ولكن بتصميم منفصل لكل مشارك
-              </p>
-              <p className="text-blue-200 text-xs font-arabic text-center mt-1">
-                جميع المشاركين في نفس الغرفة، ولكن لكل منهم إطاره المخصص
-              </p>
-            </div>
-          </div>
+          <VideoRoom
+            gameId={gameId!}
+            className="w-full"
+            observerMode={false}
+          />
         </div>
 
         {/* Instructions */}
