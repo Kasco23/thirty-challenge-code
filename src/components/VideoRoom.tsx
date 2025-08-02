@@ -272,31 +272,42 @@ export default function VideoRoom(props: VideoRoomProps) {
   // Memoize Daily call object so the same instance is reused across re-renders.
   // Daily recommends creating a call object per room and disposing it when finished
   // to avoid leaking video/audio resources.
-  const callObject = useMemo<DailyCall>(
-    () => DailyIframe.createCallObject(),
-    [],
-  );
+  const callObject = useMemo<DailyCall>(() => {
+    try {
+      return DailyIframe.createCallObject();
+    } catch (error) {
+      console.warn('[VideoRoom] Failed to create Daily call object:', error);
+      // Return a mock object that won't cause issues
+      return null as any;
+    }
+  }, []);
 
   // Destroy the Daily call object on unmount to free resources and prevent
   // lingering connections that could leave the UI in a loading state.
   useEffect(() => {
     return () => {
-      // Only destroy if not already destroyed or destroying
-      const meetingState = callObject.meetingState();
-      // Only destroy if not in a state that doesn't require cleanup
-      if (
-        meetingState !== "left-meeting" &&
-        meetingState !== "error" &&
-        meetingState !== "new" &&
-        meetingState !== "loading"
-      ) {
-        callObject.destroy();
+      if (callObject) {
+        try {
+          // Only destroy if not already destroyed or destroying
+          const meetingState = callObject.meetingState();
+          // Only destroy if not in a state that doesn't require cleanup
+          if (
+            meetingState !== "left-meeting" &&
+            meetingState !== "error" &&
+            meetingState !== "new" &&
+            meetingState !== "loading"
+          ) {
+            callObject.destroy();
+          }
+        } catch (error) {
+          console.warn('[VideoRoom] Error during cleanup:', error);
+        }
       }
     };
   }, [callObject]);
 
-  // Only render if video room is created
-  if (!state.videoRoomCreated || !state.videoRoomUrl) {
+  // Only render if video room is created and call object is available
+  if (!state.videoRoomCreated || !state.videoRoomUrl || !callObject) {
     return (
       <div className={`bg-gray-500/20 border border-gray-500/30 rounded-xl p-6 ${props.className || ''}`}>
         <div className="text-center">
@@ -304,7 +315,7 @@ export default function VideoRoom(props: VideoRoomProps) {
             Video room not available
           </div>
           <div className="text-gray-300 text-sm">
-            Waiting for video room creation...
+            {!callObject ? 'Daily.co initialization failed' : 'Waiting for video room creation...'}
           </div>
         </div>
       </div>
