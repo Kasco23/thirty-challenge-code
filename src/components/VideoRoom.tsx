@@ -176,12 +176,6 @@ function VideoRoomContent({ gameId, className = '', observerMode = false }: Vide
   const [isJoining, setIsJoining] = useState(false);
   const [error, setError] = useState<string>('');
 
-  // Call useParticipant for each participant ID at the top level
-  const participantData = participantIds.reduce((acc, id) => {
-    acc[id] = useParticipant(id);
-    return acc;
-  }, {} as Record<string, any>);
-
   // Get user info from URL parameters
   const getUserInfo = useCallback(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -330,26 +324,19 @@ function VideoRoomContent({ gameId, className = '', observerMode = false }: Vide
     );
   }
 
-  // Find specific participants by their roles
-  const allParticipants = participantIds.map(id => ({
-    id,
-    participant: participantData[id]
-  }));
-  
-  const hostParticipant = allParticipants.find(({ participant }) => 
-    participant?.user_name?.includes('مقدم') || 
-    participant?.user_name?.includes('host') || 
-    (state.hostName && participant?.user_name?.includes(state.hostName))
+  // Find specific participants by their IDs (we'll let the ParticipantVideo component handle the useParticipant hook)
+  const hostParticipantId = participantIds.find(id => 
+    id.includes('host') || 
+    id === 'host-mobile' || 
+    id === 'host-pc'
   );
-  const playerAParticipant = allParticipants.find(({ participant }) => 
-    participant?.user_name?.includes('لاعب 1') || 
-    participant?.user_name?.includes('playerA') || 
-    (state.players.playerA.name && participant?.user_name?.includes(state.players.playerA.name))
+  const playerAParticipantId = participantIds.find(id => 
+    id.includes('playerA') || 
+    id === 'playerA'
   );
-  const playerBParticipant = allParticipants.find(({ participant }) => 
-    participant?.user_name?.includes('لاعب 2') || 
-    participant?.user_name?.includes('playerB') ||
-    (state.players.playerB.name && participant?.user_name?.includes(state.players.playerB.name))
+  const playerBParticipantId = participantIds.find(id => 
+    id.includes('playerB') || 
+    id === 'playerB'
   );
 
   return (
@@ -367,7 +354,7 @@ function VideoRoomContent({ gameId, className = '', observerMode = false }: Vide
               المقدم
             </h4>
             <ParticipantVideo
-              participantId={hostParticipant?.id || 'host'}
+              participantId={hostParticipantId || 'host'}
               name={state.hostName || 'المقدم'}
               type="host"
               className="w-full"
@@ -380,7 +367,7 @@ function VideoRoomContent({ gameId, className = '', observerMode = false }: Vide
               اللاعب الأول
             </h4>
             <ParticipantVideo
-              participantId={playerAParticipant?.id || 'playerA'}
+              participantId={playerAParticipantId || 'playerA'}
               name={state.players.playerA.name || 'لاعب 1'}
               type="playerA"
               className="w-full"
@@ -393,7 +380,7 @@ function VideoRoomContent({ gameId, className = '', observerMode = false }: Vide
               اللاعب الثاني
             </h4>
             <ParticipantVideo
-              participantId={playerBParticipant?.id || 'playerB'}
+              participantId={playerBParticipantId || 'playerB'}
               name={state.players.playerB.name || 'لاعب 2'}
               type="playerB"
               className="w-full"
@@ -407,7 +394,7 @@ function VideoRoomContent({ gameId, className = '', observerMode = false }: Vide
             💡 إطار منفصل لكل مشارك مع الصوت والفيديو المباشر
           </p>
           <p className="text-blue-200 text-xs font-arabic text-center mt-1">
-            المشاركون المتصلون: {allParticipants.length}
+            المشاركون المتصلون: {participantIds.length}
           </p>
         </div>
       </div>
