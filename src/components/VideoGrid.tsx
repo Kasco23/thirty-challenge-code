@@ -272,7 +272,7 @@ function VideoRoomFrame({
                   onClick={onJoinRoom}
                   className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-arabic transition-colors"
                 >
-                  انضمام
+                  تفعيل مدمج
                 </button>
                 <button
                   onClick={onDeleteRoom}
@@ -367,12 +367,12 @@ export default function VideoGrid({ gameId, myParticipant, showAlertMessage, cla
     }
   }, [gameId, endVideoRoom, showAlertMessage]);
 
-  // Join room function
+  // Join room function - now activates embedded video instead of opening new tab
   const handleJoinRoom = useCallback((roomType: 'host' | 'playerA' | 'playerB') => {
     const room = rooms[roomType];
     if (room.url) {
-      window.open(room.url, '_blank');
-      showAlertMessage(`تم فتح غرفة ${roomType} في تبويب جديد`, 'info');
+      // Instead of opening in new tab, show message that video is embedded
+      showAlertMessage(`تم تفعيل غرفة ${roomType} المدمجة في الصفحة`, 'success');
     }
   }, [rooms, showAlertMessage]);
 

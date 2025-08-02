@@ -549,10 +549,9 @@ export default function TrueLobby() {
                 </div>
                 <div className="text-gray-400 font-arabic">
                   URL: {state.videoRoomUrl ? (
-                    <a href={state.videoRoomUrl} target="_blank" rel="noopener noreferrer" 
-                       className="text-blue-400 hover:text-blue-300 break-all text-xs">
-                      {state.videoRoomUrl}
-                    </a>
+                    <span className="text-blue-400 break-all text-xs font-mono">
+                      {state.videoRoomUrl} (مدمج أدناه)
+                    </span>
                   ) : 'غير متوفر'}
                 </div>
               </div>
@@ -600,7 +599,7 @@ export default function TrueLobby() {
               <button
                 onClick={() => {
                   if (state.videoRoomUrl) {
-                    window.open(state.videoRoomUrl, '_blank');
+                    showAlertMessage('غرفة الفيديو مدمجة في الصفحة أدناه', 'info');
                   } else {
                     showAlertMessage('لا يوجد رابط غرفة فيديو', 'error');
                   }
@@ -608,7 +607,7 @@ export default function TrueLobby() {
                 disabled={!state.videoRoomUrl}
                 className="px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm font-arabic transition-colors"
               >
-                فتح في Daily.co
+                عرض الفيديو المدمج
               </button>
 
               <button
@@ -625,10 +624,8 @@ export default function TrueLobby() {
                     );
                     
                     if (token && state.videoRoomUrl) {
-                      // Create URL with token for manual join
-                      const joinUrl = `${state.videoRoomUrl}?t=${token}`;
-                      window.open(joinUrl, '_blank');
-                      showAlertMessage('تم فتح رابط انضمام مباشر', 'success');
+                      // Instead of opening new tab, indicate video is embedded below
+                      showAlertMessage('تم توليد رمز الدخول. الفيديو مدمج في الصفحة أدناه', 'success');
                     } else {
                       showAlertMessage('فشل في توليد رمز الدخول', 'error');
                     }
@@ -640,7 +637,7 @@ export default function TrueLobby() {
                 disabled={!state.videoRoomUrl || !myParticipant}
                 className="px-3 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded text-sm font-arabic transition-colors"
               >
-                انضمام مباشر
+                تفعيل الفيديو المدمج
               </button>
 
               <button
