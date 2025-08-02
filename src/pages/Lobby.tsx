@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
-import { gameSyncInstanceAtom, lobbyParticipantsAtom } from '@/state';
+import { gameSyncInstanceAtom, lobbyParticipantsAtom, updateGameStateAtom } from '@/state';
 import type { AtomGameSync } from '@/lib/atomGameSync';
 import VideoRoom from '@/components/VideoRoom';
 import AlertBanner from '@/components/AlertBanner';
@@ -16,6 +16,7 @@ export default function TrueLobby() {
   const navigate = useNavigate();
   const state = useGameState();
   const { startGame, createVideoRoom, endVideoRoom, generateDailyToken, loadGameState, setHostConnected, checkVideoRoomExists } = useGameActions();
+  const updateGameState = useSetAtom(updateGameStateAtom);
   const { myParticipant, setParticipant } = useLobbyActions();
   
   // Initialize game sync
@@ -88,23 +89,29 @@ export default function TrueLobby() {
       
       createVideoRoomRef.current(gameId)
         .then((result) => {
-          if (!isMounted || !result) {
-            console.log('[AUTO-CREATE] Skipping result processing:', { isMounted, result });
-            return;
-          }
-          
           console.log('[AUTO-CREATE] Create result:', result);
           
-          if (result.success) {
-            showAlertMessage('تم إنشاء غرفة الفيديو تلقائياً', 'success');
+          if (result?.success) {
+            // Force state update to ensure VideoRoom component gets the update
+            updateGameState({
+              videoRoomUrl: result.roomUrl,
+              videoRoomCreated: true,
+            });
+            
+            if (isMounted) {
+              showAlertMessage('تم إنشاء غرفة الفيديو تلقائياً', 'success');
+            }
           } else {
-            showAlertMessage(`فشل في إنشاء غرفة الفيديو: ${result.error}`, 'error');
+            if (isMounted) {
+              showAlertMessage(`فشل في إنشاء غرفة الفيديو: ${result?.error || 'خطأ غير معروف'}`, 'error');
+            }
           }
         })
         .catch((error) => {
-          if (!isMounted) return;
           console.error('[AUTO-CREATE] Error in auto-creating video room:', error);
-          showAlertMessage('خطأ في إنشاء غرفة الفيديو', 'error');
+          if (isMounted) {
+            showAlertMessage('خطأ في إنشاء غرفة الفيديو', 'error');
+          }
         })
         .finally(() => {
           if (isMounted) {
