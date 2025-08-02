@@ -1,8 +1,7 @@
 import { atom } from 'jotai';
 
-// Simple video error tracking atom (non-duplicate)
+// Simple video error tracking atom
 export const videoErrorAtom = atom<string | null>(null);
-export const isJoiningVideoAtom = atom<boolean>(false);
 
 // Action atom for testing Daily.co connectivity
 export const testDailyConnectionAtom = atom(
@@ -17,7 +16,7 @@ export const testDailyConnectionAtom = atom(
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           roomName: `test-${Date.now()}`,
-          properties: { max_participants: 2 }
+          properties: { max_participants: 10 }
         })
       });
       
