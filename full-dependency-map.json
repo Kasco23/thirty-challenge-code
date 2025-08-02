@@ -32,7 +32,9 @@
   "src/components/LazyImage.tsx": [],
   "src/components/Scoreboard.tsx": [],
   "src/components/Timer.tsx": [],
-  "src/components/VideoRoom.tsx": [],
+  "src/components/VideoRoom.tsx": [
+    "src/components/AlertBanner.tsx"
+  ],
   "src/context/GameContext.tsx": [
     "src/context/defaults.ts",
     "src/context/gameReducer.ts",
