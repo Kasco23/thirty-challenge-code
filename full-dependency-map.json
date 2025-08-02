@@ -32,6 +32,7 @@
   "src/components/LazyImage.tsx": [],
   "src/components/Scoreboard.tsx": [],
   "src/components/Timer.tsx": [],
+  "src/components/VideoGrid.tsx": [],
   "src/components/VideoRoom.tsx": [
     "src/components/AlertBanner.tsx"
   ],
@@ -72,6 +73,7 @@
   "src/pages/Join.tsx": [],
   "src/pages/Landing.tsx": [],
   "src/pages/Lobby.tsx": [],
+  "src/pages/LobbyTest.tsx": [],
   "src/pages/NotFound.tsx": [],
   "src/pages/QuizRoom.tsx": [],
   "src/pages/Scoreboard.tsx": [],
