@@ -165,9 +165,24 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    // Use custom domain if configured, otherwise use the default URL from Daily.co
+    let finalUrl = room.url;
+    const customDomain = process.env.DAILY_DOMAIN;
+    if (customDomain && customDomain.trim() !== '') {
+      // Replace the default daily.co domain with the custom domain
+      // Example: https://daily.co/room-name -> https://thirty.daily.co/room-name
+      const roomName = room.name;
+      finalUrl = `https://${customDomain.trim()}/${roomName}`;
+      console.log('Using custom Daily.co domain:', { 
+        original: room.url, 
+        custom: finalUrl,
+        domain: customDomain.trim()
+      });
+    }
+
     console.log('Successfully created Daily.co room:', { 
       name: room.name, 
-      url: room.url,
+      url: finalUrl,
       created: room.created_at 
     });
 
@@ -181,7 +196,7 @@ export const handler: Handler = async (event) => {
       },
       body: JSON.stringify({
         roomName: room.name,
-        url: room.url,
+        url: finalUrl,
         created: room.created_at,
         config: room.config || {},
         expires: roomConfig.properties.exp,

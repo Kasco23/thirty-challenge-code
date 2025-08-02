@@ -6,6 +6,7 @@ interface DailyConfig {
   isConfigured: boolean;
   missingVars: string[];
   isDevelopmentMode: boolean;
+  customDomain?: string;
 }
 
 function validateDailyEnvironment(): DailyConfig {
@@ -16,24 +17,49 @@ function validateDailyEnvironment(): DailyConfig {
   // In development mode, assume Daily.co is available with mock functionality
   const isDevMode = import.meta.env?.DEV === true;
   
+  // Check for custom domain configuration
+  const customDomain = import.meta.env?.VITE_DAILY_DOMAIN;
+  
   // In production, we'll test the actual room creation via Netlify functions
   const isConfigured = true; // We'll validate this dynamically when needed
 
   if (isDevMode) {
     console.log('🔧 Daily.co Development Mode - Video features enabled with mock data');
+    if (customDomain) {
+      console.log('🎯 Custom Daily.co domain configured:', customDomain);
+    }
   } else {
     console.log('✅ Daily.co Production Mode - Validating via API calls');
+    if (customDomain) {
+      console.log('🎯 Custom Daily.co domain configured:', customDomain);
+    }
   }
 
   return {
     isConfigured,
     missingVars,
     isDevelopmentMode: isDevMode,
+    customDomain,
   };
 }
 
 const dailyConfig = validateDailyEnvironment();
 
+/**
+ * Returns the Daily.co domain to use (custom or default)
+ */
+/**
+ * Returns the Daily.co domain to use (custom or default), validating custom domains.
+ */
+function isValidDailyDomain(domain?: string): boolean {
+  // Accepts subdomains like "myteam.daily.co" or "my-team.daily.co"
+  // Disallows protocol, slashes, or other domains
+  return typeof domain === 'string' &&
+    /^[a-zA-Z0-9-]+\.daily\.co$/.test(domain);
+}
+
+export const getDailyDomain = () =>
+  isValidDailyDomain(dailyConfig.customDomain) ? dailyConfig.customDomain! : 'daily.co';
 /**
  * Returns `true` if we're in development mode.
  */

@@ -2,7 +2,7 @@ import { useAtomValue, useSetAtom, useStore } from 'jotai';
 import { useCallback, useEffect } from 'react';
 import { GameDatabase } from '@/lib/gameDatabase';
 import { createAtomGameSync, type AtomGameSync } from '@/lib/atomGameSync';
-import { isDevelopmentMode } from '@/lib/dailyConfig';
+import { isDevelopmentMode, getDailyDomain } from '@/lib/dailyConfig';
 import type { SegmentCode, PlayerId, Player, GameState } from '@/types/game';
 
 // Helper function to map player records (copied from atomGameSync)
@@ -222,7 +222,8 @@ export function useGameActions() {
       if (isDevelopmentMode()) {
         console.log('[DEV] Creating mock video room for gameId:', gameId);
         
-        const mockUrl = `https://daily.co/mock-room-${gameId}`;
+        const dailyDomain = getDailyDomain();
+        const mockUrl = `https://${dailyDomain}/mock-room-${gameId}`;
         
         // Simulate async operation
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -377,7 +378,8 @@ export function useGameActions() {
         // Mock response: assume room exists if it matches current game state
         const currentState = store.get(gameStateAtom);
         const exists = currentState.videoRoomCreated;
-        const url = exists ? `https://daily.co/mock-room-${roomName}` : undefined;
+        const dailyDomain = getDailyDomain();
+        const url = exists ? `https://${dailyDomain}/mock-room-${roomName}` : undefined;
         
         return { 
           success: true, 

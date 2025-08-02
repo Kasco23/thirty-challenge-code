@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
-import { gameSyncInstanceAtom, lobbyParticipantsAtom } from '@/state';
+import { gameSyncInstanceAtom, lobbyParticipantsAtom, updateGameStateAtom } from '@/state';
 import type { AtomGameSync } from '@/lib/atomGameSync';
 import VideoRoom from '@/components/VideoRoom';
 import AlertBanner from '@/components/AlertBanner';
@@ -16,6 +16,7 @@ export default function TrueLobby() {
   const navigate = useNavigate();
   const state = useGameState();
   const { startGame, createVideoRoom, endVideoRoom, generateDailyToken, loadGameState, setHostConnected, checkVideoRoomExists } = useGameActions();
+  const updateGameState = useSetAtom(updateGameStateAtom);
   const { myParticipant, setParticipant } = useLobbyActions();
   
   // Initialize game sync
@@ -82,43 +83,35 @@ export default function TrueLobby() {
       console.log('Host PC auto-creating video room...');
       setIsCreatingRoom(true);
       
-      // Check if room already exists first
-      checkVideoRoomExists(gameId)
-        .then((checkResult) => {
-          if (!isMounted) return Promise.resolve(null);
-          
-          console.log('[AUTO-CREATE] Check result:', checkResult);
-          
-          if (checkResult.success && checkResult.exists && checkResult.url) {
-            // Room already exists, update state
-            showAlertMessage('غرفة الفيديو موجودة مسبقاً', 'info');
-            // Note: This would normally update the database and state, but we'll let the sync handle it
-            return Promise.resolve({ success: true, roomUrl: checkResult.url });
-          } else {
-            // Room doesn't exist, create it
-            console.log('[AUTO-CREATE] Room does not exist, creating...');
-            showAlertMessage('إنشاء غرفة فيديو جديدة...', 'info');
-            return createVideoRoom(gameId);
-          }
-        })
+      // Directly create video room without checking (since in dev mode checkVideoRoomExists always returns false initially)
+      console.log('[AUTO-CREATE] Creating video room directly...');
+      showAlertMessage('إنشاء غرفة فيديو جديدة...', 'info');
+      
+      createVideoRoomRef.current(gameId)
         .then((result) => {
-          if (!isMounted || !result) {
-            console.log('[AUTO-CREATE] Skipping result processing:', { isMounted, result });
-            return;
-          }
-          
           console.log('[AUTO-CREATE] Create result:', result);
           
-          if (result.success) {
-            showAlertMessage('تم إنشاء غرفة الفيديو تلقائياً', 'success');
+          if (result?.success) {
+            // Force state update to ensure VideoRoom component gets the update
+            updateGameState({
+              videoRoomUrl: result.roomUrl,
+              videoRoomCreated: true,
+            });
+            
+            if (isMounted) {
+              showAlertMessage('تم إنشاء غرفة الفيديو تلقائياً', 'success');
+            }
           } else {
-            showAlertMessage(`فشل في إنشاء غرفة الفيديو: ${result.error}`, 'error');
+            if (isMounted) {
+              showAlertMessage(`فشل في إنشاء غرفة الفيديو: ${result?.error || 'خطأ غير معروف'}`, 'error');
+            }
           }
         })
         .catch((error) => {
-          if (!isMounted) return;
           console.error('[AUTO-CREATE] Error in auto-creating video room:', error);
-          showAlertMessage('خطأ في إنشاء غرفة الفيديو', 'error');
+          if (isMounted) {
+            showAlertMessage('خطأ في إنشاء غرفة الفيديو', 'error');
+          }
         })
         .finally(() => {
           if (isMounted) {
@@ -131,7 +124,7 @@ export default function TrueLobby() {
     return () => {
       isMounted = false;
     };
-  }, [myParticipant?.type, state.videoRoomCreated, gameId, isCreatingRoom, createVideoRoom, checkVideoRoomExists, showAlertMessage]);
+  }, [myParticipant?.type, state.videoRoomCreated, gameId, isCreatingRoom]);
 
   // Use global video room state
   const videoRoomCreated = state.videoRoomCreated || false;
@@ -141,6 +134,7 @@ export default function TrueLobby() {
   const setParticipantRef = useRef(setParticipant);
   const setHostConnectedRef = useRef(setHostConnected);
   const showAlertMessageRef = useRef(showAlertMessage);
+  const createVideoRoomRef = useRef(createVideoRoom);
   
   // Memoize search params to avoid re-parsing on every render
   const searchParamsObj = useMemo(() => ({
@@ -157,6 +151,7 @@ export default function TrueLobby() {
     setParticipantRef.current = setParticipant;
     setHostConnectedRef.current = setHostConnected;
     showAlertMessageRef.current = showAlertMessage;
+    createVideoRoomRef.current = createVideoRoom;
   });
 
   useEffect(() => {
