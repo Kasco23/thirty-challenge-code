@@ -275,8 +275,40 @@ containerRef.current?.appendChild(iframe);
 Required environment variables for Daily.co integration:
 
 ```bash
+# Daily.co API key (required)
 DAILY_API_KEY=your_daily_api_key_here
+
+# Daily.co custom domain (optional)
+# If you have a custom Daily.co domain, set both server and client variables
+DAILY_DOMAIN=thirty.daily.co
+VITE_DAILY_DOMAIN=thirty.daily.co
 ```
+
+### Custom Domain Configuration
+
+If you have a custom Daily.co domain (e.g., `thirty.daily.co`):
+
+1. **Set Environment Variables:**
+   ```bash
+   # Server-side (for Netlify functions)
+   DAILY_DOMAIN=thirty.daily.co
+   
+   # Client-side (for development mode and frontend)
+   VITE_DAILY_DOMAIN=thirty.daily.co
+   ```
+
+2. **Domain Format:** Use only the domain name without `https://` protocol
+   - ✅ Correct: `thirty.daily.co`
+   - ❌ Incorrect: `https://thirty.daily.co`
+
+3. **Room URL Generation:**
+   - **Development mode:** Mock URLs use custom domain (e.g., `https://thirty.daily.co/mock-room-{gameId}`)
+   - **Production mode:** Real rooms created via Daily.co API will use custom domain URLs
+
+4. **Verification in Netlify:**
+   - Go to **Site settings > Environment variables**
+   - Add both `DAILY_API_KEY` and `DAILY_DOMAIN`
+   - Build logs will show: "Using custom Daily.co domain: thirty.daily.co"
 
 ## Final Implementation Details
 
