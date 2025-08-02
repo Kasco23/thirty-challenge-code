@@ -380,7 +380,13 @@ export default function VideoRoom(props: VideoRoomProps) {
     return () => {
       // Only destroy if not already destroyed or destroying
       const meetingState = callObject.meetingState();
-      if (meetingState !== "left-meeting" && meetingState !== "error") {
+      // Only destroy if not in a state that doesn't require cleanup
+      if (
+        meetingState !== "left-meeting" &&
+        meetingState !== "error" &&
+        meetingState !== "new" &&
+        meetingState !== "loading"
+      ) {
         callObject.destroy();
       }
     };
