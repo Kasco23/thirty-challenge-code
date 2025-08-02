@@ -14,8 +14,10 @@ interface ParticipantVideoProps {
 }
 
 function ParticipantVideo({ participantId, className = '' }: ParticipantVideoProps) {
-  const videoTrack = useParticipantProperty(participantId, 'tracks.video');
-  const audioTrack = useParticipantProperty(participantId, 'tracks.audio');
+  const videoTrack = useParticipantProperty(participantId, 'tracks.video.persistentTrack');
+  const audioTrack = useParticipantProperty(participantId, 'tracks.audio.persistentTrack');
+  const videoState = useParticipantProperty(participantId, 'tracks.video.state');
+  const audioState = useParticipantProperty(participantId, 'tracks.audio.state');
   const userName = useParticipantProperty(participantId, 'user_name');
   const isLocal = useParticipantProperty(participantId, 'local');
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -113,17 +115,17 @@ function ParticipantVideo({ participantId, className = '' }: ParticipantVideoPro
         {/* Video status indicators */}
         <div className="absolute bottom-2 right-2 flex gap-1">
           <div className={`w-6 h-6 rounded flex items-center justify-center ${
-            audioTrack ? 'bg-green-600' : 'bg-red-600'
+            audioState === 'playable' || audioState === 'sendable' ? 'bg-green-600' : 'bg-red-600'
           }`}>
             <span className="text-white text-xs">
-              {audioTrack ? '🎤' : '🚫'}
+              {audioState === 'playable' || audioState === 'sendable' ? '🎤' : '🚫'}
             </span>
           </div>
           <div className={`w-6 h-6 rounded flex items-center justify-center ${
-            videoTrack ? 'bg-green-600' : 'bg-red-600'
+            videoState === 'playable' || videoState === 'sendable' ? 'bg-green-600' : 'bg-red-600'
           }`}>
             <span className="text-white text-xs">
-              {videoTrack ? '📷' : '🚫'}
+              {videoState === 'playable' || videoState === 'sendable' ? '📷' : '🚫'}
             </span>
           </div>
         </div>
