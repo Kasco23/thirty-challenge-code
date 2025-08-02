@@ -82,25 +82,11 @@ export default function TrueLobby() {
       console.log('Host PC auto-creating video room...');
       setIsCreatingRoom(true);
       
-      // Check if room already exists first
-      checkVideoRoomExists(gameId)
-        .then((checkResult) => {
-          if (!isMounted) return Promise.resolve(null);
-          
-          console.log('[AUTO-CREATE] Check result:', checkResult);
-          
-          if (checkResult.success && checkResult.exists && checkResult.url) {
-            // Room already exists, update state
-            showAlertMessage('غرفة الفيديو موجودة مسبقاً', 'info');
-            // Note: This would normally update the database and state, but we'll let the sync handle it
-            return Promise.resolve({ success: true, roomUrl: checkResult.url });
-          } else {
-            // Room doesn't exist, create it
-            console.log('[AUTO-CREATE] Room does not exist, creating...');
-            showAlertMessage('إنشاء غرفة فيديو جديدة...', 'info');
-            return createVideoRoom(gameId);
-          }
-        })
+      // Directly create video room without checking (since in dev mode checkVideoRoomExists always returns false initially)
+      console.log('[AUTO-CREATE] Creating video room directly...');
+      showAlertMessage('إنشاء غرفة فيديو جديدة...', 'info');
+      
+      createVideoRoomRef.current(gameId)
         .then((result) => {
           if (!isMounted || !result) {
             console.log('[AUTO-CREATE] Skipping result processing:', { isMounted, result });
@@ -131,7 +117,7 @@ export default function TrueLobby() {
     return () => {
       isMounted = false;
     };
-  }, [myParticipant?.type, state.videoRoomCreated, gameId, isCreatingRoom, createVideoRoom, checkVideoRoomExists, showAlertMessage]);
+  }, [myParticipant?.type, state.videoRoomCreated, gameId, isCreatingRoom]);
 
   // Use global video room state
   const videoRoomCreated = state.videoRoomCreated || false;
@@ -141,6 +127,7 @@ export default function TrueLobby() {
   const setParticipantRef = useRef(setParticipant);
   const setHostConnectedRef = useRef(setHostConnected);
   const showAlertMessageRef = useRef(showAlertMessage);
+  const createVideoRoomRef = useRef(createVideoRoom);
   
   // Memoize search params to avoid re-parsing on every render
   const searchParamsObj = useMemo(() => ({
@@ -157,6 +144,7 @@ export default function TrueLobby() {
     setParticipantRef.current = setParticipant;
     setHostConnectedRef.current = setHostConnected;
     showAlertMessageRef.current = showAlertMessage;
+    createVideoRoomRef.current = createVideoRoom;
   });
 
   useEffect(() => {
