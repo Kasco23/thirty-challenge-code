@@ -130,7 +130,7 @@ export default function LobbyTest() {
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (myParticipant && gameSyncInstance && typeof gameSyncInstance === 'object' && 'disconnect' in gameSyncInstance) {
-        (gameSyncInstance as any).disconnect().catch(console.error);
+        (gameSyncInstance as { disconnect: () => Promise<void> }).disconnect().catch(console.error);
         
         if (myParticipant.type === 'host-pc' || myParticipant.type === 'host-mobile') {
           setHostConnected(false);

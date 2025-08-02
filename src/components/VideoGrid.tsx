@@ -251,7 +251,7 @@ function VideoRoomFrame({
   };
 
   return (
-    <div className="flex-1 bg-gray-800 rounded-lg overflow-hidden border border-gray-600/50 flex flex-col min-h-[300px]">
+    <div className="flex-1 bg-gray-800 overflow-hidden border-b border-gray-600/50 md:border md:border-gray-600/50 md:rounded-lg flex flex-col min-h-[300px]">
       {/* Room controls */}
       <div className="p-3 bg-gray-700/50 border-b border-gray-600/50">
         <div className="flex items-center justify-between">
@@ -433,7 +433,7 @@ export default function VideoGrid({ gameId, myParticipant, showAlertMessage, cla
           شبكة الفيديو - ثلاث غرف منفصلة
         </h3>
         
-        <div className="flex gap-1 min-h-[400px]">
+        <div className="flex flex-col md:flex-row md:gap-1 min-h-[400px]">
           {/* Host room */}
           <VideoRoomFrame
             roomType="host"
@@ -447,8 +447,8 @@ export default function VideoGrid({ gameId, myParticipant, showAlertMessage, cla
             showAlertMessage={showAlertMessage}
           />
           
-          {/* Vertical divider */}
-          <div className="w-px bg-gray-600" />
+          {/* Vertical divider for desktop only */}
+          <div className="hidden md:block w-px bg-gray-600" />
           
           {/* Player A room */}
           <VideoRoomFrame
@@ -463,8 +463,8 @@ export default function VideoGrid({ gameId, myParticipant, showAlertMessage, cla
             showAlertMessage={showAlertMessage}
           />
           
-          {/* Vertical divider */}
-          <div className="w-px bg-gray-600" />
+          {/* Vertical divider for desktop only */}
+          <div className="hidden md:block w-px bg-gray-600" />
           
           {/* Player B room */}
           <VideoRoomFrame
