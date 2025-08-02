@@ -90,7 +90,7 @@ export const handler: Handler = async (event) => {
       properties: {
         room_name: room.trim(),
         user_name: user.trim(),
-        user_id: getUserRole(), // Add user_id based on role
+        user_id: generateUniqueUserId(getUserRole()), // Add unique user_id based on role
         is_owner: Boolean(isHost),
         enable_screenshare: Boolean(isHost && !isObserver),
         enable_recording: false,
