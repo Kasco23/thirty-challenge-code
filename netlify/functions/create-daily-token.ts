@@ -39,7 +39,7 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    const { room, user, isHost = false, isObserver = false } = requestBody;
+    const { room, user, isHost = false, isObserver = false, role } = requestBody;
 
     // Validate required parameters
     if (!room || !user) {
@@ -77,11 +77,20 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    // Determine user role for user_id
+    const getUserRole = () => {
+      if (role) return role; // Use explicit role if provided
+      if (isHost) return 'host';
+      // Default fallback
+      return 'participant';
+    };
+
     // Create meeting token using Daily.co API with enhanced error handling
     const tokenRequest = {
       properties: {
         room_name: room.trim(),
         user_name: user.trim(),
+        user_id: getUserRole(), // Add user_id based on role
         is_owner: Boolean(isHost),
         enable_screenshare: Boolean(isHost && !isObserver),
         enable_recording: false,

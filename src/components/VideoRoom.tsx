@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useDaily, useParticipantIds, useParticipant, DailyProvider } from '@daily-co/daily-react';
+import { useDaily, useParticipantIds, useParticipantProperty, DailyProvider } from '@daily-co/daily-react';
 import { useGameState, useGameActions } from '@/hooks/useGameAtoms';
 
 interface VideoRoomProps {
@@ -10,84 +10,57 @@ interface VideoRoomProps {
 
 interface ParticipantVideoProps {
   participantId: string;
-  name: string;
-  type: 'host' | 'playerA' | 'playerB';
   className?: string;
 }
 
-function ParticipantVideo({ participantId, name, type, className = '' }: ParticipantVideoProps) {
-  const participant = useParticipant(participantId);
+function ParticipantVideo({ participantId, className = '' }: ParticipantVideoProps) {
+  const videoTrack = useParticipantProperty(participantId, 'tracks.video');
+  const audioTrack = useParticipantProperty(participantId, 'tracks.audio');
+  const userName = useParticipantProperty(participantId, 'user_name');
+  const isLocal = useParticipantProperty(participantId, 'local');
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  // Get color scheme for participant type
-  const getColorScheme = () => {
-    switch (type) {
-      case 'host':
-        return {
-          border: 'border-blue-500/30',
-          bg: 'bg-blue-500/20',
-          text: 'text-blue-300',
-          accent: 'bg-blue-600'
-        };
-      case 'playerA':
-        return {
-          border: 'border-green-500/30',
-          bg: 'bg-green-500/20',
-          text: 'text-green-300',
-          accent: 'bg-green-600'
-        };
-      case 'playerB':
-        return {
-          border: 'border-purple-500/30',
-          bg: 'bg-purple-500/20',
-          text: 'text-purple-300',
-          accent: 'bg-purple-600'
-        };
-      default:
-        return {
-          border: 'border-gray-500/30',
-          bg: 'bg-gray-500/20',
-          text: 'text-gray-300',
-          accent: 'bg-gray-600'
-        };
-    }
+  // Generic color scheme for all participants
+  const colors = {
+    border: 'border-blue-500/30',
+    bg: 'bg-blue-500/20',
+    text: 'text-blue-300',
+    accent: 'bg-blue-600'
   };
-
-  const colors = getColorScheme();
 
   // Set up video stream
   useEffect(() => {
-    if (participant?.videoTrack && videoRef.current) {
+    if (videoTrack && videoRef.current) {
       const videoElement = videoRef.current;
-      const stream = new MediaStream([participant.videoTrack]);
+      const stream = new MediaStream([videoTrack]);
       videoElement.srcObject = stream;
       videoElement.autoplay = true;
       videoElement.playsInline = true;
       
       // Mute local user video
-      if (participant.local) {
+      if (isLocal) {
         videoElement.muted = true;
       }
     }
-  }, [participant?.videoTrack, participant?.local]);
+  }, [videoTrack, isLocal]);
 
   // Set up audio stream
   useEffect(() => {
-    if (participant?.audioTrack && audioRef.current && !participant.local) {
+    if (audioTrack && audioRef.current && !isLocal) {
       const audioElement = audioRef.current;
-      const stream = new MediaStream([participant.audioTrack]);
+      const stream = new MediaStream([audioTrack]);
       audioElement.srcObject = stream;
       audioElement.autoplay = true;
     }
-  }, [participant?.audioTrack, participant?.local]);
+  }, [audioTrack, isLocal]);
 
-  if (!participant) {
+  if (!userName && !videoTrack && !audioTrack) {
     return (
       <div className={`${colors.bg} border ${colors.border} rounded-xl p-4 ${className}`}>
         <div className="text-center">
           <div className={`${colors.text} text-lg font-bold mb-2 font-arabic`}>
-            {name}
+            {participantId}
           </div>
           <div className="text-gray-400 text-sm font-arabic">
             في انتظار الانضمام...
@@ -103,18 +76,14 @@ function ParticipantVideo({ participantId, name, type, className = '' }: Partici
       <div className={`${colors.bg} border ${colors.border} rounded-t-xl p-3 flex items-center justify-between`}>
         <div className="flex items-center gap-2">
           <div className={`w-3 h-3 rounded-full ${
-            participant ? 'bg-green-500' : 'bg-gray-500'
+            userName ? 'bg-green-500' : 'bg-gray-500'
           }`}></div>
           <div className={`${colors.text} font-bold font-arabic`}>
-            {participant.user_name || name}
+            {userName || participantId}
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <div className="text-xs text-gray-400 font-arabic">
-            {type === 'host' ? 'المقدم' : 
-             type === 'playerA' ? 'لاعب 1' : 'لاعب 2'}
-          </div>
-          {participant.local && (
+          {isLocal && (
             <div className="px-2 py-1 bg-green-600 text-white text-xs rounded font-arabic">
               أنت
             </div>
@@ -130,11 +99,11 @@ function ParticipantVideo({ participantId, name, type, className = '' }: Partici
           className="w-full h-full object-cover rounded-b-xl"
           playsInline
           autoPlay
-          muted={participant.local}
+          muted={isLocal}
         />
         
         {/* Audio element (hidden, for non-local participants) */}
-        {!participant.local && (
+        {!isLocal && (
           <audio
             ref={audioRef}
             autoPlay
@@ -144,24 +113,24 @@ function ParticipantVideo({ participantId, name, type, className = '' }: Partici
         {/* Video status indicators */}
         <div className="absolute bottom-2 right-2 flex gap-1">
           <div className={`w-6 h-6 rounded flex items-center justify-center ${
-            participant.audioTrack ? 'bg-green-600' : 'bg-red-600'
+            audioTrack ? 'bg-green-600' : 'bg-red-600'
           }`}>
             <span className="text-white text-xs">
-              {participant.audioTrack ? '🎤' : '🚫'}
+              {audioTrack ? '🎤' : '🚫'}
             </span>
           </div>
           <div className={`w-6 h-6 rounded flex items-center justify-center ${
-            participant.videoTrack ? 'bg-green-600' : 'bg-red-600'
+            videoTrack ? 'bg-green-600' : 'bg-red-600'
           }`}>
             <span className="text-white text-xs">
-              {participant.videoTrack ? '📷' : '🚫'}
+              {videoTrack ? '📷' : '🚫'}
             </span>
           </div>
         </div>
         
         {/* Participant name overlay */}
         <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-arabic">
-          {participant.user_name || name}
+          {userName || participantId}
         </div>
       </div>
     </div>
@@ -325,19 +294,7 @@ function VideoRoomContent({ gameId, className = '', observerMode = false }: Vide
   }
 
   // Find specific participants by their IDs (we'll let the ParticipantVideo component handle the useParticipant hook)
-  const hostParticipantId = participantIds.find(id => 
-    id.includes('host') || 
-    id === 'host-mobile' || 
-    id === 'host-pc'
-  );
-  const playerAParticipantId = participantIds.find(id => 
-    id.includes('playerA') || 
-    id === 'playerA'
-  );
-  const playerBParticipantId = participantIds.find(id => 
-    id.includes('playerB') || 
-    id === 'playerB'
-  );
+  // No more hard-coded participant detection - just render all participants dynamically
 
   return (
     <div className={`${className}`}>
@@ -346,46 +303,28 @@ function VideoRoomContent({ gameId, className = '', observerMode = false }: Vide
           غرفة الفيديو المباشرة
         </h3>
         
-        {/* Horizontal layout for participants */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Host Video */}
-          <div className="space-y-2">
-            <h4 className="text-lg font-bold text-blue-300 font-arabic text-center">
-              المقدم
-            </h4>
-            <ParticipantVideo
-              participantId={hostParticipantId || 'host'}
-              name={state.hostName || 'المقدم'}
-              type="host"
-              className="w-full"
-            />
-          </div>
+        {/* Dynamic participant rendering */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          {participantIds.map((participantId) => (
+            <div key={participantId} className="space-y-2">
+              <ParticipantVideo
+                participantId={participantId}
+                className="w-full"
+              />
+            </div>
+          ))}
           
-          {/* Player A Video */}
-          <div className="space-y-2">
-            <h4 className="text-lg font-bold text-green-300 font-arabic text-center">
-              اللاعب الأول
-            </h4>
-            <ParticipantVideo
-              participantId={playerAParticipantId || 'playerA'}
-              name={state.players.playerA.name || 'لاعب 1'}
-              type="playerA"
-              className="w-full"
-            />
-          </div>
-          
-          {/* Player B Video */}
-          <div className="space-y-2">
-            <h4 className="text-lg font-bold text-purple-300 font-arabic text-center">
-              اللاعب الثاني
-            </h4>
-            <ParticipantVideo
-              participantId={playerBParticipantId || 'playerB'}
-              name={state.players.playerB.name || 'لاعب 2'}
-              type="playerB"
-              className="w-full"
-            />
-          </div>
+          {/* Show message if no participants */}
+          {participantIds.length === 0 && (
+            <div className="col-span-full text-center">
+              <div className="text-gray-400 text-lg font-bold mb-2 font-arabic">
+                لا يوجد مشاركون متصلون
+              </div>
+              <div className="text-gray-300 text-sm font-arabic">
+                في انتظار انضمام المشاركين...
+              </div>
+            </div>
+          )}
         </div>
         
         {/* Info note */}
