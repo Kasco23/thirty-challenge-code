@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
   useDaily,
   useParticipantIds,
@@ -6,6 +6,7 @@ import {
 } from '@daily-co/daily-react';
 import DailyIframe, { type DailyCall } from '@daily-co/daily-js';
 import { useGameActions } from '@/hooks/useGameAtoms';
+import { isDevelopmentMode } from '@/lib/dailyConfig';
 import type { LobbyParticipant } from '@/state';
 
 interface VideoGridProps {
@@ -42,6 +43,7 @@ function VideoRoomContent({ roomType, gameId, myParticipant, roomUrl, showAlertM
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [hasJoined, setHasJoined] = useState(false);
+  const [devModeSimulation, setDevModeSimulation] = useState(false);
 
   // Determine if this is my room
   const isMyRoom = useMemo(() => {
@@ -51,9 +53,24 @@ function VideoRoomContent({ roomType, gameId, myParticipant, roomUrl, showAlertM
     return myParticipant.id === roomType;
   }, [roomType, myParticipant]);
 
-  // Join room when URL is available and it's my room
+  // Development mode simulation for video
   useEffect(() => {
-    if (!daily || !roomUrl || !isMyRoom || hasJoined || isJoining) return;
+    if (!isDevelopmentMode()) return;
+    
+    if (isMyRoom && !hasJoined && !isJoining) {
+      const timer = setTimeout(() => {
+        setDevModeSimulation(true);
+        setHasJoined(true);
+        showAlertMessage(`تم تفعيل محاكاة الفيديو لغرفة ${getRoomLabel(roomType)} في وضع التطوير`, 'success');
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isMyRoom, hasJoined, isJoining, roomType, showAlertMessage]);
+
+  // Join room when URL is available and it's my room (only in production)
+  useEffect(() => {
+    if (!daily || !roomUrl || !isMyRoom || hasJoined || isJoining || isDevelopmentMode()) return;
 
     const joinRoom = async () => {
       setIsJoining(true);
@@ -84,12 +101,12 @@ function VideoRoomContent({ roomType, gameId, myParticipant, roomUrl, showAlertM
         await daily.setLocalAudio(true);
 
         setHasJoined(true);
-        showAlertMessage(`تم الانضمام بنجاح لغرفة ${roomType}`, 'success');
+        showAlertMessage(`تم الانضمام بنجاح لغرفة ${getRoomLabel(roomType)}`, 'success');
         console.log(`[VideoGrid] Successfully joined ${roomType} room`);
       } catch (error) {
         console.error(`[VideoGrid] Failed to join ${roomType} room:`, error);
-        setJoinError(`فشل في الانضمام لغرفة ${roomType}`);
-        showAlertMessage(`فشل في الانضمام لغرفة ${roomType}`, 'error');
+        setJoinError(`فشل في الانضمام لغرفة ${getRoomLabel(roomType)}`);
+        showAlertMessage(`فشل في الانضمام لغرفة ${getRoomLabel(roomType)}`, 'error');
       } finally {
         setIsJoining(false);
       }
@@ -101,7 +118,7 @@ function VideoRoomContent({ roomType, gameId, myParticipant, roomUrl, showAlertM
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (daily && hasJoined) {
+      if (daily && hasJoined && !isDevelopmentMode()) {
         daily.leave().catch(console.error);
       }
     };
@@ -127,6 +144,7 @@ function VideoRoomContent({ roomType, gameId, myParticipant, roomUrl, showAlertM
           {isMyRoom ? 'غرفتي' : 'غرفة أخرى'}
           {hasJoined && ' • متصل'}
           {isJoining && ' • جاري الاتصال...'}
+          {devModeSimulation && ' • محاكاة تطوير'}
         </div>
       </div>
 
@@ -155,9 +173,37 @@ function VideoRoomContent({ roomType, gameId, myParticipant, roomUrl, showAlertM
               </button>
             </div>
           </div>
+        ) : devModeSimulation ? (
+          // Development mode: Show simulated video
+          <div className="h-full relative bg-gradient-to-br from-blue-900 to-indigo-800">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mb-4 mx-auto animate-pulse">
+                  {myParticipant.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="text-white font-arabic font-semibold">{myParticipant.name}</div>
+                <div className="text-blue-200 text-sm font-arabic mt-1">محاكاة فيديو - وضع التطوير</div>
+              </div>
+            </div>
+            
+            {/* Simulated video controls */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs">🎥</span>
+              </div>
+              <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                <span className="text-white text-xs">🎤</span>
+              </div>
+            </div>
+
+            {/* Mock participant indicator */}
+            <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs font-arabic">
+              1 مشارك (محاكاة)
+            </div>
+          </div>
         ) : participantIds.length > 0 ? (
           <div className="h-full relative">
-            {/* Daily.co will render participant video here automatically */}
+            {/* Daily.co video elements will be injected here automatically */}
             <div className="absolute inset-0 [&>div]:h-full [&>div>div]:h-full">
               {/* Daily's video elements will be injected here */}
             </div>
@@ -189,9 +235,11 @@ function VideoRoomContent({ roomType, gameId, myParticipant, roomUrl, showAlertM
       {/* Connection status */}
       <div className="p-2 bg-gray-800/60 border-t border-gray-600/50">
         <div className="flex items-center justify-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${hasJoined ? 'bg-green-400' : 'bg-red-400'}`}></div>
+          <div className={`w-2 h-2 rounded-full ${
+            hasJoined ? 'bg-green-400' : joinError ? 'bg-red-400' : 'bg-yellow-400'
+          }`}></div>
           <span className="text-xs text-gray-400 font-arabic">
-            {hasJoined ? 'متصل' : 'غير متصل'}
+            {hasJoined ? (devModeSimulation ? 'محاكاة نشطة' : 'متصل') : joinError ? 'خطأ' : 'غير متصل'}
           </span>
         </div>
       </div>
@@ -210,36 +258,66 @@ function VideoRoomFrame({
   onJoinRoom,
   showAlertMessage 
 }: VideoRoomFrameProps) {
-  // Create Daily call object for this room
+  // Use a single shared call object instance managed at the top level
+  const callObjectRef = useRef<DailyCall | null>(null);
+
+  // Create Daily call object for this room only when needed and no duplicates exist
   const callObject = useMemo<DailyCall | null>(() => {
     try {
-      return DailyIframe.createCallObject();
+      // In development mode, always try to create, but handle failures gracefully
+      if (isDevelopmentMode()) {
+        // For development, we'll use a mock or simplified approach
+        console.log(`[VideoGrid] Skipping Daily call object creation in dev mode for ${roomType}`);
+        return null;
+      }
+
+      // In production, only create if we don't have one and it's actually needed
+      if (!callObjectRef.current && isRoomCreated && roomUrl) {
+        callObjectRef.current = DailyIframe.createCallObject();
+        console.log(`[VideoGrid] Created Daily call object for ${roomType}`);
+      }
+      
+      return callObjectRef.current;
     } catch (error) {
       console.warn(`[VideoGrid] Failed to create Daily call object for ${roomType}:`, error);
       return null;
     }
-  }, [roomType]);
+  }, [roomType, isRoomCreated, roomUrl]);
 
-  // Cleanup call object on unmount
+  // Cleanup call object on unmount or when room is deleted
   useEffect(() => {
     return () => {
-      if (callObject) {
+      if (callObjectRef.current) {
         try {
-          const meetingState = callObject.meetingState();
+          const meetingState = callObjectRef.current.meetingState();
           if (
             meetingState !== 'left-meeting' &&
             meetingState !== 'error' &&
             meetingState !== 'new' &&
             meetingState !== 'loading'
           ) {
-            callObject.destroy();
+            callObjectRef.current.destroy();
           }
         } catch (error) {
           console.warn(`[VideoGrid] Error during ${roomType} cleanup:`, error);
         }
+        callObjectRef.current = null;
       }
     };
-  }, [callObject, roomType]);
+  }, [roomType]);
+
+  // Clean up when room is deleted
+  useEffect(() => {
+    if (!isRoomCreated && callObjectRef.current) {
+      try {
+        callObjectRef.current.destroy();
+        callObjectRef.current = null;
+        console.log(`[VideoGrid] Cleaned up call object for deleted ${roomType} room`);
+      } catch (error) {
+        console.warn(`[VideoGrid] Error cleaning up ${roomType} call object:`, error);
+      }
+    }
+  }, [isRoomCreated, roomType]);
 
   const getRoomLabel = (type: string) => {
     switch (type) {
@@ -272,7 +350,7 @@ function VideoRoomFrame({
                   onClick={onJoinRoom}
                   className="px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-arabic transition-colors"
                 >
-                  تفعيل مدمج
+                  {isDevelopmentMode() ? 'تفعيل محاكاة' : 'تفعيل مدمج'}
                 </button>
                 <button
                   onClick={onDeleteRoom}
@@ -288,8 +366,9 @@ function VideoRoomFrame({
 
       {/* Video content */}
       <div className="flex-1">
-        {isRoomCreated && roomUrl && callObject ? (
-          <DailyProvider callObject={callObject}>
+        {isRoomCreated && roomUrl ? (
+          isDevelopmentMode() ? (
+            // Development mode: Use our enhanced VideoRoomContent without DailyProvider
             <VideoRoomContent 
               roomType={roomType}
               gameId={gameId}
@@ -297,7 +376,30 @@ function VideoRoomFrame({
               roomUrl={roomUrl}
               showAlertMessage={showAlertMessage}
             />
-          </DailyProvider>
+          ) : callObject ? (
+            // Production mode: Use DailyProvider only when we have a valid call object
+            <DailyProvider callObject={callObject}>
+              <VideoRoomContent 
+                roomType={roomType}
+                gameId={gameId}
+                myParticipant={myParticipant}
+                roomUrl={roomUrl}
+                showAlertMessage={showAlertMessage}
+              />
+            </DailyProvider>
+          ) : (
+            <div className="h-full flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-yellow-500 text-2xl mb-2">⚠️</div>
+                <div className="text-gray-400 text-sm font-arabic">
+                  فشل في تهيئة مكونات الفيديو
+                </div>
+                <div className="text-gray-500 text-xs font-arabic mt-1">
+                  تحقق من اتصال الإنترنت أو أعد تحميل الصفحة
+                </div>
+              </div>
+            </div>
+          )
         ) : (
           <div className="h-full flex items-center justify-center">
             <div className="text-center">
@@ -372,7 +474,11 @@ export default function VideoGrid({ gameId, myParticipant, showAlertMessage, cla
     const room = rooms[roomType];
     if (room.url) {
       // Instead of opening in new tab, show message that video is embedded
-      showAlertMessage(`تم تفعيل غرفة ${roomType} المدمجة في الصفحة`, 'success');
+      if (isDevelopmentMode()) {
+        showAlertMessage(`تم تفعيل محاكاة الفيديو لغرفة ${roomType} في وضع التطوير`, 'success');
+      } else {
+        showAlertMessage(`تم تفعيل غرفة ${roomType} المدمجة في الصفحة`, 'success');
+      }
     }
   }, [rooms, showAlertMessage]);
 
@@ -488,6 +594,11 @@ export default function VideoGrid({ gameId, myParticipant, showAlertMessage, cla
           <p className="text-blue-200 text-xs text-center mt-1 font-arabic">
             الغرف المنشأة: {Object.values(rooms).filter(r => r.created).length}/3
           </p>
+          {isDevelopmentMode() && (
+            <p className="text-yellow-300 text-xs text-center mt-1 font-arabic">
+              🔧 وضع التطوير: يتم استخدام محاكاة الفيديو بدلاً من Daily.co الفعلي
+            </p>
+          )}
         </div>
       </div>
     </div>
