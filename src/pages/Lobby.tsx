@@ -12,7 +12,7 @@ export default function Lobby() {
   const { gameId } = useParams<{ gameId: string }>();
   const [searchParams] = useSearchParams();
   const state = useGameState();
-  const { loadGameState, setHostConnected } = useGameActions();
+  const { loadGameState, setHostConnected, startSession } = useGameActions();
   const { myParticipant, setParticipant } = useLobbyActions();
   
   // Initialize game sync
@@ -61,7 +61,7 @@ export default function Lobby() {
 
     let isMounted = true;
 
-    // Load game state from database if needed
+    // Load game state from database if needed, or create if not exists
     const initializeGameState = async () => {
       if (state.gameId !== gameId) {
         console.log('Loading game state for:', gameId);
@@ -70,8 +70,33 @@ export default function Lobby() {
           if (!isMounted) return;
           
           if (!result.success) {
-            console.error('Failed to load game state:', result.error);
-            showAlertMessage(`فشل في تحميل بيانات الجلسة: ${result.error}`, 'error');
+            // If game doesn't exist and we have host parameters, try to create it
+            const { role, hostName: urlHostName } = searchParamsObj;
+            if (role === 'host' || role === 'host-mobile') {
+              console.log('Game not found, attempting to create new game for host:', gameId);
+              try {
+                // Create a new game with basic settings
+                await startSession(
+                  gameId,
+                  'HOST', // Default host code
+                  urlHostName || 'المقدم', // Use URL host name or default
+                  {
+                    WSHA: 4,
+                    AUCT: 4, 
+                    BELL: 10,
+                    SING: 10,
+                    REMO: 4
+                  }
+                );
+                showAlertMessage('تم إنشاء جلسة جديدة بنجاح', 'success');
+              } catch (createError) {
+                console.error('Failed to create new game:', createError);
+                showAlertMessage('فشل في إنشاء جلسة جديدة. تحقق من صحة الرابط.', 'error');
+              }
+            } else {
+              console.error('Failed to load game state:', result.error);
+              showAlertMessage(`فشل في تحميل بيانات الجلسة: ${result.error}`, 'error');
+            }
           }
         } catch (error) {
           if (!isMounted) return;
@@ -99,7 +124,7 @@ export default function Lobby() {
     } else if (role === 'host-mobile') {
       participant = {
         id: 'host-mobile',
-        name: name || state.hostName || 'المقدم',
+        name: hostName || state.hostName || 'المقدم',
         type: 'host-mobile',
         isConnected: true,
       };
@@ -123,7 +148,7 @@ export default function Lobby() {
     return () => {
       isMounted = false;
     };
-  }, [gameId, searchParamsObj, state.gameId, state.hostName, loadGameState, setHostConnected, setParticipant, showAlertMessage]);
+  }, [gameId, searchParamsObj, state.gameId, state.hostName, loadGameState, setHostConnected, setParticipant, showAlertMessage, startSession]);
 
   // Set up cleanup when user leaves the page
   useEffect(() => {
