@@ -41,6 +41,15 @@ export default function Join() {
     loadTeams();
   }, []);
 
+  // Auto-populate gameId from URL if available
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomIdFromUrl = urlParams.get('roomId') || urlParams.get('gameId');
+    if (roomIdFromUrl && !gameId) {
+      setGameId(roomIdFromUrl.toUpperCase());
+    }
+  }, [gameId]);
+
   const filteredFlags = searchFlags(flagSearch);
   const filteredTeams = searchTeams(allTeams, teamSearch);
 

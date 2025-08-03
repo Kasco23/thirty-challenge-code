@@ -35,7 +35,7 @@ function ParticipantVideo({
   
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-600/50">
-      <div className="aspect-video relative">
+      <div className="aspect-[3/4] sm:aspect-video relative">
         <DailyVideo 
           sessionId={sessionId}
           type="video"
@@ -84,7 +84,7 @@ function VideoContent({
   const meetingState = useMeetingState();
   const localParticipant = useLocalParticipant();
   const gameState = useGameState();
-  const { generateDailyToken } = useGameActions();
+  const { generateDailyToken, createVideoRoom } = useGameActions();
   
   const [roomUrl, setRoomUrl] = useState('');
   const [userName, setUserName] = useState(myParticipant.name);
@@ -97,8 +97,26 @@ function VideoContent({
     if (gameState.videoRoomUrl && roomUrl !== gameState.videoRoomUrl) {
       setRoomUrl(gameState.videoRoomUrl);
       showAlertMessage('تم تحميل رابط الغرفة تلقائياً', 'success');
+    } else if (!gameState.videoRoomUrl && !gameState.videoRoomCreated && myParticipant.type.startsWith('host')) {
+      // Auto-create room for host if none exists
+      const createRoom = async () => {
+        try {
+          showAlertMessage('جاري إنشاء غرفة فيديو جديدة...', 'info');
+          const result = await createVideoRoom(gameId);
+          if (result.success && result.roomUrl) {
+            setRoomUrl(result.roomUrl);
+            showAlertMessage('تم إنشاء غرفة الفيديو بنجاح!', 'success');
+          } else {
+            showAlertMessage('فشل في إنشاء غرفة الفيديو', 'error');
+          }
+        } catch (error) {
+          console.error('Failed to auto-create video room:', error);
+          showAlertMessage('خطأ في إنشاء غرفة الفيديو تلقائياً', 'error');
+        }
+      };
+      createRoom();
     }
-  }, [gameState.videoRoomUrl, roomUrl, showAlertMessage]);
+  }, [gameState.videoRoomUrl, gameState.videoRoomCreated, roomUrl, myParticipant.type, gameId, createVideoRoom, showAlertMessage]);
 
   // Auto-generate token when room URL is available
   useEffect(() => {
@@ -318,14 +336,14 @@ function VideoContent({
         </div>
       </div>
 
-      {/* Video Grid - 3 videos stacked vertically */}
+      {/* Video Grid - Mobile-optimized layout */}
       <div className="bg-gray-900/50 rounded-lg p-4 min-h-[500px]">
         <h4 className="text-white font-arabic text-center mb-4">
-          الفيديوهات (مرتبة عمودياً)
+          الفيديوهات (محسّن للهواتف الذكية)
         </h4>
         
         {isInCall && participantIds.length > 0 ? (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {participantIds.slice(0, 3).map((id, index) => (
               <ParticipantVideo
                 key={id}
@@ -338,7 +356,7 @@ function VideoContent({
             {/* Fill remaining slots with placeholders */}
             {Array.from({ length: Math.max(0, 3 - participantIds.length) }).map((_, index) => (
               <div key={`placeholder-${index}`} className="bg-gray-700/30 rounded-lg border-2 border-dashed border-gray-600">
-                <div className="aspect-video flex items-center justify-center">
+                <div className="aspect-[3/4] sm:aspect-video flex items-center justify-center">
                   <div className="text-center text-gray-400">
                     <div className="text-4xl mb-2">👤</div>
                     <div className="font-arabic">في انتظار المشارك {participantIds.length + index + 1}</div>

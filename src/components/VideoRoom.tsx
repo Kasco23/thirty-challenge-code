@@ -72,7 +72,7 @@ function ParticipantVideo({ participantId }: ParticipantVideoProps) {
   return (
     <div className="flex-1 min-w-0 bg-gray-800 rounded-lg overflow-hidden relative">
       {/* Video element */}
-      <div className="aspect-video relative bg-gray-900">
+      <div className="aspect-[3/4] md:aspect-video relative bg-gray-900">
         {hasVideo ? (
           <video
             ref={videoRef}
@@ -261,15 +261,15 @@ function VideoRoomContent({
           Live Video Room
         </h3>
 
-        {/* Horizontal participant layout with dividers */}
-        <div className="flex gap-4 min-h-[200px]">
+        {/* Mobile-optimized participant layout */}
+        <div className="flex flex-col sm:flex-row gap-4 min-h-[200px] sm:min-h-[300px]">
           {participantIds.map((participantId, index) => (
             <div key={participantId} className="flex items-stretch">
               <ParticipantVideo participantId={participantId} />
 
               {/* Divider between participants (not after the last one) */}
               {index < participantIds.length - 1 && (
-                <div className="w-px bg-gray-600 mx-2 self-stretch" />
+                <div className="w-px bg-gray-600 mx-2 self-stretch hidden sm:block" />
               )}
             </div>
           ))}
