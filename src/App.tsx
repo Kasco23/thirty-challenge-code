@@ -8,7 +8,7 @@ const Landing = lazy(() => import('@/pages/Landing'));
 const CreateSession = lazy(() => import('@/pages/CreateSession'));
 const Join = lazy(() => import('@/pages/Join'));
 const Lobby = lazy(() => import('@/pages/Lobby'));
-const LobbyTest = lazy(() => import('@/pages/LobbyTest'));
+
 const QuizRoom = lazy(() => import('@/pages/QuizRoom'));
 const ControlRoom = lazy(() => import('@/pages/ControlRoom'));
 const FinalScores = lazy(() => import('@/pages/FinalScores'));
@@ -48,7 +48,6 @@ export default function App() {
             <Route path="/join" element={<Join />} />
             <Route path="/lobby" element={<Lobby />} />
             <Route path="/lobby/:gameId" element={<Lobby />} />
-            <Route path="/lobby-test/:gameId" element={<LobbyTest />} />
             <Route path="/quiz" element={<QuizRoom />} />
             <Route path="/scores" element={<FinalScores />} />
             {/* Alpha Quiz Routes */}

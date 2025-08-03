@@ -3,6 +3,7 @@ import {
   DailyProvider,
   useDaily,
   useParticipantIds,
+  useParticipant,
   useMeetingState,
   useLocalParticipant,
   DailyVideo,
@@ -17,6 +18,55 @@ interface SimpleKitchenSinkVideoProps {
   myParticipant: LobbyParticipant;
   showAlertMessage: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
   className?: string;
+}
+
+// Individual participant video component
+function ParticipantVideo({ 
+  sessionId, 
+  index, 
+  localParticipantId 
+}: { 
+  sessionId: string; 
+  index: number; 
+  localParticipantId?: string; 
+}) {
+  const participant = useParticipant(sessionId);
+  const participantName = participant?.user_name || participant?.user_id || `مشارك ${index + 1}`;
+  
+  return (
+    <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-600/50">
+      <div className="aspect-video relative">
+        <DailyVideo 
+          sessionId={sessionId}
+          type="video"
+          automirror={sessionId === localParticipantId}
+          className="w-full h-full object-cover"
+        />
+        
+        {/* Participant name overlay - now shows actual name */}
+        <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-sm font-arabic">
+          {participantName} {sessionId === localParticipantId ? '(أنت)' : ''}
+        </div>
+        
+        {/* Video number indicator */}
+        <div className="absolute top-2 right-2 bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">
+          {index + 1}
+        </div>
+      </div>
+      
+      {/* Player name below video */}
+      <div className="p-3 bg-gray-800/80 text-center">
+        <p className="text-white font-arabic font-semibold">
+          {participantName}
+        </p>
+        {participant?.user_id && participant.user_id !== participantName && (
+          <p className="text-gray-400 text-xs font-arabic mt-1">
+            معرف: {participant.user_id}
+          </p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 // Video Content Component (inside DailyProvider)
@@ -277,26 +327,12 @@ function VideoContent({
         {isInCall && participantIds.length > 0 ? (
           <div className="space-y-4">
             {participantIds.slice(0, 3).map((id, index) => (
-              <div key={id} className="bg-gray-800 rounded-lg overflow-hidden border border-gray-600/50">
-                <div className="aspect-video relative">
-                  <DailyVideo 
-                    sessionId={id}
-                    type="video"
-                    automirror={id === localParticipant?.session_id}
-                    className="w-full h-full object-cover"
-                  />
-                  
-                  {/* Participant overlay */}
-                  <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-sm font-arabic">
-                    مشارك {index + 1} {id === localParticipant?.session_id ? '(أنت)' : ''}
-                  </div>
-                  
-                  {/* Video number indicator */}
-                  <div className="absolute top-2 right-2 bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">
-                    {index + 1}
-                  </div>
-                </div>
-              </div>
+              <ParticipantVideo
+                key={id}
+                sessionId={id}
+                index={index}
+                localParticipantId={localParticipant?.session_id}
+              />
             ))}
             
             {/* Fill remaining slots with placeholders */}

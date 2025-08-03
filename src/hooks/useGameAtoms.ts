@@ -223,7 +223,7 @@ export function useGameActions() {
         console.log('[DEV] Creating mock video room for gameId:', gameId);
         
         const dailyDomain = getDailyDomain();
-        const mockUrl = `https://${dailyDomain}/mock-room-${gameId}`;
+        const mockUrl = `https://${dailyDomain}/${gameId}`;
         
         // Simulate async operation
         await new Promise(resolve => setTimeout(resolve, 1000));
