@@ -9,6 +9,7 @@ import {
   DailyAudio,
 } from '@daily-co/daily-react';
 import DailyIframe, { type DailyCall } from '@daily-co/daily-js';
+import { useGameState, useGameActions } from '@/hooks/useGameAtoms';
 import type { LobbyParticipant } from '@/state';
 
 interface SimpleKitchenSinkVideoProps {
@@ -20,9 +21,11 @@ interface SimpleKitchenSinkVideoProps {
 
 // Video Content Component (inside DailyProvider)
 function VideoContent({ 
+  gameId,
   myParticipant, 
   showAlertMessage 
 }: { 
+  gameId: string;
   myParticipant: LobbyParticipant;
   showAlertMessage: (message: string, type?: 'info' | 'success' | 'warning' | 'error') => void;
 }) {
@@ -30,11 +33,50 @@ function VideoContent({
   const participantIds = useParticipantIds();
   const meetingState = useMeetingState();
   const localParticipant = useLocalParticipant();
+  const gameState = useGameState();
+  const { generateDailyToken } = useGameActions();
   
   const [roomUrl, setRoomUrl] = useState('');
   const [userName, setUserName] = useState(myParticipant.name);
   const [isJoining, setIsJoining] = useState(false);
   const [preAuthToken, setPreAuthToken] = useState('');
+  const [isGeneratingToken, setIsGeneratingToken] = useState(false);
+
+  // Auto-populate room URL and generate token when component mounts or game state changes
+  useEffect(() => {
+    if (gameState.videoRoomUrl && roomUrl !== gameState.videoRoomUrl) {
+      setRoomUrl(gameState.videoRoomUrl);
+      showAlertMessage('تم تحميل رابط الغرفة تلقائياً', 'success');
+    }
+  }, [gameState.videoRoomUrl, roomUrl, showAlertMessage]);
+
+  // Auto-generate token when room URL is available
+  useEffect(() => {
+    if (gameState.videoRoomUrl && !preAuthToken && !isGeneratingToken) {
+      setIsGeneratingToken(true);
+      generateDailyToken(
+        gameId,
+        myParticipant.name,
+        myParticipant.type.startsWith('host'),
+        false // Not observer mode
+      )
+        .then((token) => {
+          if (token) {
+            setPreAuthToken(token);
+            showAlertMessage('تم إنشاء رمز الدخول تلقائياً', 'success');
+          } else {
+            showAlertMessage('تعذر إنشاء رمز الدخول، يمكنك المتابعة بدونه', 'warning');
+          }
+        })
+        .catch((error) => {
+          console.error('Failed to generate token:', error);
+          showAlertMessage('تعذر إنشاء رمز الدخول، يمكنك المتابعة بدونه', 'warning');
+        })
+        .finally(() => {
+          setIsGeneratingToken(false);
+        });
+    }
+  }, [gameState.videoRoomUrl, preAuthToken, isGeneratingToken, generateDailyToken, gameId, myParticipant.name, myParticipant.type, showAlertMessage]);
 
   // Join call function
   const joinCall = useCallback(async () => {
@@ -119,10 +161,10 @@ function VideoContent({
       <div className="bg-gray-700/50 rounded-lg p-4 space-y-4">
         <h4 className="text-lg font-semibold text-white font-arabic">إعدادات الاتصال</h4>
         
-        {/* Room URL */}
+        {/* Auto-filled Room URL */}
         <div>
           <label className="block text-white font-arabic text-sm mb-2">
-            رابط الغرفة *
+            رابط الغرفة {gameState.videoRoomUrl ? '✅ (تم التحميل تلقائياً)' : '*'}
           </label>
           <input
             type="url"
@@ -132,12 +174,17 @@ function VideoContent({
             disabled={isInCall}
             className="w-full px-3 py-2 bg-gray-600 text-white rounded border border-gray-500 focus:border-blue-400 focus:outline-none disabled:opacity-50"
           />
+          {gameState.videoRoomUrl && roomUrl === gameState.videoRoomUrl && (
+            <p className="text-green-400 text-xs mt-1 font-arabic">
+              تم تحميل رابط الغرفة من الجلسة الحالية
+            </p>
+          )}
         </div>
 
-        {/* User Name */}
+        {/* Pre-filled User Name */}
         <div>
           <label className="block text-white font-arabic text-sm mb-2">
-            اسم المستخدم
+            اسم المستخدم ✅ (من معلومات الجلسة)
           </label>
           <input
             type="text"
@@ -146,21 +193,34 @@ function VideoContent({
             disabled={isInCall}
             className="w-full px-3 py-2 bg-gray-600 text-white rounded border border-gray-500 focus:border-blue-400 focus:outline-none disabled:opacity-50"
           />
+          <p className="text-green-400 text-xs mt-1 font-arabic">
+            تم تحميل الاسم من معلومات المشارك
+          </p>
         </div>
 
-        {/* Pre-Auth Token */}
+        {/* Auto-generated Pre-Auth Token */}
         <div>
           <label className="block text-white font-arabic text-sm mb-2">
-            رمز التحقق المسبق (اختياري)
+            رمز التحقق المسبق {preAuthToken ? '✅ (تم الإنشاء تلقائياً)' : isGeneratingToken ? '⏳ (جاري الإنشاء...)' : '(اختياري)'}
           </label>
           <input
             type="text"
             value={preAuthToken}
             onChange={(e) => setPreAuthToken(e.target.value)}
-            placeholder="Meeting token (optional)"
-            disabled={isInCall}
+            placeholder={isGeneratingToken ? "جاري إنشاء رمز الدخول..." : "Meeting token (optional)"}
+            disabled={isInCall || isGeneratingToken}
             className="w-full px-3 py-2 bg-gray-600 text-white rounded border border-gray-500 focus:border-blue-400 focus:outline-none disabled:opacity-50"
           />
+          {preAuthToken && (
+            <p className="text-green-400 text-xs mt-1 font-arabic">
+              تم إنشاء رمز الدخول تلقائياً
+            </p>
+          )}
+          {isGeneratingToken && (
+            <p className="text-blue-400 text-xs mt-1 font-arabic">
+              جاري إنشاء رمز الدخول...
+            </p>
+          )}
         </div>
 
         {/* Call Controls */}
@@ -270,13 +330,14 @@ function VideoContent({
       {/* Info Panel */}
       <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/20">
         <p className="text-green-300 text-sm text-center font-arabic">
-          ✅ تطبيق Daily.co Kitchen Sink - 3 فيديوهات مرتبة عمودياً
+          ✅ تطبيق Daily.co Kitchen Sink المحسن - تحميل تلقائي للإعدادات
         </p>
         <div className="text-green-200 text-xs text-center mt-2 font-arabic space-y-1">
-          <div>• أدخل رابط غرفة Daily.co صحيح</div>
-          <div>• يمكن إضافة رمز تحقق مسبق (اختياري)</div>
-          <div>• الفيديوهات مرتبة عمودياً كما طُلب</div>
-          <div>• يدعم حتى 3 مشاركين مع أرقام واضحة</div>
+          <div>• رابط الغرفة محمل تلقائياً من الجلسة</div>
+          <div>• اسم المستخدم محمل من معلومات المشارك</div>
+          <div>• رمز الدخول يتم إنشاؤه تلقائياً</div>
+          <div>• كل ما عليك فعله هو الضغط على "انضمام للمكالمة"</div>
+          <div>• الفيديوهات مرتبة عمودياً مع أرقام واضحة</div>
         </div>
       </div>
     </div>
@@ -285,10 +346,11 @@ function VideoContent({
 
 // Main component
 export default function SimpleKitchenSinkVideo({ 
+  gameId,
   myParticipant, 
   showAlertMessage, 
   className = '' 
-}: Omit<SimpleKitchenSinkVideoProps, 'gameId'>) {
+}: SimpleKitchenSinkVideoProps) {
   const [callObject, setCallObject] = useState<DailyCall | null>(null);
 
   // Create call object
@@ -324,7 +386,7 @@ export default function SimpleKitchenSinkVideo({
         }
       }
     };
-  }, []); // Only run once on mount
+  }, [showAlertMessage]); // Fixed dependency array
 
   if (!callObject) {
     return (
@@ -343,6 +405,7 @@ export default function SimpleKitchenSinkVideo({
     <div className={className}>
       <DailyProvider callObject={callObject}>
         <VideoContent 
+          gameId={gameId}
           myParticipant={myParticipant}
           showAlertMessage={showAlertMessage}
         />
