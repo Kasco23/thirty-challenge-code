@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useAtomValue } from 'jotai';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
 import { gameSyncInstanceAtom, lobbyParticipantsAtom } from '@/state';
-import VideoGrid from '@/components/VideoGrid';
+import KitchenSinkVideo from '@/components/KitchenSinkVideo';
 import AlertBanner from '@/components/AlertBanner';
 import type { LobbyParticipant } from '@/state';
 
@@ -184,7 +184,7 @@ export default function LobbyTest() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2 font-arabic">
-            اختبار الفيديو المتقدم
+            فيديو نمط Kitchen Sink
           </h1>
           <div className="space-y-2">
             <p className="text-accent2 font-arabic">
@@ -194,7 +194,7 @@ export default function LobbyTest() {
               اللاعبون المتصلون: {connectedPlayers}/2
             </p>
             <p className="text-blue-300 font-arabic text-sm">
-              ثلاث غرف فيديو منفصلة - كل مشارك في غرفة خاصة
+              نمط Daily React Kitchen Sink - إطارات فيديو فردية
             </p>
           </div>
         </div>
@@ -227,9 +227,9 @@ export default function LobbyTest() {
           </div>
         </div>
 
-        {/* Video Grid - Three separate rooms */}
+        {/* Kitchen Sink Video - Simple individual participant frames */}
         <div className="mb-8">
-          <VideoGrid
+          <KitchenSinkVideo
             gameId={gameId}
             myParticipant={myParticipant}
             showAlertMessage={showAlertMessage}
@@ -245,13 +245,13 @@ export default function LobbyTest() {
           transition={{ delay: 0.5 }}
         >
           <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/20">
-            <p className="font-arabic mb-2">💡 تعليمات اختبار الفيديو:</p>
+            <p className="font-arabic mb-2">💡 نمط Daily React Kitchen Sink:</p>
             <div className="text-right space-y-1 font-arabic">
-              <p>• كل مشارك له غرفة فيديو منفصلة</p>
-              <p>• يمكن إنشاء وحذف الغرف بشكل فردي</p>
-              <p>• الصوت متصل بين جميع الغرف</p>
-              <p>• التصميم الأفقي مع حدود رفيعة ومتصلة</p>
-              <p>• اختبار مباشر مع قاعدة البيانات</p>
+              <p>• كل مشارك يظهر في إطار فيديو منفصل</p>
+              <p>• استخدام مكونات DailyVideo مباشرة</p>
+              <p>• زر انضمام بسيط بدون إدارة غرف معقدة</p>
+              <p>• تخطيط أفقي مع تحديث مباشر</p>
+              <p>• اتباع أنماط Daily React المعتمدة</p>
             </div>
           </div>
         </motion.div>
