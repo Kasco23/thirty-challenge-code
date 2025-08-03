@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useAtomValue } from 'jotai';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
 import { gameSyncInstanceAtom, lobbyParticipantsAtom } from '@/state';
-import KitchenSinkVideo from '@/components/KitchenSinkVideo';
+import SimpleKitchenSinkVideo from '@/components/SimpleKitchenSinkVideo';
 import AlertBanner from '@/components/AlertBanner';
 import type { LobbyParticipant } from '@/state';
 
@@ -184,7 +184,7 @@ export default function LobbyTest() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2 font-arabic">
-            فيديو نمط Kitchen Sink
+            Daily.co Kitchen Sink - اختبار الفيديو
           </h1>
           <div className="space-y-2">
             <p className="text-accent2 font-arabic">
@@ -194,7 +194,7 @@ export default function LobbyTest() {
               اللاعبون المتصلون: {connectedPlayers}/2
             </p>
             <p className="text-blue-300 font-arabic text-sm">
-              نمط Daily React Kitchen Sink - إطارات فيديو فردية
+              تطبيق Daily.co Kitchen Sink مع 3 فيديوهات مرتبة عمودياً
             </p>
           </div>
         </div>
@@ -227,10 +227,9 @@ export default function LobbyTest() {
           </div>
         </div>
 
-        {/* Kitchen Sink Video - Simple individual participant frames */}
+        {/* Simple Kitchen Sink Video - 3 videos stacked vertically */}
         <div className="mb-8">
-          <KitchenSinkVideo
-            gameId={gameId}
+          <SimpleKitchenSinkVideo
             myParticipant={myParticipant}
             showAlertMessage={showAlertMessage}
             className="w-full"
@@ -244,14 +243,15 @@ export default function LobbyTest() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
-          <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/20">
-            <p className="font-arabic mb-2">💡 نمط Daily React Kitchen Sink:</p>
+          <div className="bg-green-500/10 rounded-lg p-4 border border-green-500/20">
+            <p className="font-arabic mb-2">✅ Daily.co Kitchen Sink الجديد:</p>
             <div className="text-right space-y-1 font-arabic">
-              <p>• كل مشارك يظهر في إطار فيديو منفصل</p>
-              <p>• استخدام مكونات DailyVideo مباشرة</p>
-              <p>• زر انضمام بسيط بدون إدارة غرف معقدة</p>
-              <p>• تخطيط أفقي مع تحديث مباشر</p>
-              <p>• اتباع أنماط Daily React المعتمدة</p>
+              <p>• أدخل رابط غرفة Daily.co مباشرة</p>
+              <p>• 3 فيديوهات مرتبة عمودياً (واحد فوق الآخر)</p>
+              <p>• أزرار انضمام ومغادرة واضحة</p>
+              <p>• إعداد رمز التحقق المسبق (اختياري)</p>
+              <p>• تحكم في الكاميرا والميكروفون</p>
+              <p>• تطبيق أنماط Daily.co Kitchen Sink الأساسية</p>
             </div>
           </div>
         </motion.div>
