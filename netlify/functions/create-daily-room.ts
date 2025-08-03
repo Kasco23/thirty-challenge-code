@@ -65,6 +65,7 @@ export const handler: Handler = async (event) => {
       };
     }
 
+    // Validate room name format for session IDs
     if (roomName.length > 200) {
       return {
         statusCode: 400,
@@ -76,12 +77,13 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    // Sanitize room name for Daily.co API
-    const sanitizedRoomName = roomName.trim().replace(/[^a-zA-Z0-9-_]/g, '-');
+    // Use the session ID directly as room name (no sanitization to preserve session ID)
+    // Session IDs should already be safe for Daily.co room names
+    const roomNameForDaily = roomName.trim();
 
     // Prepare room configuration with safe defaults
     const roomConfig = {
-      name: sanitizedRoomName,
+      name: roomNameForDaily,
       properties: {
         max_participants: Math.min(Math.max(Number(properties.max_participants) || 10, 2), 50),
         enable_screenshare: Boolean(properties.enable_screenshare ?? true),
@@ -96,7 +98,7 @@ export const handler: Handler = async (event) => {
 
     console.log('Creating Daily.co room:', { 
       original: roomName, 
-      sanitized: sanitizedRoomName,
+      roomNameForDaily: roomNameForDaily,
       properties: roomConfig.properties 
     });
 
