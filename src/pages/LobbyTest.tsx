@@ -230,6 +230,7 @@ export default function LobbyTest() {
         {/* Simple Kitchen Sink Video - 3 videos stacked vertically */}
         <div className="mb-8">
           <SimpleKitchenSinkVideo
+            gameId={gameId!}
             myParticipant={myParticipant}
             showAlertMessage={showAlertMessage}
             className="w-full"
