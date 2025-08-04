@@ -20,6 +20,6 @@
 [dev]
   framework = "vite"
   command    = "npm run dev"
-  port       = 8888        # Netlify’s public port
+  port       = 3000        # Netlify’s public port
   targetPort = 5173        # where Vite actually listens
   autoLaunch = false
