@@ -10,7 +10,14 @@ export default {
   },
   moduleNameMapper: {
     '\\.(css|scss)$': 'identity-obj-proxy',
+    '^@/(.*)$': '<rootDir>/src/$1',
   },
-  setupFilesAfterEnv: ['@testing-library/jest-dom'],
+  setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
   testMatch: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[tj]s?(x)'],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/main.tsx',
+    '!src/vite-env.d.ts',
+  ],
 };

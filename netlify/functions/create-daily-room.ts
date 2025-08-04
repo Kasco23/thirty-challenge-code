@@ -2,11 +2,28 @@ import type { Handler } from '@netlify/functions';
 
 // Enhanced Daily.co room creation with comprehensive error handling and validation
 export const handler: Handler = async (event) => {
-  // Only allow POST requests
+  // Handle CORS preflight requests
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Max-Age': '86400', // 24 hours
+      },
+      body: '',
+    };
+  }
+
+  // Only allow POST requests for actual function execution
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
       body: JSON.stringify({ error: 'Method not allowed' }),
     };
   }

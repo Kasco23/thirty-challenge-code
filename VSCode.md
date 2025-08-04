@@ -18,6 +18,7 @@
 **Step 1:** Install Firefox Developer Edition (Recommended)
 - Download from [https://www.mozilla.org/en-US/firefox/developer/](https://www.mozilla.org/en-US/firefox/developer/)
 - Developer Edition includes enhanced debugging tools and experimental features
+- Install to `/usr/bin/firefox-devedition` (or update `launch.json` with your path)
 - Regular Firefox also works but with fewer developer-specific features
 
 **Step 2:** Configure Firefox for Development
@@ -30,8 +31,13 @@
 **Step 3:** Install VS Code Firefox Debugger Extension
 - Open VS Code Extensions panel (Ctrl+Shift+X)
 - Search for "Debugger for Firefox"
-- Install the official extension by Mozilla
+- Install the official extension by Mozilla (`firefox-devtools.vscode-firefox-debug`)
 - Restart VS Code after installation
+
+**Step 4:** Create Firefox Profile for Persistent Extensions
+- Firefox Developer Edition will create a dedicated profile for debugging
+- Extensions and settings will persist across debugging sessions
+- Profile is stored in `.vscode/firefox-profile` (automatically managed)
 
 ## Debugging Setup
 
@@ -54,7 +60,10 @@
       "type": "firefox",
       "url": "http://localhost:5173",
       "webRoot": "${workspaceFolder}/src",
-      "sourceMaps": true
+      "firefoxExecutable": "/usr/bin/firefox-devedition",
+      "sourceMaps": true,
+      "keepProfileChanges": true,
+      "profile": "${workspaceFolder}/.vscode/firefox-profile"
     },
     {
       "name": "Launch Firefox (Netlify Dev)",
@@ -62,18 +71,28 @@
       "type": "firefox",
       "url": "http://localhost:8888",
       "webRoot": "${workspaceFolder}/src",
-      "sourceMaps": true
+      "firefoxExecutable": "/usr/bin/firefox-devedition",
+      "sourceMaps": true,
+      "keepProfileChanges": true,
+      "profile": "${workspaceFolder}/.vscode/firefox-profile"
     },
     {
       "name": "Attach to Firefox",
       "request": "attach",
       "type": "firefox",
       "port": 6000,
-      "webRoot": "${workspaceFolder}/src"
+      "webRoot": "${workspaceFolder}/src",
+      "firefoxExecutable": "/usr/bin/firefox-devedition"
     }
   ]
 }
 ```
+
+**Key Configuration Options:**
+- `firefoxExecutable`: Path to Firefox Developer Edition
+- `keepProfileChanges`: Preserves extensions and settings between sessions
+- `profile`: Dedicated debugging profile to avoid conflicts with personal Firefox
+- `sourceMaps`: Enables source map support for debugging TypeScript/JSX
 
 **Step 3:** Start your development server:
 - For Vite development: Run `npm run dev` in terminal
@@ -128,6 +147,8 @@ Add to `.vscode/launch.json`:
 
 ### 1. Console Debugging Patterns
 
+The project includes a standardized `debugLog` utility in `src/utils/debugLog.ts`:
+
 ```typescript
 // Enhanced error logging for development
 const debugLog = (component: string, action: string, data?: any) => {
@@ -149,115 +170,56 @@ const MyComponent = () => {
 };
 ```
 
+**Integration Status:**
+- ✅ Already integrated in `src/components/LanguageToggle.tsx`
+- ✅ Already integrated in `src/pages/Lobby.tsx`
+- 🔧 Add to other components as needed using the same pattern
+
 ### 2. Error Boundary for React
 
-Create `src/components/ErrorBoundary.tsx`:
+The `ErrorBoundary` component is located at `src/components/ErrorBoundary.tsx` and is automatically wrapped around the entire app in `src/main.tsx`.
 
+**Features:**
+- Catches JavaScript errors anywhere in the component tree
+- Shows user-friendly error message in production
+- Shows detailed error information in development mode
+- Provides reload button for recovery
+- Automatically logs errors to console with full stack traces
+
+**Usage:**
 ```typescript
-import React from 'react';
+// Already integrated in main.tsx - wraps entire app
+<ErrorBoundary>
+  <App />
+</ErrorBoundary>
 
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error?: Error;
-  errorInfo?: React.ErrorInfo;
-}
-
-export class ErrorBoundary extends React.Component<
-  React.PropsWithChildren<{}>,
-  ErrorBoundaryState
-> {
-  constructor(props: React.PropsWithChildren<{}>) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('🚨 React Error Boundary caught an error:', error);
-    console.error('Error Info:', errorInfo);
-    
-    // Send to error reporting service in production
-    if (import.meta.env.PROD) {
-      // reportError(error, errorInfo);
-    }
-    
-    this.setState({ error, errorInfo });
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen bg-red-50 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-bold text-red-600 mb-4">
-              Oops! Something went wrong
-            </h2>
-            {import.meta.env.DEV && (
-              <details className="mt-4">
-                <summary className="cursor-pointer text-sm text-gray-600">
-                  Error Details (Dev Mode)
-                </summary>
-                <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto">
-                  {this.state.error?.toString()}
-                  {this.state.errorInfo?.componentStack}
-                </pre>
-              </details>
-            )}
-            <button 
-              onClick={() => window.location.reload()}
-              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            >
-              Reload Page
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
-}
+// For specific components that need isolation:
+<ErrorBoundary>
+  <RiskyComponent />
+</ErrorBoundary>
 ```
 
 ### 3. Network Request Debugging
 
-Create `src/utils/debugNetworkRequests.ts`:
+The `debugNetworkRequests` utility in `src/utils/debugNetworkRequests.ts` is automatically enabled in development mode via `src/main.tsx`.
 
-```typescript
-// Monitor all network requests
-export const enableNetworkDebugging = () => {
-  if (import.meta.env.DEV) {
-    const originalFetch = window.fetch;
-    
-    window.fetch = async (input, init) => {
-      const url = typeof input === 'string' ? input : input.url;
-      const method = init?.method || 'GET';
-      
-      console.group(`🌐 ${method} ${url}`);
-      console.log('Request:', { input, init });
-      
-      try {
-        const response = await originalFetch(input, init);
-        console.log('Response:', {
-          status: response.status,
-          statusText: response.statusText,
-          headers: Object.fromEntries(response.headers.entries())
-        });
-        console.groupEnd();
-        return response;
-      } catch (error) {
-        console.error('Network Error:', error);
-        console.groupEnd();
-        throw error;
-      }
-    };
-  }
-};
+**Features:**
+- Intercepts all `fetch()` calls in development
+- Logs request details (method, URL, headers, body)
+- Logs response details (status, headers)
+- Groups related logs for easy debugging
+- Shows network timing and error information
 
-// Call in main.tsx during development
+**Integration Status:**
+- ✅ Automatically enabled in `src/main.tsx`
+- ✅ Works with all HTTP requests (Supabase, Daily.co, etc.)
+- ✅ Only active in development mode
+
+**Example Output:**
+```
+🌐 POST https://thirtyquiz.tyshub.xyz/.netlify/functions/create-daily-room
+  Request: { method: 'POST', body: '{"roomName":"game-123"}' }
+  Response: { status: 200, statusText: 'OK', headers: {...} }
 ```
 
 ## Development Environments
@@ -469,9 +431,39 @@ const trackApiCall = (endpoint: string) => {
 
 ## Testing Workflow
 
-### 1. Component Testing Setup
+### 1. Test Setup Configuration
 
-Create `.vscode/settings.json`:
+The project uses Jest with React Testing Library. Configuration is in `jest.config.ts`:
+
+```typescript
+export default {
+  preset: 'ts-jest/presets/default-esm',
+  testEnvironment: 'jsdom',
+  extensionsToTreatAsEsm: ['.ts', '.tsx'],
+  transform: {
+    '^.+\\.(ts|tsx)$': [
+      'ts-jest',
+      { tsconfig: './tsconfig.app.json', useESM: true },
+    ],
+  },
+  moduleNameMapper: {
+    '\\.(css|scss)$': 'identity-obj-proxy',
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+  setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
+  testMatch: ['**/__tests__/**/*.[jt]s?(x)', '**/?(*.)+(spec|test).[tj]s?(x)'],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.d.ts',
+    '!src/main.tsx',
+    '!src/vite-env.d.ts',
+  ],
+};
+```
+
+### 2. VS Code Jest Integration
+
+Create `.vscode/settings.json` with Jest configuration:
 
 ```json
 {
@@ -485,76 +477,90 @@ Create `.vscode/settings.json`:
 }
 ```
 
-### 2. Test File Templates
+**Features:**
+- Automatic test discovery and running
+- Test results shown inline in VS Code
+- Coverage information displayed
+- Watch mode for continuous testing
 
+### 3. Running Tests
+
+**Command Line:**
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run specific test file
+npm test ErrorBoundary.test.tsx
+```
+
+**VS Code Integration:**
+1. Install "Jest" extension (`ms-vscode.vscode-jest`)
+2. Tests appear in VS Code Test Explorer
+3. Click gutter icons to run individual tests
+4. View test results inline with code
+
+### 4. Test File Structure
+
+Tests are located in `__tests__` folders next to source files:
+
+```
+src/
+├── components/
+│   ├── ErrorBoundary.tsx
+│   └── __tests__/
+│       └── ErrorBoundary.test.tsx
+├── utils/
+│   ├── debugLog.ts
+│   └── __tests__/
+│       └── debugLog.test.ts
+└── tests/
+    └── setup.ts  # Global test setup
+```
+
+### 5. Example Test Files
+
+**Component Test (ErrorBoundary.test.tsx):**
 ```typescript
-// Component test template
 import { render, screen, fireEvent } from '@testing-library/react';
-import { LanguageToggle } from '../LanguageToggle';
+import { ErrorBoundary } from '../ErrorBoundary';
 
-describe('LanguageToggle', () => {
-  it('should toggle between English and Arabic', () => {
-    const mockOnClick = jest.fn();
-    render(<LanguageToggle language="en" onClick={mockOnClick} />);
-    
-    const button = screen.getByRole('button');
-    fireEvent.click(button);
-    
-    expect(mockOnClick).toHaveBeenCalledWith('ar');
-  });
-});
-
-// Integration test template
-import { renderHook } from '@testing-library/react';
-import { useDailyRoom } from '../hooks/useDailyRoom';
-
-describe('useDailyRoom Integration', () => {
-  it('should handle room creation and cleanup', async () => {
-    const { result, unmount } = renderHook(() => useDailyRoom('test-room'));
-    
-    // Test room creation
-    expect(result.current.isLoading).toBe(true);
-    
-    // Wait for room creation
-    await waitFor(() => {
-      expect(result.current.room).toBeDefined();
-    });
-    
-    // Test cleanup on unmount
-    unmount();
-    // Verify cleanup calls
+describe('ErrorBoundary', () => {
+  it('should render children when there is no error', () => {
+    render(
+      <ErrorBoundary>
+        <div>No error</div>
+      </ErrorBoundary>
+    );
+    expect(screen.getByText('No error')).toBeInTheDocument();
   });
 });
 ```
 
-### 3. E2E Testing with Playwright
-
+**Utility Test (debugLog.test.ts):**
 ```typescript
-// tests/e2e/gameflow.spec.ts
-import { test, expect } from '@playwright/test';
+import { debugLog } from '../debugLog';
 
-test.describe('Game Flow', () => {
-  test('should complete full game session', async ({ page }) => {
-    // Start with lobby
-    await page.goto('http://localhost:8888');
-    
-    // Test language toggle
-    await page.click('[data-testid="language-toggle"]');
-    await expect(page.locator('h1')).toContainText('قاعة الانتظار');
-    
-    // Test room creation
-    await page.click('[data-testid="create-room"]');
-    await expect(page.url()).toContain('/room/');
-    
-    // Test video integration
-    await expect(page.locator('[data-testid="video-container"]')).toBeVisible();
+describe('debugLog', () => {
+  it('should log debug information in development mode', () => {
+    jest.spyOn(console, 'group').mockImplementation();
+    debugLog('TestComponent', 'testAction', { test: 'data' });
+    expect(console.group).toHaveBeenCalledWith('🐛 TestComponent - testAction');
   });
 });
 ```
 
 ## Essential Extensions
 
-### 1. Core Development
+### 1. Required Extensions (Auto-Install)
+
+Create `.vscode/extensions.json` in your project root:
 
 ```json
 {
@@ -565,44 +571,14 @@ test.describe('Game Flow', () => {
     "esbenp.prettier-vscode",
     "ms-vscode.vscode-eslint",
     "github.copilot",
-    "github.copilot-chat"
-  ]
-}
-```
-
-**Important:** The Firefox debugger extension (`firefox-devtools.vscode-firefox-debug`) is essential for debugging React applications in Firefox through VS Code.
-
-### 2. React & State Management
-
-```json
-{
-  "recommendations": [
+    "github.copilot-chat",
     "ms-vscode.vscode-react-native",
     "formulahendry.auto-rename-tag",
     "christian-kohler.path-intellisense",
-    "bradlc.vscode-tailwindcss",
-    "jotai-labs.jotai-vscode"
-  ]
-}
-```
-
-### 3. Database & API
-
-```json
-{
-  "recommendations": [
+    "jotai-labs.jotai-vscode",
     "supabase.supabase",
     "humao.rest-client",
-    "ms-vscode.vscode-json"
-  ]
-}
-```
-
-### 4. Quality & Performance
-
-```json
-{
-  "recommendations": [
+    "ms-vscode.vscode-json",
     "ms-vscode.vscode-jest",
     "ms-playwright.playwright",
     "gruntfuggly.todo-tree",
@@ -612,7 +588,118 @@ test.describe('Game Flow', () => {
 }
 ```
 
-## Quick Debugging Checklist
+**Installation:**
+1. Open project in VS Code
+2. Press `Ctrl+Shift+P` and run "Extensions: Show Recommended Extensions"
+3. Click "Install All" to install all recommended extensions
+4. Restart VS Code after installation
+
+### 2. Firefox Browser Extensions (Install in Debug Profile)
+
+**React Developer Tools:**
+- Install from Firefox Add-ons
+- Essential for React component debugging
+- Shows component tree, props, and state
+
+**Redux DevTools:**
+- Install from Firefox Add-ons  
+- For state inspection and time-travel debugging
+- Works with Jotai atoms in development mode
+
+**Vue.js devtools:**
+- Alternative state management inspection
+- Useful for complex state debugging scenarios
+
+### 3. Core Development Extensions (Essential)
+
+## Common Issues & Solutions
+
+### 🔧 Multiple GoTrueClient Instances Warning
+
+**Issue:** Console shows "Multiple GoTrueClient instances detected in the same browser context"
+
+**Root Cause:** Multiple Supabase client instances being created
+
+**Solution:** 
+- ✅ **Fixed** - Project now uses singleton Supabase client from `src/lib/supabaseClient.ts`
+- All imports standardized to use the same client instance
+- Lazy loading approach removed to prevent duplicate clients
+
+**Verification:**
+```typescript
+// Check in browser console - should only see one client
+console.log(window.supabase); // Should be consistent across calls
+```
+
+### 🌐 OPTIONS 405 Method Not Allowed Error  
+
+**Issue:** `OPTIONS https://thirtyquiz.tyshub.xyz/.netlify/functions/create-daily-room` returns 405
+
+**Root Cause:** Browsers send CORS preflight OPTIONS requests, but Netlify functions didn't handle them
+
+**Solution:**
+- ✅ **Fixed** - All Netlify functions now handle OPTIONS requests
+- Added CORS headers to all function responses
+- Functions affected: `create-daily-room`, `delete-daily-room`, `create-daily-token`, `check-daily-room`, `game-event`
+
+**Example Fix Applied:**
+```typescript
+export const handler: Handler = async (event) => {
+  // Handle CORS preflight requests
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Max-Age': '86400',
+      },
+      body: '',
+    };
+  }
+  // ... rest of function
+};
+```
+
+### 🦊 Firefox Extensions Reinstalling Every Debug Session
+
+**Issue:** React DevTools and other extensions disappear after each debugging session
+
+**Root Cause:** Firefox creates new profile each time without persistence
+
+**Solution:**
+- ✅ **Fixed** - Launch configuration now includes persistent profile
+- Added `keepProfileChanges: true` and dedicated profile path
+- Extensions installed once will persist across sessions
+
+**Configuration in `.vscode/launch.json`:**
+```json
+{
+  "keepProfileChanges": true,
+  "profile": "${workspaceFolder}/.vscode/firefox-profile"
+}
+```
+
+**Setup Steps:**
+1. Start debugging session in VS Code (Ctrl+Shift+D)
+2. Install React DevTools, Redux DevTools in the opened Firefox instance
+3. Extensions will persist in future debugging sessions
+4. Profile data stored in `.vscode/firefox-profile/` (add to `.gitignore`)
+
+### 🔍 VS Code Extensions Not Auto-Installing
+
+**Issue:** Recommended extensions don't install automatically
+
+**Solution:**
+- ✅ **Fixed** - Created `.vscode/extensions.json` with full recommendation list
+- Extensions will be suggested when opening project in VS Code
+
+**Manual Installation:**
+1. Press `Ctrl+Shift+P` 
+2. Run "Extensions: Show Recommended Extensions"
+3. Click "Install All" button
+4. Restart VS Code after installation
 
 ### 🐛 Application Not Loading
 **Step 1:** Open Firefox Developer Tools (F12) and check Console tab for JavaScript errors
