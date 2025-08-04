@@ -1,5 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useAtomValue } from 'jotai';
+import { isArabicAtom } from '@/state/languageAtoms';
+import ActiveGames from '@/components/ActiveGames';
 
 /**
  * Landing page with simple navigation options. Hosts can create a
@@ -8,6 +12,8 @@ import { motion } from 'framer-motion';
  */
 export default function Landing() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const isArabic = useAtomValue(isArabicAtom);
 
   const handleCreateSession = () => {
     navigate('/create-session');
@@ -15,6 +21,10 @@ export default function Landing() {
 
   const handleJoinGame = () => {
     navigate('/join');
+  };
+
+  const handleJoinGameById = (gameId: string) => {
+    navigate(`/join?gameId=${gameId}`);
   };
 
   const handleAlphaQuiz = () => {
@@ -45,13 +55,16 @@ export default function Landing() {
       </motion.h1>
 
       <motion.p
-        className="mb-10 text-accent2 text-lg font-arabic text-center"
+        className={`mb-10 text-accent2 text-lg text-center ${isArabic ? 'font-arabic' : ''}`}
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.4 }}
       >
-        !ابدأ التحدي مع أصدقائك الآن
+        {t('startChallenge')}
       </motion.p>
+
+      {/* Active Games Section */}
+      <ActiveGames onJoinGame={handleJoinGameById} />
 
       <motion.div
         className="flex flex-col gap-6 items-center w-full max-w-md"
@@ -61,40 +74,40 @@ export default function Landing() {
       >
         <button
           onClick={handleCreateSession}
-          className="w-full px-10 py-4 text-xl rounded-2xl font-bold bg-accent2 hover:bg-accent shadow-lg transition-all border border-accent glow font-arabic"
+          className={`w-full px-10 py-4 text-xl rounded-2xl font-bold bg-accent2 hover:bg-accent shadow-lg transition-all border border-accent glow ${isArabic ? 'font-arabic' : ''}`}
         >
-          إنشاء جلسة جديدة
+          {t('createSession')}
         </button>
 
         <button
           onClick={handleJoinGame}
-          className="w-full px-6 py-3 text-lg rounded-xl font-bold bg-transparent hover:bg-white/10 text-white/80 hover:text-accent2 border border-white/20 hover:border-accent2 transition-all font-arabic"
+          className={`w-full px-6 py-3 text-lg rounded-xl font-bold bg-transparent hover:bg-white/10 text-white/80 hover:text-accent2 border border-white/20 hover:border-accent2 transition-all ${isArabic ? 'font-arabic' : ''}`}
         >
-          الانضمام لجلسة
+          {t('joinSession')}
         </button>
         
         <button
           onClick={handleAlphaQuiz}
-          className="w-full px-6 py-3 text-lg rounded-xl font-bold bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-black border border-orange-400 transition-all font-arabic shadow-lg"
+          className={`w-full px-6 py-3 text-lg rounded-xl font-bold bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-black border border-orange-400 transition-all shadow-lg ${isArabic ? 'font-arabic' : ''}`}
         >
-          Alpha: Quiz 🚀
+          {t('alphaQuiz')}
         </button>
       </motion.div>
 
       <motion.div
-        className="mt-12 text-center text-white/60 text-sm max-w-md"
+        className={`mt-12 text-center text-white/60 text-sm max-w-md ${isArabic ? 'font-arabic' : ''}`}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
       >
-        <p className="font-arabic">
-          إنشاء جلسة جديدة: ستصبح المقدم وتتحكم في اللعبة
+        <p>
+          {t('createSessionDesc')}
         </p>
-        <p className="font-arabic mt-1">
-          الانضمام لجلسة: ادخل كلاعب في جلسة موجودة
+        <p className="mt-1">
+          {t('joinSessionDesc')}
         </p>
-        <p className="font-arabic mt-1 text-orange-300">
-          Alpha Quiz: نسخة مبسطة للاختبار (بدون فيديو)
+        <p className="mt-1 text-orange-300">
+          {t('alphaQuizDesc')}
         </p>
       </motion.div>
     </motion.div>

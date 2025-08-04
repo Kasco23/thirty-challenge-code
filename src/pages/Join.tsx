@@ -6,9 +6,14 @@ import { GameDatabase } from '@/lib/gameDatabase';
 import { getSupabase } from '@/lib/supabaseLazy';
 import LazyImage from '@/components/LazyImage';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import { useTranslation } from '@/hooks/useTranslation';
+import { useAtomValue } from 'jotai';
+import { isArabicAtom } from '@/state/languageAtoms';
 
 export default function Join() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const isArabic = useAtomValue(isArabicAtom);
   const [step, setStep] = useState(1);
   const [joinType, setJoinType] = useState<'host' | 'player' | ''>('');
   // Session code that players use to join the lobby
@@ -78,7 +83,7 @@ export default function Join() {
         .single();
       const foundId = data?.id;
       if (!foundId) {
-        setErrorMsg('لا توجد جلسة بهذا الرمز');
+        setErrorMsg(t('gameNotFound'));
         return;
       }
       navigate(`/lobby/${foundId}?role=host-mobile`);
@@ -86,7 +91,7 @@ export default function Join() {
       const actualGameId = gameId.toUpperCase();
       const existing = await GameDatabase.getGame(actualGameId);
       if (!existing) {
-        setErrorMsg('لا توجد جلسة بهذا الرمز');
+        setErrorMsg(t('gameNotFound'));
         return;
       }
       setStep(3);
@@ -111,14 +116,14 @@ export default function Join() {
       } else if (!takenRoles.includes('playerB')) {
         availableRole = 'playerB';
       } else {
-        setErrorMsg('اللعبة ممتلئة! لا يمكن انضمام المزيد من اللاعبين');
+        setErrorMsg(t('gameIsFull'));
         return;
       }
 
       // Check if video room exists - just inform, don't offer to create
       const game = await GameDatabase.getGame(sessionId);
       if (!game?.video_room_created) {
-        setErrorMsg('لا توجد غرفة فيديو بعد. اتصل بالمقدم لإنشاء الغرفة أولاً.');
+        setErrorMsg(t('noVideoRoomYet') + ' ' + t('contactHostCreateRoom'));
         return;
       }
 
@@ -162,7 +167,7 @@ export default function Join() {
       });
 
       if (!result) {
-        setErrorMsg('فشل في الانضمام للعبة. حاول مرة أخرى');
+        setErrorMsg(t('failedJoinGame'));
         setShowConfirmModal(false);
         setIsJoining(false);
         return;
@@ -177,7 +182,7 @@ export default function Join() {
       }
     } catch (error) {
       console.error('Error joining game:', error);
-      setErrorMsg('حدث خطأ أثناء الانضمام للعبة');
+      setErrorMsg(t('errorJoiningGame'));
       setShowConfirmModal(false);
       setIsJoining(false);
     }
@@ -192,17 +197,17 @@ export default function Join() {
         transition={{ duration: 0.5 }}
       >
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2 font-arabic">
-            انضم للعبة
+          <h1 className={`text-3xl font-bold text-white mb-2 ${isArabic ? 'font-arabic' : ''}`}>
+            {t('joinGame')}
           </h1>
-          <p className="text-white/70 font-arabic">
+          <p className={`text-white/70 ${isArabic ? 'font-arabic' : ''}`}>
             {step === 1
-              ? 'اختر نوع الانضمام'
+              ? t('chooseJoinType')
               : step === 2
                 ? joinType === 'host'
-                  ? 'أدخل رمز الجلسة ورمز المقدم'
-                  : 'أدخل رمز اللعبة والاسم'
-                : 'اختر العلم والفريق'}
+                  ? t('enterSessionAndHostCode')
+                  : t('enterCodeAndName')
+                : t('selectFlag') + ' ' + t('selectTeam')}
           </p>
         </div>
 
@@ -217,14 +222,14 @@ export default function Join() {
             >
               <div className="text-center">
                 <div className="text-3xl mb-2">🎤</div>
-                <h3 className="text-lg font-bold font-arabic mb-2">
-                  انضم كمقدم
+                <h3 className={`text-lg font-bold mb-2 ${isArabic ? 'font-arabic' : ''}`}>
+                  {t('hostMobile')}
                 </h3>
-                <p className="text-sm text-blue-200 font-arabic">
-                  للمقدمين الذين يريدون المشاركة بالفيديو من الهاتف
+                <p className={`text-sm text-blue-200 ${isArabic ? 'font-arabic' : ''}`}>
+                  {t('hostMobileDesc')}
                 </p>
-                <p className="text-xs text-blue-300 font-arabic mt-1">
-                  تحتاج رمز الجلسة ورمز المقدم
+                <p className={`text-xs text-blue-300 mt-1 ${isArabic ? 'font-arabic' : ''}`}>
+                  {t('needSessionAndHostCode')}
                 </p>
               </div>
             </motion.button>
@@ -237,23 +242,23 @@ export default function Join() {
             >
               <div className="text-center">
                 <div className="text-3xl mb-2">🎮</div>
-                <h3 className="text-lg font-bold font-arabic mb-2">
-                  انضم كلاعب
+                <h3 className={`text-lg font-bold mb-2 ${isArabic ? 'font-arabic' : ''}`}>
+                  {t('playerJoin')}
                 </h3>
-                <p className="text-sm text-green-200 font-arabic">
-                  للاعبين المشاركين في المسابقة
+                <p className={`text-sm text-green-200 ${isArabic ? 'font-arabic' : ''}`}>
+                  {t('participatingPlayers')}
                 </p>
-                <p className="text-xs text-green-300 font-arabic mt-1">
-                  تحتاج رمز اللعبة العادي
+                <p className={`text-xs text-green-300 mt-1 ${isArabic ? 'font-arabic' : ''}`}>
+                  {t('sessionCode')}
                 </p>
               </div>
             </motion.button>
 
             <button
               onClick={() => navigate('/')}
-              className="w-full mt-4 px-4 py-2 text-white/70 hover:text-white font-arabic transition-colors"
+              className={`w-full mt-4 px-4 py-2 text-white/70 hover:text-white transition-colors ${isArabic ? 'font-arabic' : ''}`}
             >
-              العودة للرئيسية
+              {t('back')}
             </button>
           </div>
         ) : step === 2 ? (
@@ -262,35 +267,35 @@ export default function Join() {
             {joinType === 'host' ? (
               <>
                 <div>
-                  <label className="block text-white/80 mb-2 font-arabic">
-                    رمز الجلسة
+                  <label className={`block text-white/80 mb-2 ${isArabic ? 'font-arabic' : ''}`}>
+                    {t('sessionCode')}
                   </label>
                   <input
                     type="text"
                     value={gameId}
                     onChange={(e) => setGameId(e.target.value.toUpperCase())}
-                    placeholder="مثال: ABC123"
+                    placeholder={t('enterSessionCode')}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-mono text-center text-lg"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-white/80 mb-2 font-arabic">
-                    رمز المقدم
+                  <label className={`block text-white/80 mb-2 ${isArabic ? 'font-arabic' : ''}`}>
+                    {t('hostCode')}
                   </label>
                   <input
                     type="text"
                     value={hostCode}
                     onChange={(e) => setHostCode(e.target.value.toUpperCase())}
-                    placeholder="مثال: MUSAED"
+                    placeholder={t('enterHostCode')}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-mono text-center text-lg"
                     required
                   />
-                  <p className="text-xs text-blue-300 mt-1 font-arabic text-center">
-                    ستجد رمز المقدم في صفحة إعداد الجلسة
+                  <p className={`text-xs text-blue-300 mt-1 text-center ${isArabic ? 'font-arabic' : ''}`}>
+                    {t('hostCodeFound')}
                   </p>
                   {errorMsg && (
-                    <p className="text-xs text-red-400 mt-1 font-arabic text-center">
+                    <p className={`text-xs text-red-400 mt-1 text-center ${isArabic ? 'font-arabic' : ''}`}>
                       {errorMsg}
                     </p>
                   )}
@@ -299,33 +304,33 @@ export default function Join() {
             ) : (
               <>
                 <div>
-                  <label className="block text-white/80 mb-2 font-arabic">
-                    رمز اللعبة
+                  <label className={`block text-white/80 mb-2 ${isArabic ? 'font-arabic' : ''}`}>
+                    {t('sessionCode')}
                   </label>
                   <input
                     type="text"
                     value={gameId}
                     onChange={(e) => setGameId(e.target.value.toUpperCase())}
-                    placeholder="مثال: ABC123"
+                    placeholder={t('enterSessionCode')}
                     className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-mono text-center text-lg"
                     required
                   />
                   {errorMsg && (
-                    <p className="text-xs text-red-400 mt-1 font-arabic text-center">
+                    <p className={`text-xs text-red-400 mt-1 text-center ${isArabic ? 'font-arabic' : ''}`}>
                       {errorMsg}
                     </p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-white/80 mb-2 font-arabic">
-                    الاسم
+                  <label className={`block text-white/80 mb-2 ${isArabic ? 'font-arabic' : ''}`}>
+                    {t('playerName')}
                   </label>
                   <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="أدخل اسمك"
-                    className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic text-center"
+                    placeholder={t('enterPlayerName')}
+                    className={`w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-accent2 text-center ${isArabic ? 'font-arabic' : ''}`}
                     required
                   />
                 </div>
@@ -336,9 +341,9 @@ export default function Join() {
               <button
                 type="button"
                 onClick={() => setStep(1)}
-                className="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-arabic transition-colors"
+                className={`flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl transition-colors ${isArabic ? 'font-arabic' : ''}`}
               >
-                رجوع
+                {t('back')}
               </button>
               <button
                 type="submit"
@@ -346,9 +351,9 @@ export default function Join() {
                   !gameId.trim() ||
                   (joinType === 'host' ? !hostCode.trim() : !name.trim())
                 }
-                className="flex-1 px-4 py-3 bg-accent2 hover:bg-accent text-white rounded-xl font-arabic transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`flex-1 px-4 py-3 bg-accent2 hover:bg-accent text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isArabic ? 'font-arabic' : ''}`}
               >
-                {joinType === 'host' ? 'انضم كمقدم' : 'التالي'}
+                {joinType === 'host' ? t('joinAsHost') : t('next')}
               </button>
             </div>
           </form>
@@ -357,15 +362,15 @@ export default function Join() {
           <form onSubmit={handlePlayerJoin} className="space-y-6">
             {/* Flag Selection */}
             <div>
-              <label className="block text-white/80 mb-2 font-arabic">
-                اختر العلم
+              <label className={`block text-white/80 mb-2 ${isArabic ? 'font-arabic' : ''}`}>
+                {t('selectFlag')}
               </label>
               <input
                 type="text"
                 value={flagSearch}
                 onChange={(e) => setFlagSearch(e.target.value)}
-                placeholder="ابحث عن بلد..."
-                className="w-full px-4 py-2 mb-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic"
+                placeholder={t('flagSearch')}
+                className={`w-full px-4 py-2 mb-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 ${isArabic ? 'font-arabic' : ''}`}
               />
               <div className="grid grid-cols-4 gap-2 max-h-32 overflow-y-auto">
                 {filteredFlags.map((flag: { code: string; name: string }) => (
@@ -380,7 +385,7 @@ export default function Join() {
                     }`}
                   >
                     <span className={`fi fi-${flag.code} text-2xl`}></span>
-                    <p className="text-xs text-white/80 mt-1 font-arabic">
+                    <p className={`text-xs text-white/80 mt-1 ${isArabic ? 'font-arabic' : ''}`}>
                       {flag.name}
                     </p>
                   </button>
@@ -390,15 +395,15 @@ export default function Join() {
 
             {/* Team Selection */}
             <div>
-              <label className="block text-white/80 mb-2 font-arabic">
-                اختر الفريق
+              <label className={`block text-white/80 mb-2 ${isArabic ? 'font-arabic' : ''}`}>
+                {t('selectTeam')}
               </label>
               <input
                 type="text"
                 value={teamSearch}
                 onChange={(e) => setTeamSearch(e.target.value)}
-                placeholder="ابحث عن فريق..."
-                className="w-full px-4 py-2 mb-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 font-arabic"
+                placeholder={t('teamSearch')}
+                className={`w-full px-4 py-2 mb-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-accent2 ${isArabic ? 'font-arabic' : ''}`}
               />
               <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
                 {filteredTeams.map((team: import('@/utils/teamUtils').Team) => (
@@ -417,7 +422,7 @@ export default function Join() {
                       alt={team.name}
                       className="w-8 h-8 object-contain"
                     />
-                    <span className="text-white font-arabic text-sm">
+                    <span className={`text-white text-sm ${isArabic ? 'font-arabic' : ''}`}>
                       {team.displayName}
                     </span>
                   </button>
@@ -427,7 +432,7 @@ export default function Join() {
 
             {/* Error message for step 3 */}
             {errorMsg && (
-              <div className="text-red-400 text-sm font-arabic text-center">
+              <div className={`text-red-400 text-sm text-center ${isArabic ? 'font-arabic' : ''}`}>
                 {errorMsg}
               </div>
             )}
@@ -436,16 +441,16 @@ export default function Join() {
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl font-arabic transition-colors"
+                className={`flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-xl transition-colors ${isArabic ? 'font-arabic' : ''}`}
               >
-                رجوع
+                {t('back')}
               </button>
               <button
                 type="submit"
                 disabled={!selectedFlag || !selectedTeam}
-                className="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-arabic transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isArabic ? 'font-arabic' : ''}`}
               >
-                انضم للعبة
+                {t('joinGame')}
               </button>
             </div>
           </form>
@@ -457,10 +462,10 @@ export default function Join() {
         isOpen={showConfirmModal}
         onClose={() => setShowConfirmModal(false)}
         onConfirm={handleConfirmJoin}
-        title="تأكيد الانضمام للعبة"
-        message={`أنت على وشك الانضمام للعبة ${gameId} كـ${playerRole === 'playerA' ? 'لاعب أول' : 'لاعب ثاني'}. سيتم نقلك إلى صالة الانتظار لبدء الفيديو والانتظار حتى يبدأ المقدم اللعبة.`}
-        confirmText="انضم للعبة"
-        cancelText="إلغاء"
+        title={t('confirmJoinGame')}
+        message={`${t('aboutToJoinGame')} ${gameId} ${playerRole === 'playerA' ? t('firstPlayer') : t('secondPlayer')}. ${t('moveToLobbyWait')}`}
+        confirmText={t('joinGame')}
+        cancelText={t('cancel')}
         isLoading={isJoining}
       />
     </div>
