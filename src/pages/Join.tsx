@@ -86,7 +86,7 @@ export default function Join() {
         setErrorMsg(t('gameNotFound'));
         return;
       }
-      navigate(`/lobby/${foundId}?role=host-mobile`);
+      navigate(`/lobby/${foundId}?role=host`);
     } else {
       const actualGameId = gameId.toUpperCase();
       const existing = await GameDatabase.getGame(actualGameId);

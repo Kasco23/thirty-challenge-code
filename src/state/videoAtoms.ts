@@ -10,31 +10,16 @@ export const testDailyConnectionAtom = atom(
     set(videoErrorAtom, null);
     
     try {
-      // Test room creation
+      // Test endpoint availability without creating test rooms
       const response = await fetch('/.netlify/functions/create-daily-room', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roomName: `test-${Date.now()}`,
-          properties: { max_participants: 10 }
-        })
+        method: 'OPTIONS',
       });
       
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create test room');
+      if (response.status === 404) {
+        throw new Error('Daily.co endpoint not available');
       }
       
-      const roomData = await response.json();
-      console.log('Daily.co test successful:', roomData.roomName);
-      
-      // Clean up test room
-      await fetch('/.netlify/functions/delete-daily-room', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomName: roomData.roomName })
-      });
-      
+      console.log('Daily.co endpoint is available');
       return true;
     } catch (error) {
       console.error('Daily.co test failed:', error);

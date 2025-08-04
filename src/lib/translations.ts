@@ -98,6 +98,49 @@ export interface Translations {
   english: string;
   arabic: string;
   switchLanguage: string;
+  
+  // Lobby Page
+  waitingLobby: string;
+  lobbySessionCode: string;
+  connectedPlayers: string;
+  videoSystemUpdated: string;
+  userInformation: string;
+  participantType: string;
+  participantName: string;
+  participantId: string;
+  videoSystemNotes: string;
+  roomLinkLoaded: string;
+  playerNamesVisible: string;
+  videoRoomUsingSession: string;
+  cameraControls: string;
+  dailyKitchenSink: string;
+  
+  // Control Room Page
+  controlRoom: string;
+  playersCode: string;
+  controlRoomHostCode: string;
+  currentStage: string;
+  hostConnected: string;
+  hostDisconnected: string;
+  controllerActive: string;
+  connectedToServer: string;
+  controlRoomStartGame: string;
+  waitingConfig: string;
+  gameAlreadyStarted: string;
+  videoRoomReady: string;
+  noVideoRoom: string;
+  manageVideoLobby: string;
+  importantVideoInfo: string;
+  controlRoomGameOnly: string;
+  videoManagementInLobby: string;
+  goToLobby: string;
+  showParticipantInfo: string;
+  participantInfo: string;
+  controlRoomHost: string;
+  controlRoomFirstPlayer: string;
+  controlRoomSecondPlayer: string;
+  notJoinedYet: string;
+  videoInteractionTip: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -199,6 +242,49 @@ export const translations: Record<Language, Translations> = {
     english: 'English',
     arabic: 'العربية',
     switchLanguage: 'Switch Language',
+    
+    // Lobby Page
+    waitingLobby: 'Waiting Lobby',
+    lobbySessionCode: 'Session Code',
+    connectedPlayers: 'Connected Players',
+    videoSystemUpdated: 'Updated video system with player name display',
+    userInformation: 'User Information',
+    participantType: 'Type',
+    participantName: 'Name',
+    participantId: 'ID',
+    videoSystemNotes: '✅ Updated Video System:',
+    roomLinkLoaded: '• Room link automatically loaded from session ID',
+    playerNamesVisible: '• Player names displayed below videos',
+    videoRoomUsingSession: '• Video room uses session ID directly',
+    cameraControls: '• Camera and microphone controls',
+    dailyKitchenSink: '• Enhanced Daily.co Kitchen Sink application',
+    
+    // Control Room Page
+    controlRoom: 'Control Room',
+    playersCode: 'Players Code',
+    controlRoomHostCode: 'Host Code',
+    currentStage: 'Current Stage',
+    hostConnected: 'Host Connected',
+    hostDisconnected: 'Host Disconnected',
+    controllerActive: 'Controller Active',
+    connectedToServer: 'Connected to Server',
+    controlRoomStartGame: 'Start Game',
+    waitingConfig: 'Waiting for configuration confirmation...',
+    gameAlreadyStarted: 'Game already started',
+    videoRoomReady: '✓ Video room ready',
+    noVideoRoom: 'No video room',
+    manageVideoLobby: 'Manage Video in Lobby',
+    importantVideoInfo: 'Important Information - Video Control',
+    controlRoomGameOnly: 'This control room is for game management only - does not contain video settings',
+    videoManagementInLobby: 'To manage video and interact with players, please use the waiting lobby',
+    goToLobby: 'Go to Waiting Lobby',
+    showParticipantInfo: 'Show participant information (for reference)',
+    participantInfo: 'Participant Information:',
+    controlRoomHost: 'Host',
+    controlRoomFirstPlayer: 'First Player',
+    controlRoomSecondPlayer: 'Second Player',
+    notJoinedYet: 'Not joined yet',
+    videoInteractionTip: '💡 To interact with video and participants, use the waiting lobby',
   },
   ar: {
     // Landing Page
@@ -298,6 +384,49 @@ export const translations: Record<Language, Translations> = {
     english: 'English',
     arabic: 'العربية',
     switchLanguage: 'تغيير اللغة',
+    
+    // Lobby Page
+    waitingLobby: 'صالة الانتظار',
+    lobbySessionCode: 'رمز الجلسة',
+    connectedPlayers: 'اللاعبون المتصلون',
+    videoSystemUpdated: 'نظام الفيديو المحدث مع عرض أسماء اللاعبين',
+    userInformation: 'معلومات المستخدم',
+    participantType: 'النوع',
+    participantName: 'الاسم',
+    participantId: 'المعرف',
+    videoSystemNotes: '✅ نظام الفيديو المحدث:',
+    roomLinkLoaded: '• رابط الغرفة يتم تحميله تلقائياً من معرف الجلسة',
+    playerNamesVisible: '• أسماء اللاعبين تظهر أسفل مقاطع الفيديو',
+    videoRoomUsingSession: '• غرفة الفيديو تستخدم معرف الجلسة مباشرة',
+    cameraControls: '• تحكم في الكاميرا والميكروفون',
+    dailyKitchenSink: '• تطبيق Daily.co Kitchen Sink المطور',
+    
+    // Control Room Page
+    controlRoom: 'غرفة التحكم',
+    playersCode: 'رمز اللاعبين',
+    controlRoomHostCode: 'رمز المقدم',
+    currentStage: 'المرحلة الحالية',
+    hostConnected: 'المقدم متصل',
+    hostDisconnected: 'المقدم غير متصل',
+    controllerActive: 'تحكم نشط',
+    connectedToServer: 'متصل بالخادم',
+    controlRoomStartGame: 'ابدأ اللعبة',
+    waitingConfig: 'في انتظار تأكيد البيانات...',
+    gameAlreadyStarted: 'اللعبة بدأت فعلاً',
+    videoRoomReady: '✓ غرفة الفيديو جاهزة',
+    noVideoRoom: 'لا توجد غرفة فيديو',
+    manageVideoLobby: 'إدارة الفيديو في الصالة',
+    importantVideoInfo: 'معلومات هامة - التحكم في الفيديو',
+    controlRoomGameOnly: 'هذه غرفة التحكم للعبة فقط - لا تحتوي على إعدادات الفيديو',
+    videoManagementInLobby: 'لإدارة الفيديو والمشاركة مع اللاعبين، يرجى استخدام صالة الانتظار',
+    goToLobby: 'الذهاب لصالة الانتظار',
+    showParticipantInfo: 'عرض معلومات المشاركين (للمرجع)',
+    participantInfo: 'معلومات المشاركين:',
+    controlRoomHost: 'المقدم',
+    controlRoomFirstPlayer: 'اللاعب الأول',
+    controlRoomSecondPlayer: 'اللاعب الثاني',
+    notJoinedYet: 'لم ينضم بعد',
+    videoInteractionTip: '💡 للتفاعل مع الفيديو والمشاركين، استخدم صالة الانتظار',
   },
 };
 

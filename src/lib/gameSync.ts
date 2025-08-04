@@ -225,7 +225,7 @@ export class GameSync {
   async trackPresence(participantData: {
     id: string;
     name: string;
-    type: 'host-pc' | 'host-mobile' | 'player';
+    type: 'controller' | 'host' | 'player';
     playerId?: PlayerId;
     flag?: string;
     club?: string;
