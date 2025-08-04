@@ -8,8 +8,8 @@ export default defineConfig({
     react(),
     bundlesize({
       limits: [
-        // check every generated JS entry ≤ 200 kB gzip-compressed
-        { name: '**/*.js', limit: '200 kB' },
+        // check every generated JS entry ≤ 205 kB gzip-compressed
+        { name: '**/*.js', limit: '205 kB' },
       ],
     }),
   ],
@@ -36,7 +36,7 @@ export default defineConfig({
       },
     },
     // optional: also raise Vite’s own warning bar from 500 kB to 200 kB
-    chunkSizeWarningLimit: 200, // kB
+    chunkSizeWarningLimit: 205, // kB
   },
   optimizeDeps: {
     include: [

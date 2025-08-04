@@ -93,32 +93,95 @@ function VideoContent({
   const [isJoining, setIsJoining] = useState(false);
   const [preAuthToken, setPreAuthToken] = useState('');
   const [isGeneratingToken, setIsGeneratingToken] = useState(false);
+  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
+  const [roomCreationAttempted, setRoomCreationAttempted] = useState(false);
 
-  // Auto-populate room URL and generate token when component mounts or game state changes
+  // Auto-populate room URL when game state is loaded
   useEffect(() => {
     if (gameState.videoRoomUrl && roomUrl !== gameState.videoRoomUrl) {
       setRoomUrl(gameState.videoRoomUrl);
       showAlertMessage(t('roomUrlLoaded'), 'success');
-    } else if (!gameState.videoRoomUrl && !gameState.videoRoomCreated && (myParticipant.type === 'host' || myParticipant.type === 'controller')) {
-      // Auto-create room for host/controller if none exists
-      const createRoom = async () => {
-        try {
-          showAlertMessage('Creating video room...', 'info');
-          const result = await createVideoRoom(gameId);
-          if (result.success && result.roomUrl) {
-            setRoomUrl(result.roomUrl);
-            showAlertMessage('Video room created successfully!', 'success');
-          } else {
-            showAlertMessage('Failed to create video room', 'error');
-          }
-        } catch (error) {
-          console.error('Failed to auto-create video room:', error);
-          showAlertMessage('Error creating video room automatically', 'error');
-        }
-      };
-      createRoom();
+      console.log('[VideoRoom] Loaded existing room URL from game state:', gameState.videoRoomUrl);
     }
-  }, [gameState.videoRoomUrl, gameState.videoRoomCreated, roomUrl, myParticipant.type, gameId, createVideoRoom, showAlertMessage, t]);
+  }, [gameState.videoRoomUrl, roomUrl, showAlertMessage, t]);
+
+  // Reset creation flags when gameId changes
+  useEffect(() => {
+    setRoomCreationAttempted(false);
+    setIsCreatingRoom(false);
+    console.log('[VideoRoom] GameId changed, resetting room creation flags for:', gameId);
+  }, [gameId]);
+
+  // Auto-create room for host/controller if none exists - with safeguards
+  useEffect(() => {
+    console.log('[VideoRoom] Checking room creation conditions:', {
+      participantType: myParticipant.type,
+      gameStateGameId: gameState.gameId,
+      currentGameId: gameId,
+      hasVideoRoomUrl: !!gameState.videoRoomUrl,
+      videoRoomCreated: gameState.videoRoomCreated,
+      roomCreationAttempted,
+      isCreatingRoom
+    });
+
+    // Only proceed if:
+    // 1. We're a host or controller
+    // 2. Game state is loaded (gameId matches our gameId)
+    // 3. No room URL exists in game state
+    // 4. Room creation was not marked as done in game state
+    // 5. We haven't attempted creation yet
+    // 6. We're not currently creating a room
+    if (
+      (myParticipant.type === 'host' || myParticipant.type === 'controller') &&
+      gameState.gameId === gameId && // Ensure game state is loaded for this gameId
+      !gameState.videoRoomUrl &&
+      !gameState.videoRoomCreated &&
+      !roomCreationAttempted &&
+      !isCreatingRoom
+    ) {
+      console.log('[VideoRoom] All conditions met - creating new room for gameId:', gameId);
+      
+      // Add a small delay to ensure all state updates are processed
+      const timeoutId = setTimeout(() => {
+        const createRoom = async () => {
+          setIsCreatingRoom(true);
+          setRoomCreationAttempted(true);
+          
+          try {
+            showAlertMessage('Creating video room...', 'info');
+            const result = await createVideoRoom(gameId);
+            if (result.success && result.roomUrl) {
+              setRoomUrl(result.roomUrl);
+              showAlertMessage('Video room created successfully!', 'success');
+              console.log('[VideoRoom] Room created successfully:', result.roomUrl);
+            } else {
+              showAlertMessage('Failed to create video room', 'error');
+              console.error('[VideoRoom] Room creation failed:', result);
+            }
+          } catch (error) {
+            console.error('[VideoRoom] Failed to auto-create video room:', error);
+            showAlertMessage('Error creating video room automatically', 'error');
+          } finally {
+            setIsCreatingRoom(false);
+          }
+        };
+        
+        createRoom();
+      }, 1000); // 1 second delay to ensure state is stable
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [
+    gameState.gameId,
+    gameState.videoRoomUrl, 
+    gameState.videoRoomCreated, 
+    myParticipant.type, 
+    gameId, 
+    roomCreationAttempted, 
+    isCreatingRoom, 
+    createVideoRoom, 
+    showAlertMessage
+  ]);
 
   // Auto-generate token when room URL is available
   useEffect(() => {
@@ -181,7 +244,7 @@ function VideoContent({
     } finally {
       setIsJoining(false);
     }
-  }, [daily, roomUrl, userName, myParticipant.name, preAuthToken, isJoining, showAlertMessage]);
+  }, [daily, roomUrl, userName, myParticipant.name, preAuthToken, isJoining, showAlertMessage, t]);
 
   // Leave call function
   const leaveCall = useCallback(async () => {
@@ -194,7 +257,7 @@ function VideoContent({
       console.error('Failed to leave call:', error);
       showAlertMessage(t('failedLeaveCall'), 'error');
     }
-  }, [daily, showAlertMessage]);
+  }, [daily, showAlertMessage, t]);
 
   // Toggle camera
   const toggleCamera = useCallback(async () => {
@@ -401,10 +464,13 @@ export default function SimpleKitchenSinkVideo({
   const [callObject, setCallObject] = useState<DailyCall | null>(null);
   const { t } = useTranslation();
 
-  // Create call object
+  // Create call object - only once
   useEffect(() => {
+    let isMounted = true;
+    
     const createCallObject = async () => {
       try {
+        console.log('[VideoRoom] Creating Daily call object...');
         const newCallObject = DailyIframe.createCallObject({
           iframeStyle: {
             position: 'relative',
@@ -413,10 +479,19 @@ export default function SimpleKitchenSinkVideo({
             border: 'none',
           },
         });
-        setCallObject(newCallObject);
+        
+        if (isMounted) {
+          setCallObject(newCallObject);
+          console.log('[VideoRoom] Daily call object created successfully');
+        } else {
+          // Component was unmounted, cleanup
+          newCallObject.destroy();
+        }
       } catch (error) {
-        console.error('Failed to create Daily call object:', error);
-        showAlertMessage(t('failedInitVideoComponents'), 'error');
+        console.error('[VideoRoom] Failed to create Daily call object:', error);
+        if (isMounted && showAlertMessage && t) {
+          showAlertMessage(t('failedInitVideoComponents'), 'error');
+        }
       }
     };
 
@@ -426,15 +501,17 @@ export default function SimpleKitchenSinkVideo({
 
     // Cleanup
     return () => {
+      isMounted = false;
       if (callObject) {
         try {
+          console.log('[VideoRoom] Cleaning up Daily call object...');
           callObject.destroy();
         } catch (error) {
-          console.warn('Error during call object cleanup:', error);
+          console.warn('[VideoRoom] Error during call object cleanup:', error);
         }
       }
     };
-  }, [showAlertMessage]); // callObject removed to prevent infinite loop
+  }, [callObject, showAlertMessage, t]); // Include dependencies
 
   if (!callObject) {
     return (
