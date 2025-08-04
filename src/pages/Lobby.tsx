@@ -1,6 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { useAtomValue } from 'jotai';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
 import { gameSyncInstanceAtom, lobbyParticipantsAtom } from '@/state';
@@ -94,14 +93,14 @@ export default function Lobby() {
                     REMO: 4
                   }
                 );
-                showAlertMessage('تم إنشاء جلسة جديدة بنجاح', 'success');
+                showAlertMessage(t('sessionCreatedSuccessfully'), 'success');
               } catch (createError) {
                 console.error('Failed to create new game:', createError);
-                showAlertMessage('فشل في إنشاء جلسة جديدة. تحقق من صحة الرابط.', 'error');
+                showAlertMessage(t('failedCreateSession'), 'error');
               }
             } else {
               console.error('Failed to load game state:', result.error);
-              showAlertMessage(`فشل في تحميل بيانات الجلسة: ${result.error}`, 'error');
+              showAlertMessage(`${t('failedLoadSessionData')}: ${result.error}`, 'error');
             }
           }
         } catch (error) {
@@ -154,7 +153,7 @@ export default function Lobby() {
     return () => {
       isMounted = false;
     };
-  }, [gameId, searchParamsObj, state.gameId, state.hostName, loadGameState, setHostConnected, setParticipant, showAlertMessage, startSession]);
+  }, [gameId, searchParamsObj, state.gameId, state.hostName, loadGameState, setHostConnected, setParticipant, showAlertMessage, startSession, language, t]);
 
   // Set up cleanup when user leaves the page
   useEffect(() => {
@@ -184,8 +183,8 @@ export default function Lobby() {
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 flex items-center justify-center">
         <div className={`text-white text-center ${language === 'ar' ? 'font-arabic' : ''}`}>
           <div className="w-8 h-8 border-2 border-accent2 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-lg mb-2">{language === 'ar' ? 'جاري تحميل الصالة...' : 'Loading lobby...'}</p>
-          {!gameId && <p className="text-sm text-white/70">{language === 'ar' ? 'لا يوجد معرف للعبة' : 'No game ID found'}</p>}
+          <p className="text-lg mb-2">{language === 'ar' ? t('loadingLobby') : 'Loading lobby...'}</p>
+          {!gameId && <p className="text-sm text-white/70">{language === 'ar' ? t('noGameIdFound') : 'No game ID found'}</p>}
         </div>
       </div>
     );
@@ -217,32 +216,27 @@ export default function Lobby() {
             <p className={`text-white/70 ${language === 'ar' ? 'font-arabic' : ''}`}>
               {t('connectedPlayers')}: {connectedPlayers}/2
             </p>
-            <p className={`text-blue-300 text-sm ${language === 'ar' ? 'font-arabic' : ''}`}>
-              {t('videoSystemUpdated')}
-            </p>
+
           </div>
         </div>
 
-        {/* User Info */}
-        <div className="mb-8 bg-blue-500/20 rounded-xl p-6 border border-blue-500/30">
-          <h3 className={`text-xl font-bold text-blue-300 mb-4 text-center ${language === 'ar' ? 'font-arabic' : ''}`}>
-            {t('userInformation')}
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div>
-              <p className={`text-white ${language === 'ar' ? 'font-arabic' : ''}`}>{t('participantType')}: {myParticipant.type}</p>
-            </div>
-            <div>
-              <p className={`text-white ${language === 'ar' ? 'font-arabic' : ''}`}>{t('participantName')}: {myParticipant.name}</p>
-            </div>
-            <div>
-              <p className={`text-white ${language === 'ar' ? 'font-arabic' : ''}`}>{t('participantId')}: {myParticipant.id}</p>
-            </div>
+        {/* User Info - Compact */}
+        <div className="mb-6 bg-blue-500/20 rounded-xl p-4 border border-blue-500/30">
+          <div className="flex flex-wrap justify-center gap-4 text-sm">
+            <span className={`text-white bg-blue-600/30 px-3 py-1 rounded-full ${language === 'ar' ? 'font-arabic' : ''}`}>
+              {t('participantType')}: {myParticipant.type}
+            </span>
+            <span className={`text-white bg-blue-600/30 px-3 py-1 rounded-full ${language === 'ar' ? 'font-arabic' : ''}`}>
+              {t('participantName')}: {myParticipant.name}
+            </span>
+            <span className={`text-white bg-blue-600/30 px-3 py-1 rounded-full ${language === 'ar' ? 'font-arabic' : ''}`}>
+              {t('participantId')}: {myParticipant.id}
+            </span>
           </div>
         </div>
 
-        {/* Simple Kitchen Sink Video - with proper room name using session ID */}
-        <div className="mb-8">
+        {/* Simple Kitchen Sink Video - Optimized for mobile */}
+        <div className="mb-6">
           <SimpleKitchenSinkVideo
             gameId={gameId!}
             myParticipant={myParticipant}
@@ -251,24 +245,6 @@ export default function Lobby() {
           />
         </div>
 
-        {/* Instructions */}
-        <motion.div
-          className="text-center text-white/60 text-sm max-w-2xl mx-auto"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <div className="bg-green-500/10 rounded-lg p-4 border border-green-500/20">
-            <p className={`mb-2 ${language === 'ar' ? 'font-arabic' : ''}`}>{t('videoSystemNotes')}</p>
-            <div className={`${language === 'ar' ? 'text-right' : 'text-left'} space-y-1 ${language === 'ar' ? 'font-arabic' : ''}`}>
-              <p>• {t('roomLinkLoaded')}</p>
-              <p>• {t('playerNamesVisible')}</p>
-              <p>• {t('videoRoomUsingSession')}</p>
-              <p>• {t('cameraControls')}</p>
-              <p>• {t('dailyKitchenSink')}</p>
-            </div>
-          </div>
-        </motion.div>
       </div>
     </div>
   );
