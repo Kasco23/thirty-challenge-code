@@ -26,10 +26,13 @@
   ],
   "src/alphaquiz/state/alphaAtoms.ts": [],
   "src/components/ActiveGames.tsx": [],
-  "src/components/AlertBanner.tsx": [],
+  "src/components/AlertBanner.tsx": [
+    "src/utils/debugLog.ts"
+  ],
   "src/components/Buzzer.tsx": [],
   "src/components/ConfirmationModal.tsx": [],
   "src/components/ConnectionBanner.tsx": [],
+  "src/components/ErrorBoundary.tsx": [],
   "src/components/KitchenSinkVideo.tsx": [],
   "src/components/LanguageToggle.tsx": [],
   "src/components/LazyImage.tsx": [],
@@ -101,6 +104,8 @@
   "src/state/syncAtoms.ts": [],
   "src/state/videoAtoms.ts": [],
   "src/types/game.ts": [],
+  "src/utils/debugLog.ts": [],
+  "src/utils/debugNetworkRequests.ts": [],
   "src/utils/teamUtils.ts": [],
   "src/vite-env.d.ts": []
 }
