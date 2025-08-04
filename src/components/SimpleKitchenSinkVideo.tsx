@@ -11,6 +11,7 @@ import {
 } from '@daily-co/daily-react';
 import DailyIframe, { type DailyCall } from '@daily-co/daily-js';
 import { useGameState, useGameActions } from '@/hooks/useGameAtoms';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { LobbyParticipant } from '@/state';
 
 interface SimpleKitchenSinkVideoProps {
@@ -35,7 +36,7 @@ function ParticipantVideo({
   
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden border border-gray-600/50">
-      <div className="aspect-[3/4] sm:aspect-video relative">
+      <div className="aspect-[4/3] relative">
         <DailyVideo 
           sessionId={sessionId}
           type="video"
@@ -44,23 +45,23 @@ function ParticipantVideo({
         />
         
         {/* Participant name overlay - now shows actual name */}
-        <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-sm font-arabic">
+        <div className="absolute bottom-1 left-1 bg-black/70 text-white px-2 py-1 rounded text-xs">
           {participantName} {sessionId === localParticipantId ? '(أنت)' : ''}
         </div>
         
         {/* Video number indicator */}
-        <div className="absolute top-2 right-2 bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold">
+        <div className="absolute top-1 right-1 bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs">
           {index + 1}
         </div>
       </div>
       
-      {/* Player name below video */}
-      <div className="p-3 bg-gray-800/80 text-center">
-        <p className="text-white font-arabic font-semibold">
+      {/* Player name below video - more compact */}
+      <div className="p-2 bg-gray-800/80 text-center">
+        <p className="text-white text-sm font-semibold">
           {participantName}
         </p>
         {participant?.user_id && participant.user_id !== participantName && (
-          <p className="text-gray-400 text-xs font-arabic mt-1">
+          <p className="text-gray-400 text-xs mt-1">
             معرف: {participant.user_id}
           </p>
         )}
@@ -85,6 +86,7 @@ function VideoContent({
   const localParticipant = useLocalParticipant();
   const gameState = useGameState();
   const { generateDailyToken, createVideoRoom } = useGameActions();
+  const { t } = useTranslation();
   
   const [roomUrl, setRoomUrl] = useState('');
   const [userName, setUserName] = useState(myParticipant.name);
@@ -96,27 +98,27 @@ function VideoContent({
   useEffect(() => {
     if (gameState.videoRoomUrl && roomUrl !== gameState.videoRoomUrl) {
       setRoomUrl(gameState.videoRoomUrl);
-      showAlertMessage('تم تحميل رابط الغرفة تلقائياً', 'success');
-    } else if (!gameState.videoRoomUrl && !gameState.videoRoomCreated && myParticipant.type.startsWith('host')) {
-      // Auto-create room for host if none exists
+      showAlertMessage(t('roomUrlLoaded'), 'success');
+    } else if (!gameState.videoRoomUrl && !gameState.videoRoomCreated && (myParticipant.type === 'host' || myParticipant.type === 'controller')) {
+      // Auto-create room for host/controller if none exists
       const createRoom = async () => {
         try {
-          showAlertMessage('جاري إنشاء غرفة فيديو جديدة...', 'info');
+          showAlertMessage('Creating video room...', 'info');
           const result = await createVideoRoom(gameId);
           if (result.success && result.roomUrl) {
             setRoomUrl(result.roomUrl);
-            showAlertMessage('تم إنشاء غرفة الفيديو بنجاح!', 'success');
+            showAlertMessage('Video room created successfully!', 'success');
           } else {
-            showAlertMessage('فشل في إنشاء غرفة الفيديو', 'error');
+            showAlertMessage('Failed to create video room', 'error');
           }
         } catch (error) {
           console.error('Failed to auto-create video room:', error);
-          showAlertMessage('خطأ في إنشاء غرفة الفيديو تلقائياً', 'error');
+          showAlertMessage('Error creating video room automatically', 'error');
         }
       };
       createRoom();
     }
-  }, [gameState.videoRoomUrl, gameState.videoRoomCreated, roomUrl, myParticipant.type, gameId, createVideoRoom, showAlertMessage]);
+  }, [gameState.videoRoomUrl, gameState.videoRoomCreated, roomUrl, myParticipant.type, gameId, createVideoRoom, showAlertMessage, t]);
 
   // Auto-generate token when room URL is available
   useEffect(() => {
@@ -131,20 +133,20 @@ function VideoContent({
         .then((token) => {
           if (token) {
             setPreAuthToken(token);
-            showAlertMessage('تم إنشاء رمز الدخول تلقائياً', 'success');
+            showAlertMessage(t('tokenGenerated'), 'success');
           } else {
-            showAlertMessage('تعذر إنشاء رمز الدخول، يمكنك المتابعة بدونه', 'warning');
+            showAlertMessage(t('failedGenerateToken'), 'warning');
           }
         })
         .catch((error) => {
           console.error('Failed to generate token:', error);
-          showAlertMessage('تعذر إنشاء رمز الدخول، يمكنك المتابعة بدونه', 'warning');
+          showAlertMessage(t('failedGenerateToken'), 'warning');
         })
         .finally(() => {
           setIsGeneratingToken(false);
         });
     }
-  }, [gameState.videoRoomUrl, preAuthToken, isGeneratingToken, generateDailyToken, gameId, myParticipant.name, myParticipant.type, showAlertMessage]);
+  }, [gameState.videoRoomUrl, preAuthToken, isGeneratingToken, generateDailyToken, gameId, myParticipant.name, myParticipant.type, showAlertMessage, t]);
 
   // Join call function
   const joinCall = useCallback(async () => {
@@ -152,7 +154,7 @@ function VideoContent({
 
     setIsJoining(true);
     try {
-      showAlertMessage('جاري الانضمام للمكالمة...', 'info');
+      showAlertMessage(t('joiningCallMsg'), 'info');
       
       // Prepare join options
       const joinOptions: {
@@ -172,10 +174,10 @@ function VideoContent({
       // Join the call
       await daily.join(joinOptions);
       
-      showAlertMessage('تم الانضمام للمكالمة بنجاح!', 'success');
+      showAlertMessage(t('joinedCallSuccessfully'), 'success');
     } catch (error) {
       console.error('Failed to join call:', error);
-      showAlertMessage(`فشل في الانضمام للمكالمة: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`, 'error');
+      showAlertMessage(`${t('failedJoinCall')}: ${error instanceof Error ? error.message : t('unknownError')}`, 'error');
     } finally {
       setIsJoining(false);
     }
@@ -187,10 +189,10 @@ function VideoContent({
 
     try {
       await daily.leave();
-      showAlertMessage('تم مغادرة المكالمة', 'info');
+      showAlertMessage(t('leftCall'), 'info');
     } catch (error) {
       console.error('Failed to leave call:', error);
-      showAlertMessage('خطأ في مغادرة المكالمة', 'error');
+      showAlertMessage(t('failedLeaveCall'), 'error');
     }
   }, [daily, showAlertMessage]);
 
@@ -220,130 +222,135 @@ function VideoContent({
   const canJoin = !isInCall && roomUrl.trim() && !isJoining;
 
   return (
-    <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-600/30 space-y-6">
-      <h3 className="text-xl font-bold text-white text-center font-arabic">
-        Daily.co Kitchen Sink Video
+    <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-600/30 space-y-4">
+      <h3 className="text-lg font-bold text-white text-center">
+        {t('dailyVideoSystem')}
       </h3>
 
-      {/* Control Panel */}
-      <div className="bg-gray-700/50 rounded-lg p-4 space-y-4">
-        <h4 className="text-lg font-semibold text-white font-arabic">إعدادات الاتصال</h4>
+      {/* Control Panel - Compact Layout */}
+      <div className="bg-gray-700/50 rounded-lg p-3 space-y-3">
+        <h4 className="text-base font-semibold text-white">{t('connectionSettings')}</h4>
         
-        {/* Auto-filled Room URL */}
-        <div>
-          <label className="block text-white font-arabic text-sm mb-2">
-            رابط الغرفة {gameState.videoRoomUrl ? '✅ (تم التحميل تلقائياً)' : '*'}
-          </label>
-          <input
-            type="url"
-            value={roomUrl}
-            onChange={(e) => setRoomUrl(e.target.value)}
-            placeholder="https://yourdomain.daily.co/room-name"
-            disabled={isInCall}
-            className="w-full px-3 py-2 bg-gray-600 text-white rounded border border-gray-500 focus:border-blue-400 focus:outline-none disabled:opacity-50"
-          />
-          {gameState.videoRoomUrl && roomUrl === gameState.videoRoomUrl && (
-            <p className="text-green-400 text-xs mt-1 font-arabic">
-              تم تحميل رابط الغرفة من الجلسة الحالية
-            </p>
-          )}
-        </div>
+        {/* Side by side layout for larger screens */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {/* Room URL and Name */}
+          <div className="space-y-3">
+            <div>
+              <label className="block text-white text-sm mb-1">
+                {t('roomUrl')} {gameState.videoRoomUrl ? t('roomUrlAutoLoaded') : '*'}
+              </label>
+              <input
+                type="url"
+                value={roomUrl}
+                onChange={(e) => setRoomUrl(e.target.value)}
+                placeholder="https://yourdomain.daily.co/room-name"
+                disabled={isInCall}
+                className="w-full px-2 py-1 text-sm bg-gray-600 text-white rounded border border-gray-500 focus:border-blue-400 focus:outline-none disabled:opacity-50"
+              />
+              {gameState.videoRoomUrl && roomUrl === gameState.videoRoomUrl && (
+                <p className="text-green-400 text-xs mt-1">
+                  {t('roomUrlFromSession')}
+                </p>
+              )}
+            </div>
 
-        {/* Pre-filled User Name */}
-        <div>
-          <label className="block text-white font-arabic text-sm mb-2">
-            اسم المستخدم ✅ (من معلومات الجلسة)
-          </label>
-          <input
-            type="text"
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
-            disabled={isInCall}
-            className="w-full px-3 py-2 bg-gray-600 text-white rounded border border-gray-500 focus:border-blue-400 focus:outline-none disabled:opacity-50"
-          />
-          <p className="text-green-400 text-xs mt-1 font-arabic">
-            تم تحميل الاسم من معلومات المشارك
-          </p>
-        </div>
+            <div>
+              <label className="block text-white text-sm mb-1">
+                {t('userName')} {t('userNameFromSession')}
+              </label>
+              <input
+                type="text"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                disabled={isInCall}
+                className="w-full px-2 py-1 text-sm bg-gray-600 text-white rounded border border-gray-500 focus:border-blue-400 focus:outline-none disabled:opacity-50"
+              />
+              <p className="text-green-400 text-xs mt-1">
+                {t('userNameLoaded')}
+              </p>
+            </div>
+          </div>
 
-        {/* Auto-generated Pre-Auth Token */}
-        <div>
-          <label className="block text-white font-arabic text-sm mb-2">
-            رمز التحقق المسبق {preAuthToken ? '✅ (تم الإنشاء تلقائياً)' : isGeneratingToken ? '⏳ (جاري الإنشاء...)' : '(اختياري)'}
-          </label>
-          <input
-            type="text"
-            value={preAuthToken}
-            onChange={(e) => setPreAuthToken(e.target.value)}
-            placeholder={isGeneratingToken ? "جاري إنشاء رمز الدخول..." : "Meeting token (optional)"}
-            disabled={isInCall || isGeneratingToken}
-            className="w-full px-3 py-2 bg-gray-600 text-white rounded border border-gray-500 focus:border-blue-400 focus:outline-none disabled:opacity-50"
-          />
-          {preAuthToken && (
-            <p className="text-green-400 text-xs mt-1 font-arabic">
-              تم إنشاء رمز الدخول تلقائياً
-            </p>
-          )}
-          {isGeneratingToken && (
-            <p className="text-blue-400 text-xs mt-1 font-arabic">
-              جاري إنشاء رمز الدخول...
-            </p>
-          )}
-        </div>
+          {/* Token and Controls */}
+          <div className="space-y-3">
+            <div>
+              <label className="block text-white text-sm mb-1">
+                {t('preAuthToken')} {preAuthToken ? t('preAuthTokenAutoGenerated') : isGeneratingToken ? t('preAuthTokenGenerating') : t('preAuthTokenOptional')}
+              </label>
+              <input
+                type="text"
+                value={preAuthToken}
+                onChange={(e) => setPreAuthToken(e.target.value)}
+                placeholder={isGeneratingToken ? t('generatingToken') : "Meeting token (optional)"}
+                disabled={isInCall || isGeneratingToken}
+                className="w-full px-2 py-1 text-sm bg-gray-600 text-white rounded border border-gray-500 focus:border-blue-400 focus:outline-none disabled:opacity-50"
+              />
+              {preAuthToken && (
+                <p className="text-green-400 text-xs mt-1">
+                  {t('tokenGenerated')}
+                </p>
+              )}
+              {isGeneratingToken && (
+                <p className="text-blue-400 text-xs mt-1">
+                  {t('tokenGenerating')}
+                </p>
+              )}
+            </div>
 
-        {/* Call Controls */}
-        <div className="flex gap-3 justify-center">
-          {!isInCall ? (
-            <button
-              onClick={joinCall}
-              disabled={!canJoin}
-              className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed text-white rounded font-arabic transition-colors"
-            >
-              {isJoining ? 'جاري الانضمام...' : 'انضمام للمكالمة'}
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={leaveCall}
-                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-arabic transition-colors"
-              >
-                مغادرة المكالمة
-              </button>
-              <button
-                onClick={toggleCamera}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-arabic transition-colors"
-              >
-                🎥 كاميرا
-              </button>
-              <button
-                onClick={toggleMicrophone}
-                className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded font-arabic transition-colors"
-              >
-                🎤 ميكروفون
-              </button>
-            </>
-          )}
+            {/* Call Controls */}
+            <div className="flex gap-2 flex-wrap">
+              {!isInCall ? (
+                <button
+                  onClick={joinCall}
+                  disabled={!canJoin}
+                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-500 disabled:cursor-not-allowed text-white rounded text-sm transition-colors"
+                >
+                  {isJoining ? t('joiningCall') : t('joinCall')}
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={leaveCall}
+                    className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm transition-colors"
+                  >
+                    {t('leaveCall')}
+                  </button>
+                  <button
+                    onClick={toggleCamera}
+                    className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm transition-colors"
+                  >
+                    {t('camera')}
+                  </button>
+                  <button
+                    onClick={toggleMicrophone}
+                    className="px-3 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-sm transition-colors"
+                  >
+                    {t('microphone')}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Meeting Status - Compact */}
+      <div className="bg-blue-500/20 rounded-lg p-2 border border-blue-500/30 text-center">
+        <div className="text-blue-300 text-sm">
+          {t('meetingState')}: <span className="font-mono text-accent2">{meetingState}</span>
+        </div>
+        <div className="text-blue-200 text-xs mt-1">
+          {t('participants')}: {participantIds.length}
         </div>
       </div>
 
-      {/* Meeting Status */}
-      <div className="bg-blue-500/20 rounded-lg p-3 border border-blue-500/30 text-center">
-        <div className="text-blue-300 font-arabic">
-          حالة الاجتماع: <span className="font-mono text-accent2">{meetingState}</span>
-        </div>
-        <div className="text-blue-200 font-arabic mt-1">
-          المشاركون: {participantIds.length}
-        </div>
-      </div>
-
-      {/* Video Grid - Mobile-optimized layout */}
-      <div className="bg-gray-900/50 rounded-lg p-4 min-h-[500px]">
-        <h4 className="text-white font-arabic text-center mb-4">
-          الفيديوهات (محسّن للهواتف الذكية)
+      {/* Video Grid - Mobile-optimized, compact layout */}
+      <div className="bg-gray-900/50 rounded-lg p-3 min-h-[300px]">
+        <h4 className="text-white text-sm text-center mb-3">
+          {t('videosTitle')}
         </h4>
         
         {isInCall && participantIds.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {participantIds.slice(0, 3).map((id, index) => (
               <ParticipantVideo
                 key={id}
@@ -356,44 +363,30 @@ function VideoContent({
             {/* Fill remaining slots with placeholders */}
             {Array.from({ length: Math.max(0, 3 - participantIds.length) }).map((_, index) => (
               <div key={`placeholder-${index}`} className="bg-gray-700/30 rounded-lg border-2 border-dashed border-gray-600">
-                <div className="aspect-[3/4] sm:aspect-video flex items-center justify-center">
+                <div className="aspect-[4/3] flex items-center justify-center">
                   <div className="text-center text-gray-400">
-                    <div className="text-4xl mb-2">👤</div>
-                    <div className="font-arabic">في انتظار المشارك {participantIds.length + index + 1}</div>
+                    <div className="text-2xl mb-1">👤</div>
+                    <div className="text-xs">{t('waitingForParticipant')} {participantIds.length + index + 1}</div>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : isInCall ? (
-          <div className="text-center text-gray-400 py-20">
-            <div className="text-4xl mb-4">⏳</div>
-            <div className="font-arabic">متصل، في انتظار المشاركين...</div>
+          <div className="text-center text-gray-400 py-10">
+            <div className="text-2xl mb-2">⏳</div>
+            <div className="text-sm">{t('connectedWaiting')}</div>
           </div>
         ) : (
-          <div className="text-center text-gray-400 py-20">
-            <div className="text-4xl mb-4">📹</div>
-            <div className="font-arabic">أدخل رابط الغرفة وانقر "انضمام للمكالمة"</div>
+          <div className="text-center text-gray-400 py-10">
+            <div className="text-2xl mb-2">📹</div>
+            <div className="text-sm">{t('enterRoomAndJoin')}</div>
           </div>
         )}
       </div>
 
       {/* Audio component for call audio */}
       {isInCall && <DailyAudio />}
-
-      {/* Info Panel */}
-      <div className="bg-green-500/10 rounded-lg p-3 border border-green-500/20">
-        <p className="text-green-300 text-sm text-center font-arabic">
-          ✅ تطبيق Daily.co Kitchen Sink المحسن - تحميل تلقائي للإعدادات
-        </p>
-        <div className="text-green-200 text-xs text-center mt-2 font-arabic space-y-1">
-          <div>• رابط الغرفة محمل تلقائياً من الجلسة</div>
-          <div>• اسم المستخدم محمل من معلومات المشارك</div>
-          <div>• رمز الدخول يتم إنشاؤه تلقائياً</div>
-          <div>• كل ما عليك فعله هو الضغط على "انضمام للمكالمة"</div>
-          <div>• الفيديوهات مرتبة عمودياً مع أرقام واضحة</div>
-        </div>
-      </div>
     </div>
   );
 }
@@ -406,6 +399,7 @@ export default function SimpleKitchenSinkVideo({
   className = '' 
 }: SimpleKitchenSinkVideoProps) {
   const [callObject, setCallObject] = useState<DailyCall | null>(null);
+  const { t } = useTranslation();
 
   // Create call object
   useEffect(() => {
@@ -422,7 +416,7 @@ export default function SimpleKitchenSinkVideo({
         setCallObject(newCallObject);
       } catch (error) {
         console.error('Failed to create Daily call object:', error);
-        showAlertMessage('فشل في تهيئة مكونات الفيديو', 'error');
+        showAlertMessage(t('failedInitVideoComponents'), 'error');
       }
     };
 
@@ -440,15 +434,15 @@ export default function SimpleKitchenSinkVideo({
         }
       }
     };
-  }, [showAlertMessage]); // Fixed dependency array
+  }, [showAlertMessage]); // callObject removed to prevent infinite loop
 
   if (!callObject) {
     return (
       <div className={`bg-gray-500/20 border border-gray-500/30 rounded-xl p-6 ${className}`}>
         <div className="text-center py-8">
           <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-gray-400 text-lg font-bold mb-2 font-arabic">
-            جاري تهيئة مكونات الفيديو...
+          <div className="text-gray-400 text-base font-bold mb-2">
+            {t('loadingVideoComponents')}
           </div>
         </div>
       </div>

@@ -1,5 +1,12 @@
 import type { Handler } from '@netlify/functions';
 
+// Helper function to generate unique user IDs
+function generateUniqueUserId(role: string): string {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(2, 8);
+  return `${role}-${timestamp}-${random}`;
+}
+
 // Enhanced Daily.co token generation with comprehensive error handling and validation
 export const handler: Handler = async (event) => {
   // Handle CORS preflight requests
