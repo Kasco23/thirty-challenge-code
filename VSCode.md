@@ -1,53 +1,88 @@
 # VSCode Development Guide for Thirty Challenge
 
 ## Table of Contents
-1. [Debugging Setup](#debugging-setup)
-2. [Error Tracing](#error-tracing)
-3. [Development Environments](#development-environments)
-4. [VSCode Copilot Usage](#vscode-copilot-usage)
-5. [Recommended MCPs](#recommended-mcps)
-6. [Performance Analysis](#performance-analysis)
-7. [Testing Workflow](#testing-workflow)
-8. [Essential Extensions](#essential-extensions)
+1. [Prerequisites](#prerequisites)
+2. [Debugging Setup](#debugging-setup)
+3. [Error Tracing](#error-tracing)
+4. [Development Environments](#development-environments)
+5. [VSCode Copilot Usage](#vscode-copilot-usage)
+6. [Recommended MCPs](#recommended-mcps)
+7. [Performance Analysis](#performance-analysis)
+8. [Testing Workflow](#testing-workflow)
+9. [Essential Extensions](#essential-extensions)
+
+## Prerequisites
+
+### Firefox Setup for Development
+
+**Step 1:** Install Firefox Developer Edition (Recommended)
+- Download from [https://www.mozilla.org/en-US/firefox/developer/](https://www.mozilla.org/en-US/firefox/developer/)
+- Developer Edition includes enhanced debugging tools and experimental features
+- Regular Firefox also works but with fewer developer-specific features
+
+**Step 2:** Configure Firefox for Development
+- Open Firefox and navigate to `about:config`
+- Search for and set these preferences:
+  - `devtools.debugger.remote-enabled` → `true`
+  - `devtools.chrome.enabled` → `true`
+  - `devtools.debugger.prompt-connection` → `false`
+
+**Step 3:** Install VS Code Firefox Debugger Extension
+- Open VS Code Extensions panel (Ctrl+Shift+X)
+- Search for "Debugger for Firefox"
+- Install the official extension by Mozilla
+- Restart VS Code after installation
 
 ## Debugging Setup
 
 ### 1. Browser Debugger Configuration
 
-Create `.vscode/launch.json`:
+**Step 1:** Install the Firefox Debugger extension for VS Code:
+- Open VS Code Extensions panel (Ctrl+Shift+X)
+- Search for "Debugger for Firefox" 
+- Install the official Firefox debugger extension
+
+**Step 2:** Create `.vscode/launch.json` in your project root:
 
 ```json
 {
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch Chrome (Vite Dev)",
+      "name": "Launch Firefox (Vite Dev)",
       "request": "launch",
-      "type": "chrome",
+      "type": "firefox",
       "url": "http://localhost:5173",
       "webRoot": "${workspaceFolder}/src",
-      "sourceMaps": true,
-      "userDataDir": "${workspaceFolder}/.vscode/chrome-debug-profile"
+      "sourceMaps": true
     },
     {
-      "name": "Launch Chrome (Netlify Dev)",
+      "name": "Launch Firefox (Netlify Dev)",
       "request": "launch",
-      "type": "chrome",
+      "type": "firefox",
       "url": "http://localhost:8888",
       "webRoot": "${workspaceFolder}/src",
-      "sourceMaps": true,
-      "userDataDir": "${workspaceFolder}/.vscode/chrome-debug-profile-netlify"
+      "sourceMaps": true
     },
     {
-      "name": "Attach to Chrome",
+      "name": "Attach to Firefox",
       "request": "attach",
-      "type": "chrome",
-      "port": 9222,
+      "type": "firefox",
+      "port": 6000,
       "webRoot": "${workspaceFolder}/src"
     }
   ]
 }
 ```
+
+**Step 3:** Start your development server:
+- For Vite development: Run `npm run dev` in terminal
+- For Netlify development: Run `npm run dev:netlify` in terminal
+
+**Step 4:** Start debugging:
+- Open VS Code's Debug panel (Ctrl+Shift+D)
+- Select "Launch Firefox (Vite Dev)" or "Launch Firefox (Netlify Dev)" from dropdown
+- Click the green play button to start debugging
 
 ### 2. Node.js Debugging for Netlify Functions
 
@@ -71,10 +106,23 @@ Add to `.vscode/launch.json`:
 
 ### 3. React Developer Tools Integration
 
-Install browser extensions:
-- React Developer Tools
-- Redux DevTools (for state inspection)
-- Supabase Debug Tools
+**Step 1:** Install Firefox browser extensions for development:
+- Open Firefox and navigate to Firefox Add-ons (Ctrl+Shift+A)
+- Search for and install:
+  - **React Developer Tools** - Essential for React component debugging
+  - **Redux DevTools** - For state inspection and time-travel debugging
+  - **Vue.js devtools** - Alternative state management inspection
+
+**Step 2:** Enable Developer Mode in Firefox:
+- Open Firefox Developer Tools (F12)
+- Navigate to Settings (gear icon)
+- Check "Enable browser chrome and add-on debugging toolboxes"
+- Check "Enable remote debugging"
+
+**Step 3:** Verify extensions are working:
+- Open your React application in Firefox
+- Open Developer Tools (F12)
+- Look for "React" and "Redux" tabs in the developer tools panel
 
 ## Error Tracing
 
@@ -244,27 +292,57 @@ export const enableNetworkDebugging = () => {
 
 #### 1. Frontend-Only Development
 
-```bash
-# Terminal 1: Start Vite dev server
-npm run dev
+**Step 1:** Ensure Firefox is installed and up to date on your system
 
-# Open http://localhost:5173
-# Fast hot reload, frontend-only features
+**Step 2:** Open terminal and start the Vite development server:
+```bash
+# Navigate to project directory
+cd your-project-directory
+
+# Start Vite dev server  
+npm run dev
 ```
+
+**Step 3:** The server will start on http://localhost:5173
+
+**Step 4:** Launch debugging in VS Code:
+- Open VS Code Debug panel (Ctrl+Shift+D)
+- Select "Launch Firefox (Vite Dev)" from the dropdown
+- Click the green play button
+- Firefox will open automatically with debugging enabled
+
+**Benefits:** Fast hot reload, frontend-only features, ideal for UI development
 
 #### 2. Full-Stack Development
 
+**Step 1:** Ensure you have a properly configured `.env` file:
 ```bash
-# Ensure .env file exists with all required variables
+# Copy the example environment file
 cp .env.example .env
-# Edit .env with your actual API keys
 
-# Terminal 1: Start Netlify dev server
-npm run dev:netlify
-
-# Open http://localhost:8888
-# Includes serverless functions at /.netlify/functions/
+# Edit .env with your actual API keys using your preferred editor
+nano .env  # or code .env for VS Code
 ```
+
+**Step 2:** Start the Netlify development server:
+```bash
+# Start Netlify dev server (includes serverless functions)
+npm run dev:netlify
+```
+
+**Step 3:** The server will start on http://localhost:8888
+
+**Step 4:** Launch debugging in VS Code:
+- Open VS Code Debug panel (Ctrl+Shift+D)  
+- Select "Launch Firefox (Netlify Dev)" from the dropdown
+- Click the green play button
+- Firefox will open automatically with debugging enabled
+
+**Step 5:** Verify serverless functions are available:
+- Functions are accessible at `http://localhost:8888/.netlify/functions/`
+- Check the terminal for function compilation status
+
+**Benefits:** Full environment simulation, serverless functions available, environment variables loaded
 
 ## VSCode Copilot Usage
 
@@ -481,6 +559,7 @@ test.describe('Game Flow', () => {
 ```json
 {
   "recommendations": [
+    "firefox-devtools.vscode-firefox-debug",
     "ms-vscode.vscode-typescript-next",
     "bradlc.vscode-tailwindcss",
     "esbenp.prettier-vscode",
@@ -490,6 +569,8 @@ test.describe('Game Flow', () => {
   ]
 }
 ```
+
+**Important:** The Firefox debugger extension (`firefox-devtools.vscode-firefox-debug`) is essential for debugging React applications in Firefox through VS Code.
 
 ### 2. React & State Management
 
@@ -534,10 +615,16 @@ test.describe('Game Flow', () => {
 ## Quick Debugging Checklist
 
 ### 🐛 Application Not Loading
-1. Check console for JavaScript errors
-2. Verify environment variables in `.env`
-3. Ensure correct development server (`npm run dev` vs `netlify dev`)
-4. Check network tab for failed requests
+**Step 1:** Open Firefox Developer Tools (F12) and check Console tab for JavaScript errors
+**Step 2:** Verify environment variables are properly set in `.env` file:
+   - Copy `.env.example` to `.env` if it doesn't exist
+   - Ensure all required `VITE_*` variables are defined
+**Step 3:** Confirm you're using the correct development server:
+   - Use `npm run dev` for frontend-only development (port 5173)
+   - Use `npm run dev:netlify` for full-stack development (port 8888)
+**Step 4:** Check Network tab in Firefox Developer Tools for failed requests:
+   - Look for 404, 500, or CORS errors
+   - Verify API endpoints are correct
 
 ### 🌐 API Errors
 1. Verify function deployment: `netlify functions:list`
@@ -546,22 +633,52 @@ test.describe('Game Flow', () => {
 4. Validate environment variables are accessible in functions
 
 ### 🎥 Daily.co Issues
-1. Test API key: Check response from create-daily-room function
-2. Verify domain configuration in `.env`
-3. Check browser permissions for camera/microphone
-4. Monitor Daily.co dashboard for room creation
+**Step 1:** Test API key by checking the response from create-daily-room function
+**Step 2:** Verify domain configuration in `.env` file:
+   - Ensure `VITE_DAILY_DOMAIN` is set correctly
+   - Check `DAILY_API_KEY` is valid
+**Step 3:** Check Firefox permissions for camera/microphone:
+   - Click the shield/lock icon in Firefox address bar
+   - Ensure Camera and Microphone are set to "Allow"
+   - Try refreshing the page after granting permissions
+**Step 4:** Monitor Daily.co dashboard for room creation:
+   - Log into your Daily.co dashboard
+   - Check if rooms are being created successfully
 
 ### 📱 Supabase Connection
-1. Test connection in browser dev tools: `window.supabase`
-2. Check real-time subscriptions in Supabase dashboard
-3. Verify row-level security policies
-4. Test queries in Supabase SQL editor
+**Step 1:** Test connection in Firefox Developer Tools:
+   - Open Firefox Developer Tools (F12)
+   - Navigate to Console tab
+   - Type `window.supabase` and press Enter
+   - Should return the Supabase client object
+**Step 2:** Check real-time subscriptions in Supabase dashboard:
+   - Log into your Supabase project dashboard
+   - Navigate to Database > Realtime
+   - Verify subscriptions are active
+**Step 3:** Verify row-level security policies:
+   - Open Supabase dashboard > Authentication > Policies
+   - Ensure policies allow your operations
+**Step 4:** Test queries in Supabase SQL editor:
+   - Use the SQL editor to run test queries
+   - Verify data structure matches your application expectations
 
 ### 🎨 UI/Styling Issues
-1. Check Tailwind classes are properly purged
-2. Verify responsive design in dev tools
-3. Test both English/Arabic layouts
-4. Check console for hydration errors
+**Step 1:** Check Tailwind classes are properly applied:
+   - Open Firefox Developer Tools (F12)
+   - Use Inspector tab to examine elements
+   - Verify Tailwind classes are present in the computed styles
+**Step 2:** Test responsive design using Firefox's Responsive Design Mode:
+   - Press Ctrl+Shift+M to toggle Responsive Design Mode
+   - Test different device sizes and orientations
+   - Check for layout issues at various breakpoints
+**Step 3:** Test both English and Arabic layouts:
+   - Use the language toggle feature in your app
+   - Check for text overflow, alignment issues, or RTL problems
+   - Verify Arabic text displays correctly
+**Step 4:** Check console for hydration errors:
+   - Open Console tab in Firefox Developer Tools
+   - Look for React hydration warnings or errors
+   - Check for mismatched server/client rendering
 
 ## Flow Analysis Commands
 
