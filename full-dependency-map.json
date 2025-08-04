@@ -25,11 +25,13 @@
     "src/alphaquiz/state/alphaAtoms.ts"
   ],
   "src/alphaquiz/state/alphaAtoms.ts": [],
+  "src/components/ActiveGames.tsx": [],
   "src/components/AlertBanner.tsx": [],
   "src/components/Buzzer.tsx": [],
   "src/components/ConfirmationModal.tsx": [],
   "src/components/ConnectionBanner.tsx": [],
   "src/components/KitchenSinkVideo.tsx": [],
+  "src/components/LanguageToggle.tsx": [],
   "src/components/LazyImage.tsx": [],
   "src/components/Scoreboard.tsx": [],
   "src/components/SimpleKitchenSinkVideo.tsx": [],
@@ -54,6 +56,7 @@
   "src/hooks/useGame.ts": [],
   "src/hooks/useGameAtoms.ts": [],
   "src/hooks/useSupabaseFetch.ts": [],
+  "src/hooks/useTranslation.ts": [],
   "src/lib/atomGameSync.ts": [],
   "src/lib/dailyConfig.ts": [],
   "src/lib/gameDatabase.ts": [
@@ -66,6 +69,7 @@
   ],
   "src/lib/supabaseClient.ts": [],
   "src/lib/supabaseLazy.ts": [],
+  "src/lib/translations.ts": [],
   "src/main.tsx": [
     "src/App.tsx"
   ],
@@ -93,6 +97,7 @@
     "src/state/syncAtoms.ts",
     "src/state/videoAtoms.ts"
   ],
+  "src/state/languageAtoms.ts": [],
   "src/state/syncAtoms.ts": [],
   "src/state/videoAtoms.ts": [],
   "src/types/game.ts": [],
