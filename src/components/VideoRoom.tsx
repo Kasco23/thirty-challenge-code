@@ -149,7 +149,7 @@ function VideoRoomContent({
       };
     }
 
-    if (role === 'host' || role === 'host-mobile') {
+    if (role === 'host') {
       return {
         userName: state.hostName || name,
         isHost: true,

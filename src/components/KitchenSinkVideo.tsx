@@ -64,7 +64,7 @@ function VideoContent({ gameId, myParticipant, showAlertMessage }: VideoContentP
       const token = await generateDailyToken(
         gameId,
         myParticipant.name,
-        myParticipant.type === 'host-pc' || myParticipant.type === 'host-mobile',
+        myParticipant.type === 'controller' || myParticipant.type === 'host',
         false // Not observer mode
       );
 

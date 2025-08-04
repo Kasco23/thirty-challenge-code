@@ -10,7 +10,7 @@ export const gameSyncInstanceAtom = atom<unknown>(null); // Will hold AtomGameSy
 export interface LobbyParticipant {
   id: string;
   name: string;
-  type: 'host-pc' | 'host-mobile' | 'player';
+  type: 'controller' | 'host' | 'player';
   playerId?: PlayerId;
   flag?: string;
   club?: string;

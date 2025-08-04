@@ -6,6 +6,8 @@ import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/ho
 import { gameSyncInstanceAtom, lobbyParticipantsAtom } from '@/state';
 import SimpleKitchenSinkVideo from '@/components/SimpleKitchenSinkVideo';
 import AlertBanner from '@/components/AlertBanner';
+import LanguageToggle from '@/components/LanguageToggle';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { LobbyParticipant } from '@/state';
 
 export default function Lobby() {
@@ -14,6 +16,7 @@ export default function Lobby() {
   const state = useGameState();
   const { loadGameState, setHostConnected, startSession } = useGameActions();
   const { myParticipant, setParticipant } = useLobbyActions();
+  const { t, language } = useTranslation();
   
   // Initialize game sync
   useGameSync();
@@ -72,14 +75,14 @@ export default function Lobby() {
           if (!result.success) {
             // If game doesn't exist and we have host parameters, try to create it
             const { role, hostName: urlHostName } = searchParamsObj;
-            if (role === 'host' || role === 'host-mobile') {
+            if (role === 'host') {
               console.log('Game not found, attempting to create new game for host:', gameId);
               try {
                 // Create a new game with basic settings
                 await startSession(
                   gameId,
                   'HOST', // Default host code
-                  urlHostName || 'المقدم', // Use URL host name or default
+                  urlHostName || (language === 'ar' ? 'المقدم' : 'Host'), // Use URL host name or default
                   {
                     WSHA: 4,
                     AUCT: 4, 
@@ -113,19 +116,19 @@ export default function Lobby() {
 
     let participant: LobbyParticipant | null = null;
 
-    if (role === 'host') {
+    if (role === 'controller') {
       participant = {
-        id: 'host-pc',
-        name: hostName || state.hostName || 'المقدم',
-        type: 'host-pc',
+        id: 'controller',
+        name: hostName || state.hostName || 'Controller',
+        type: 'controller',
         isConnected: true,
       };
       setHostConnected(true);
-    } else if (role === 'host-mobile') {
+    } else if (role === 'host') {
       participant = {
-        id: 'host-mobile',
-        name: hostName || state.hostName || 'المقدم',
-        type: 'host-mobile',
+        id: 'host',
+        name: hostName || state.hostName || 'Host',
+        type: 'host',
         isConnected: true,
       };
       setHostConnected(true);
@@ -156,7 +159,7 @@ export default function Lobby() {
       if (myParticipant && gameSyncInstance && typeof gameSyncInstance === 'object' && 'disconnect' in gameSyncInstance) {
         (gameSyncInstance as { disconnect: () => Promise<void> }).disconnect().catch(console.error);
         
-        if (myParticipant.type === 'host-pc' || myParticipant.type === 'host-mobile') {
+        if (myParticipant.type === 'controller' || myParticipant.type === 'host') {
           setHostConnected(false);
         }
       }
@@ -167,7 +170,7 @@ export default function Lobby() {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       
-      if (myParticipant && (myParticipant.type === 'host-pc' || myParticipant.type === 'host-mobile')) {
+      if (myParticipant && (myParticipant.type === 'controller' || myParticipant.type === 'host')) {
         setHostConnected(false);
       }
     };
@@ -176,10 +179,10 @@ export default function Lobby() {
   if (!myParticipant || !gameId) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 flex items-center justify-center">
-        <div className="text-white text-center font-arabic">
+        <div className={`text-white text-center ${language === 'ar' ? 'font-arabic' : ''}`}>
           <div className="w-8 h-8 border-2 border-accent2 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-lg mb-2">جاري تحميل الصالة...</p>
-          {!gameId && <p className="text-sm text-white/70">لا يوجد معرف للعبة</p>}
+          <p className="text-lg mb-2">{language === 'ar' ? 'جاري تحميل الصالة...' : 'Loading lobby...'}</p>
+          {!gameId && <p className="text-sm text-white/70">{language === 'ar' ? 'لا يوجد معرف للعبة' : 'No game ID found'}</p>}
         </div>
       </div>
     );
@@ -187,6 +190,9 @@ export default function Lobby() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-[#10102a] to-blue-900 p-4">
+      {/* Language Toggle */}
+      <LanguageToggle />
+      
       {/* Alert Banner */}
       <AlertBanner
         message={alertMessage}
@@ -198,36 +204,36 @@ export default function Lobby() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2 font-arabic">
-            صالة الانتظار
+          <h1 className={`text-4xl font-bold text-white mb-2 ${language === 'ar' ? 'font-arabic' : ''}`}>
+            {t('waitingLobby')}
           </h1>
           <div className="space-y-2">
-            <p className="text-accent2 font-arabic">
-              رمز الجلسة: <span className="font-mono text-2xl">{gameId}</span>
+            <p className={`text-accent2 ${language === 'ar' ? 'font-arabic' : ''}`}>
+              {t('lobbySessionCode')}: <span className="font-mono text-2xl">{gameId}</span>
             </p>
-            <p className="text-white/70 font-arabic">
-              اللاعبون المتصلون: {connectedPlayers}/2
+            <p className={`text-white/70 ${language === 'ar' ? 'font-arabic' : ''}`}>
+              {t('connectedPlayers')}: {connectedPlayers}/2
             </p>
-            <p className="text-blue-300 font-arabic text-sm">
-              نظام الفيديو المحدث مع عرض أسماء اللاعبين
+            <p className={`text-blue-300 text-sm ${language === 'ar' ? 'font-arabic' : ''}`}>
+              {t('videoSystemUpdated')}
             </p>
           </div>
         </div>
 
         {/* User Info */}
         <div className="mb-8 bg-blue-500/20 rounded-xl p-6 border border-blue-500/30">
-          <h3 className="text-xl font-bold text-blue-300 mb-4 font-arabic text-center">
-            معلومات المستخدم
+          <h3 className={`text-xl font-bold text-blue-300 mb-4 text-center ${language === 'ar' ? 'font-arabic' : ''}`}>
+            {t('userInformation')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-white font-arabic">النوع: {myParticipant.type}</p>
+              <p className={`text-white ${language === 'ar' ? 'font-arabic' : ''}`}>{t('participantType')}: {myParticipant.type}</p>
             </div>
             <div>
-              <p className="text-white font-arabic">الاسم: {myParticipant.name}</p>
+              <p className={`text-white ${language === 'ar' ? 'font-arabic' : ''}`}>{t('participantName')}: {myParticipant.name}</p>
             </div>
             <div>
-              <p className="text-white font-arabic">المعرف: {myParticipant.id}</p>
+              <p className={`text-white ${language === 'ar' ? 'font-arabic' : ''}`}>{t('participantId')}: {myParticipant.id}</p>
             </div>
           </div>
         </div>
@@ -250,13 +256,13 @@ export default function Lobby() {
           transition={{ delay: 0.5 }}
         >
           <div className="bg-green-500/10 rounded-lg p-4 border border-green-500/20">
-            <p className="font-arabic mb-2">✅ نظام الفيديو المحدث:</p>
-            <div className="text-right space-y-1 font-arabic">
-              <p>• رابط الغرفة يتم تحميله تلقائياً من معرف الجلسة</p>
-              <p>• أسماء اللاعبين تظهر أسفل مقاطع الفيديو</p>
-              <p>• غرفة الفيديو تستخدم معرف الجلسة مباشرة</p>
-              <p>• تحكم في الكاميرا والميكروفون</p>
-              <p>• تطبيق Daily.co Kitchen Sink المطور</p>
+            <p className={`mb-2 ${language === 'ar' ? 'font-arabic' : ''}`}>{t('videoSystemNotes')}</p>
+            <div className={`${language === 'ar' ? 'text-right' : 'text-left'} space-y-1 ${language === 'ar' ? 'font-arabic' : ''}`}>
+              <p>• {t('roomLinkLoaded')}</p>
+              <p>• {t('playerNamesVisible')}</p>
+              <p>• {t('videoRoomUsingSession')}</p>
+              <p>• {t('cameraControls')}</p>
+              <p>• {t('dailyKitchenSink')}</p>
             </div>
           </div>
         </motion.div>

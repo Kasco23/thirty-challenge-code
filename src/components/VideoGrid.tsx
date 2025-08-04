@@ -7,6 +7,7 @@ import {
 import DailyIframe, { type DailyCall } from '@daily-co/daily-js';
 import { useGameActions } from '@/hooks/useGameAtoms';
 import { isDevelopmentMode } from '@/lib/dailyConfig';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { LobbyParticipant } from '@/state';
 
 interface VideoGridProps {
@@ -40,6 +41,7 @@ function VideoRoomContent({ roomType, gameId, myParticipant, roomUrl, showAlertM
   const daily = useDaily();
   const participantIds = useParticipantIds();
   const { generateDailyToken } = useGameActions();
+  const { language } = useTranslation();
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
   const [hasJoined, setHasJoined] = useState(false);
@@ -48,7 +50,7 @@ function VideoRoomContent({ roomType, gameId, myParticipant, roomUrl, showAlertM
   // Determine if this is my room
   const isMyRoom = useMemo(() => {
     if (roomType === 'host') {
-      return myParticipant.type === 'host-pc' || myParticipant.type === 'host-mobile';
+      return myParticipant.type === 'controller' || myParticipant.type === 'host';
     }
     return myParticipant.id === roomType;
   }, [roomType, myParticipant]);
@@ -126,9 +128,10 @@ function VideoRoomContent({ roomType, gameId, myParticipant, roomUrl, showAlertM
 
   const getRoomLabel = (type: string) => {
     switch (type) {
-      case 'host': return 'المقدم';
-      case 'playerA': return 'اللاعب الأول';
-      case 'playerB': return 'اللاعب الثاني';
+      case 'host': return language === 'ar' ? 'المقدم' : 'Host';
+      case 'playerA': return language === 'ar' ? 'اللاعب الأول' : 'Player A';
+      case 'playerB': return language === 'ar' ? 'اللاعب الثاني' : 'Player B';
+      case 'controller': return language === 'ar' ? 'تحكم' : 'Controller';
       default: return type;
     }
   };
@@ -260,6 +263,7 @@ function VideoRoomFrame({
 }: VideoRoomFrameProps) {
   // Use a single shared call object instance managed at the top level
   const callObjectRef = useRef<DailyCall | null>(null);
+  const { language } = useTranslation();
 
   // Create Daily call object for this room only when needed and no duplicates exist
   const callObject = useMemo<DailyCall | null>(() => {
@@ -321,9 +325,10 @@ function VideoRoomFrame({
 
   const getRoomLabel = (type: string) => {
     switch (type) {
-      case 'host': return 'المقدم';
-      case 'playerA': return 'اللاعب الأول';
-      case 'playerB': return 'اللاعب الثاني';
+      case 'host': return language === 'ar' ? 'المقدم' : 'Host';
+      case 'playerA': return language === 'ar' ? 'اللاعب الأول' : 'Player A';
+      case 'playerB': return language === 'ar' ? 'اللاعب الثاني' : 'Player B';
+      case 'controller': return language === 'ar' ? 'تحكم' : 'Controller';
       default: return type;
     }
   };
