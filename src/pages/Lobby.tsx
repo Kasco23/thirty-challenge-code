@@ -8,6 +8,7 @@ import SimpleKitchenSinkVideo from '@/components/SimpleKitchenSinkVideo';
 import AlertBanner from '@/components/AlertBanner';
 import LanguageToggle from '@/components/LanguageToggle';
 import { useTranslation } from '@/hooks/useTranslation';
+import { debugLog } from '@/utils/debugLog';
 import type { LobbyParticipant } from '@/state';
 
 export default function Lobby() {
@@ -17,6 +18,8 @@ export default function Lobby() {
   const { loadGameState, setHostConnected, startSession } = useGameActions();
   const { myParticipant, setParticipant } = useLobbyActions();
   const { t, language } = useTranslation();
+  
+  debugLog('Lobby', 'component_render', { gameId, players: Object.keys(state.players) });
   
   // Initialize game sync
   useGameSync();

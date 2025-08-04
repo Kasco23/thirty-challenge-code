@@ -63,7 +63,7 @@
   "src/lib/atomGameSync.ts": [],
   "src/lib/dailyConfig.ts": [],
   "src/lib/gameDatabase.ts": [
-    "src/lib/supabaseLazy.ts"
+    "src/lib/supabaseClient.ts"
   ],
   "src/lib/gameSync.ts": [
     "src/lib/gameDatabase.ts",
@@ -103,7 +103,11 @@
   "src/state/languageAtoms.ts": [],
   "src/state/syncAtoms.ts": [],
   "src/state/videoAtoms.ts": [],
+  "src/tests/setup.ts": [],
   "src/types/game.ts": [],
+  "src/utils/__tests__/debugLog.test.ts": [
+    "src/utils/debugLog.ts"
+  ],
   "src/utils/debugLog.ts": [],
   "src/utils/debugNetworkRequests.ts": [],
   "src/utils/teamUtils.ts": [],
