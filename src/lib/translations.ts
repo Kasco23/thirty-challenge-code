@@ -185,6 +185,13 @@ export interface Translations {
   noGameIdFound: string;
   loadingVideoComponents: string;
   failedInitVideoComponents: string;
+  failedGenerateToken: string;
+  failedJoinCall: string;
+  failedLeaveCall: string;
+  unknownError: string;
+  joiningCallMsg: string;
+  joinedCallSuccessfully: string;
+  leftCall: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -373,6 +380,13 @@ export const translations: Record<Language, Translations> = {
     noGameIdFound: 'No game ID found',
     loadingVideoComponents: 'Loading video components...',
     failedInitVideoComponents: 'Failed to initialize video components',
+    failedGenerateToken: 'Failed to generate login token, you can continue without it',
+    failedJoinCall: 'Failed to join call',
+    failedLeaveCall: 'Error leaving call',
+    unknownError: 'Unknown error',
+    joiningCallMsg: 'Joining call...',
+    joinedCallSuccessfully: 'Successfully joined the call!',
+    leftCall: 'Left the call',
   },
   ar: {
     // Landing Page
@@ -559,6 +573,13 @@ export const translations: Record<Language, Translations> = {
     noGameIdFound: 'لا يوجد معرف للعبة',
     loadingVideoComponents: 'جاري تهيئة مكونات الفيديو...',
     failedInitVideoComponents: 'فشل في تهيئة مكونات الفيديو',
+    failedGenerateToken: 'تعذر إنشاء رمز الدخول، يمكنك المتابعة بدونه',
+    failedJoinCall: 'فشل في الانضمام للمكالمة',
+    failedLeaveCall: 'خطأ في مغادرة المكالمة',
+    unknownError: 'خطأ غير معروف',
+    joiningCallMsg: 'جاري الانضمام للمكالمة...',
+    joinedCallSuccessfully: 'تم الانضمام للمكالمة بنجاح!',
+    leftCall: 'تم مغادرة المكالمة',
   },
 };
 

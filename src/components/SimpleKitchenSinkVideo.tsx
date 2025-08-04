@@ -99,21 +99,21 @@ function VideoContent({
     if (gameState.videoRoomUrl && roomUrl !== gameState.videoRoomUrl) {
       setRoomUrl(gameState.videoRoomUrl);
       showAlertMessage(t('roomUrlLoaded'), 'success');
-    } else if (!gameState.videoRoomUrl && !gameState.videoRoomCreated && myParticipant.type.startsWith('host')) {
-      // Auto-create room for host if none exists
+    } else if (!gameState.videoRoomUrl && !gameState.videoRoomCreated && (myParticipant.type === 'host' || myParticipant.type === 'controller')) {
+      // Auto-create room for host/controller if none exists
       const createRoom = async () => {
         try {
-          showAlertMessage('جاري إنشاء غرفة فيديو جديدة...', 'info');
+          showAlertMessage('Creating video room...', 'info');
           const result = await createVideoRoom(gameId);
           if (result.success && result.roomUrl) {
             setRoomUrl(result.roomUrl);
-            showAlertMessage('تم إنشاء غرفة الفيديو بنجاح!', 'success');
+            showAlertMessage('Video room created successfully!', 'success');
           } else {
-            showAlertMessage('فشل في إنشاء غرفة الفيديو', 'error');
+            showAlertMessage('Failed to create video room', 'error');
           }
         } catch (error) {
           console.error('Failed to auto-create video room:', error);
-          showAlertMessage('خطأ في إنشاء غرفة الفيديو تلقائياً', 'error');
+          showAlertMessage('Error creating video room automatically', 'error');
         }
       };
       createRoom();
@@ -135,12 +135,12 @@ function VideoContent({
             setPreAuthToken(token);
             showAlertMessage(t('tokenGenerated'), 'success');
           } else {
-            showAlertMessage('تعذر إنشاء رمز الدخول، يمكنك المتابعة بدونه', 'warning');
+            showAlertMessage(t('failedGenerateToken'), 'warning');
           }
         })
         .catch((error) => {
           console.error('Failed to generate token:', error);
-          showAlertMessage('تعذر إنشاء رمز الدخول، يمكنك المتابعة بدونه', 'warning');
+          showAlertMessage(t('failedGenerateToken'), 'warning');
         })
         .finally(() => {
           setIsGeneratingToken(false);
@@ -154,7 +154,7 @@ function VideoContent({
 
     setIsJoining(true);
     try {
-      showAlertMessage('جاري الانضمام للمكالمة...', 'info');
+      showAlertMessage(t('joiningCallMsg'), 'info');
       
       // Prepare join options
       const joinOptions: {
@@ -174,10 +174,10 @@ function VideoContent({
       // Join the call
       await daily.join(joinOptions);
       
-      showAlertMessage('تم الانضمام للمكالمة بنجاح!', 'success');
+      showAlertMessage(t('joinedCallSuccessfully'), 'success');
     } catch (error) {
       console.error('Failed to join call:', error);
-      showAlertMessage(`فشل في الانضمام للمكالمة: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`, 'error');
+      showAlertMessage(`${t('failedJoinCall')}: ${error instanceof Error ? error.message : t('unknownError')}`, 'error');
     } finally {
       setIsJoining(false);
     }
@@ -189,10 +189,10 @@ function VideoContent({
 
     try {
       await daily.leave();
-      showAlertMessage('تم مغادرة المكالمة', 'info');
+      showAlertMessage(t('leftCall'), 'info');
     } catch (error) {
       console.error('Failed to leave call:', error);
-      showAlertMessage('خطأ في مغادرة المكالمة', 'error');
+      showAlertMessage(t('failedLeaveCall'), 'error');
     }
   }, [daily, showAlertMessage]);
 
@@ -399,6 +399,7 @@ export default function SimpleKitchenSinkVideo({
   className = '' 
 }: SimpleKitchenSinkVideoProps) {
   const [callObject, setCallObject] = useState<DailyCall | null>(null);
+  const { t } = useTranslation();
 
   // Create call object
   useEffect(() => {
@@ -415,7 +416,7 @@ export default function SimpleKitchenSinkVideo({
         setCallObject(newCallObject);
       } catch (error) {
         console.error('Failed to create Daily call object:', error);
-        showAlertMessage('فشل في تهيئة مكونات الفيديو', 'error');
+        showAlertMessage(t('failedInitVideoComponents'), 'error');
       }
     };
 
@@ -441,7 +442,7 @@ export default function SimpleKitchenSinkVideo({
         <div className="text-center py-8">
           <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <div className="text-gray-400 text-base font-bold mb-2">
-            جاري تهيئة مكونات الفيديو...
+            {t('loadingVideoComponents')}
           </div>
         </div>
       </div>
