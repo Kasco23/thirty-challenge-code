@@ -68,6 +68,40 @@ export interface Translations {
   createNewSession: string;
   creatingSession: string;
   sessionCreated: string;
+  hostCodeDescription: string;
+  hostCodePlaceholder: string;
+  hostCodeNote: string;
+  sessionId: string;
+  sessionIdReady: string;
+  sessionIdGenerating: string;
+  fillDataAndConfirm: string;
+  confirmSession: string;
+  waitingSessionCreation: string;
+  updating: string;
+  enterHostName: string;
+  backToHome: string;
+  
+  // Error messages for Create Session
+  configWarning: string;
+  featuresNotWorkProperly: string;
+  canContinueButProblems: string;
+  sessionIdNotGenerated: string;
+  cannotCreateSession: string;
+  checkSystemSettings: string;
+  failedCreateSessionNew: string;
+  tryAgain: string;
+  connectionFailed: string;
+  checkInternetAndTryAgain: string;
+  sessionIdAlreadyUsed: string;
+  refreshPageAndTryAgain: string;
+  connectionTimeout: string;
+  
+  // Segment names
+  segmentWsha: string;
+  segmentAuct: string;
+  segmentBell: string;
+  segmentSing: string;
+  segmentRemo: string;
 
   // Active Games
   activeGames: string;
@@ -263,6 +297,40 @@ export const translations: Record<Language, Translations> = {
     createNewSession: 'Create New Session',
     creatingSession: 'Creating session...',
     sessionCreated: 'Session created successfully!',
+    hostCodeDescription: 'Host Code (choose it yourself)',
+    hostCodePlaceholder: 'Example: MUSAED',
+    hostCodeNote: 'Use English letters and numbers only',
+    sessionId: 'Session ID',
+    sessionIdReady: 'Session ID ready',
+    sessionIdGenerating: 'Creating session...',
+    fillDataAndConfirm: 'Fill in the data and click confirm to create the session',
+    confirmSession: 'Confirm Session',
+    waitingSessionCreation: 'Waiting for session creation...',
+    updating: 'Updating...',
+    enterHostName: 'Enter host name',
+    backToHome: 'Back to homepage',
+    
+    // Error messages for Create Session
+    configWarning: 'Warning',
+    featuresNotWorkProperly: 'Some features may not work correctly.',
+    canContinueButProblems: 'You can continue but may encounter synchronization issues',
+    sessionIdNotGenerated: 'Session ID not generated yet. Please wait.',
+    cannotCreateSession: 'Cannot create session',
+    checkSystemSettings: 'Please check system settings.',
+    failedCreateSessionNew: 'Failed to create session. Please try again.',
+    tryAgain: 'Try again',
+    connectionFailed: 'Connection to server failed. Please check your internet connection and try again.',
+    checkInternetAndTryAgain: 'Check internet connection and try again',
+    sessionIdAlreadyUsed: 'Session ID already in use. Please refresh the page and try again.',
+    refreshPageAndTryAgain: 'Refresh page and try again',
+    connectionTimeout: 'Connection timeout. Please try again.',
+    
+    // Segment names
+    segmentWsha: 'What do you know',
+    segmentAuct: 'Auction',
+    segmentBell: 'Bell section',
+    segmentSing: 'Sin & Jeem',
+    segmentRemo: 'Compensation',
 
     // Active Games
     activeGames: 'Active Games',
@@ -456,6 +524,40 @@ export const translations: Record<Language, Translations> = {
     createNewSession: 'إنشاء جلسة جديدة',
     creatingSession: 'جاري إنشاء الجلسة...',
     sessionCreated: 'تم إنشاء الجلسة بنجاح!',
+    hostCodeDescription: 'رمز المقدم (اختره بنفسك)',
+    hostCodePlaceholder: 'مثال: MUSAED',
+    hostCodeNote: 'استخدم أحرف إنجليزية وأرقام فقط',
+    sessionId: 'معرف الجلسة',
+    sessionIdReady: 'معرف الجلسة جاهز',
+    sessionIdGenerating: 'جاري إنشاء الجلسة...',
+    fillDataAndConfirm: 'املأ البيانات واضغط تأكيد لإنشاء الجلسة',
+    confirmSession: 'تأكيد الجلسة',
+    waitingSessionCreation: 'انتظار إنشاء الجلسة...',
+    updating: 'جاري التحديث...',
+    enterHostName: 'أدخل اسم المقدم',
+    backToHome: 'العودة للصفحة الرئيسية',
+    
+    // Error messages for Create Session
+    configWarning: 'تحذير',
+    featuresNotWorkProperly: 'قد لا تعمل بعض الميزات بشكل صحيح.',
+    canContinueButProblems: 'يمكنك المتابعة ولكن قد تواجه مشاكل في المزامنة',
+    sessionIdNotGenerated: 'لم يتم إنشاء معرف الجلسة بعد. يرجى الانتظار.',
+    cannotCreateSession: 'لا يمكن إنشاء جلسة',
+    checkSystemSettings: 'يرجى التحقق من إعدادات النظام.',
+    failedCreateSessionNew: 'فشل في إنشاء الجلسة. يرجى المحاولة مرة أخرى.',
+    tryAgain: 'حاول مرة أخرى',
+    connectionFailed: 'فشل في الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.',
+    checkInternetAndTryAgain: 'تحقق من اتصال الإنترنت وحاول مرة أخرى',
+    sessionIdAlreadyUsed: 'معرف الجلسة مستخدم بالفعل. يرجى تحديث الصفحة والمحاولة مرة أخرى.',
+    refreshPageAndTryAgain: 'حدث الصفحة وحاول مرة أخرى',
+    connectionTimeout: 'انتهت مهلة الاتصال. يرجى المحاولة مرة أخرى.',
+    
+    // Segment names
+    segmentWsha: 'وش تعرف',
+    segmentAuct: 'المزاد',
+    segmentBell: 'فقرة الجرس',
+    segmentSing: 'سين وجيم',
+    segmentRemo: 'التعويض',
 
     // Active Games
     activeGames: 'الألعاب النشطة',

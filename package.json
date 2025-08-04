@@ -12,7 +12,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "preview": "vite preview",
     "dep:graph": "madge --image full-graph.dot src && madge --json > full-dependency-map.json src",
-    "flow:update": "echo 'Flowchart update script would run here'",
+    "flow:update": "node scripts/flow-from-json.mjs",
     "analyze": "npm run build && npx vite-bundle-analyzer"
   },
   "dependencies": {

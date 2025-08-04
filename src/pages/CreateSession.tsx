@@ -3,15 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useGameActions } from '@/hooks/useGameAtoms';
 import { GameDatabase } from '@/lib/gameDatabase';
 import { getConfigurationError } from '@/lib/supabaseClient';
+import { useTranslation } from '@/hooks/useTranslation';
 import type { SegmentCode } from '@/types/game';
-
-const SEGMENTS: Record<SegmentCode, string> = {
-  WSHA: 'وش تعرف',
-  AUCT: 'المزاد',
-  BELL: 'فقرة الجرس',
-  SING: 'سين وجيم',
-  REMO: 'التعويض',
-};
 
 /**
  * Enhanced session creation page with improved error handling and user feedback.
@@ -20,6 +13,16 @@ const SEGMENTS: Record<SegmentCode, string> = {
 export default function CreateSession() {
   const nav = useNavigate();
   const { updateToLobbyPhase } = useGameActions();
+  const { t } = useTranslation();
+
+  // Dynamic segments object using translations
+  const SEGMENTS: Record<SegmentCode, string> = {
+    WSHA: t('segmentWsha'),
+    AUCT: t('segmentAuct'),
+    BELL: t('segmentBell'),
+    SING: t('segmentSing'),
+    REMO: t('segmentRemo'),
+  };
 
   const [hostName, setHostName] = useState('');
   const [hostCode, setHostCode] = useState('');
@@ -40,9 +43,9 @@ export default function CreateSession() {
   useEffect(() => {
     const configError = getConfigurationError();
     if (configError) {
-      setError(`تحذير: ${configError}. قد لا تعمل بعض الميزات بشكل صحيح.`);
+      setError(`${t('configWarning')}: ${configError}. ${t('featuresNotWorkProperly')}`);
     }
-  }, []);
+  }, [t]);
 
   // Generate session ID on component mount
   useEffect(() => {
@@ -54,14 +57,14 @@ export default function CreateSession() {
     e.preventDefault();
     
     if (!gameId) {
-      setError('لم يتم إنشاء معرف الجلسة بعد. يرجى الانتظار.');
+      setError(t('sessionIdNotGenerated'));
       return;
     }
 
     // Check for configuration issues before attempting to create
     const configError = getConfigurationError();
     if (configError) {
-      setError(`لا يمكن إنشاء جلسة: ${configError}. يرجى التحقق من إعدادات النظام.`);
+      setError(`${t('cannotCreateSession')}: ${configError}. ${t('checkSystemSettings')}`);
       return;
     }
 
@@ -96,15 +99,15 @@ export default function CreateSession() {
       console.error('Failed to create and setup session:', err);
       
       // Provide specific error messages based on error type
-      let errorMessage = 'فشل في إنشاء الجلسة. يرجى المحاولة مرة أخرى.';
+      let errorMessage = t('failedCreateSessionNew');
       
       if (err instanceof Error) {
         if (err.message.includes('fetch')) {
-          errorMessage = 'فشل في الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى.';
+          errorMessage = t('connectionFailed');
         } else if (err.message.includes('duplicate')) {
-          errorMessage = 'معرف الجلسة مستخدم بالفعل. يرجى تحديث الصفحة والمحاولة مرة أخرى.';
+          errorMessage = t('sessionIdAlreadyUsed');
         } else if (err.message.includes('timeout')) {
-          errorMessage = 'انتهت مهلة الاتصال. يرجى المحاولة مرة أخرى.';
+          errorMessage = t('connectionTimeout');
         }
       }
       
@@ -121,23 +124,23 @@ export default function CreateSession() {
         className="bg-white/10 backdrop-blur-sm p-8 rounded-3xl w-full max-w-md space-y-6"
       >
         <h1 className="text-2xl font-bold text-white text-center font-arabic">
-          إنشاء جلسة جديدة
+          {t('createNewSession')}
         </h1>
 
         {/* Session Creation Status */}
         {isCreating && !gameId && (
           <div className="text-center p-4 bg-blue-500/20 rounded-lg border border-blue-500/30">
             <div className="w-6 h-6 border-2 border-blue-300 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-            <p className="text-blue-300 font-arabic text-sm">جاري إنشاء الجلسة...</p>
+            <p className="text-blue-300 font-arabic text-sm">{t('sessionIdGenerating')}</p>
           </div>
         )}
 
         {/* Session ID Display */}
         {gameId && !isCreating && (
           <div className="text-center p-4 bg-green-500/20 rounded-lg border border-green-500/30">
-            <p className="text-green-300 font-arabic text-sm mb-1">معرف الجلسة جاهز</p>
+            <p className="text-green-300 font-arabic text-sm mb-1">{t('sessionIdReady')}</p>
             <p className="text-white font-mono text-lg">{gameId}</p>
-            <p className="text-green-200 font-arabic text-xs mt-1">املأ البيانات واضغط تأكيد لإنشاء الجلسة</p>
+            <p className="text-green-200 font-arabic text-xs mt-1">{t('fillDataAndConfirm')}</p>
           </div>
         )}
 
@@ -145,9 +148,9 @@ export default function CreateSession() {
         {error && (
           <div className="text-center p-4 bg-red-500/20 rounded-lg border border-red-500/30">
             <p className="text-red-300 font-arabic text-sm">{error}</p>
-            {error.includes('تحذير') && (
+            {error.includes(t('configWarning')) && (
               <div className="mt-2 text-xs text-red-200 font-arabic">
-                يمكنك المتابعة ولكن قد تواجه مشاكل في المزامنة
+                {t('canContinueButProblems')}
               </div>
             )}
           </div>
@@ -155,7 +158,7 @@ export default function CreateSession() {
 
         <div>
           <label className="block text-white/80 mb-1 font-arabic">
-            اسم المقدم
+            {t('hostName')}
           </label>
           <input
             value={hostName}
@@ -164,18 +167,18 @@ export default function CreateSession() {
             disabled={isCreating}
             maxLength={50}
             className="w-full px-4 py-2 rounded-lg bg-white/10 text-white disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-accent2"
-            placeholder="أدخل اسم المقدم"
+            placeholder={t('enterHostName')}
           />
         </div>
 
         <div>
           <label className="block text-white/80 mb-1 font-arabic">
-            رمز المقدم (اختره بنفسك)
+            {t('hostCodeDescription')}
           </label>
           <input
             value={hostCode}
             onChange={(e) => setHostCode(e.target.value.toUpperCase())}
-            placeholder="مثال: MUSAED"
+            placeholder={t('hostCodePlaceholder')}
             required
             disabled={isCreating}
             maxLength={20}
@@ -183,7 +186,7 @@ export default function CreateSession() {
             className="w-full px-4 py-2 rounded-lg bg-white/10 text-white font-mono disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-accent2"
           />
           <p className="text-xs text-white/60 mt-1 font-arabic">
-            استخدم أحرف إنجليزية وأرقام فقط
+            {t('hostCodeNote')}
           </p>
         </div>
 
@@ -212,7 +215,7 @@ export default function CreateSession() {
           disabled={isCreating || !gameId || !hostName.trim() || !hostCode.trim()}
           className="w-full py-3 bg-accent2 hover:bg-accent disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-arabic transition-colors focus:outline-none focus:ring-2 focus:ring-accent2"
         >
-          {isCreating ? 'جاري التحديث...' : gameId ? `تأكيد الجلسة — ${gameId}` : 'انتظار إنشاء الجلسة...'}
+          {isCreating ? t('updating') : gameId ? `${t('confirmSession')} — ${gameId}` : t('waitingSessionCreation')}
         </button>
 
         <div className="text-center">
@@ -221,7 +224,7 @@ export default function CreateSession() {
             onClick={() => nav('/')}
             className="text-white/70 hover:text-white text-sm font-arabic underline"
           >
-            العودة للصفحة الرئيسية
+            {t('backToHome')}
           </button>
         </div>
       </form>
