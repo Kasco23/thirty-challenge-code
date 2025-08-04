@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { debugLog } from '../utils/debugLog'; // Import debugLog utility
 
 interface AlertBannerProps {
   message: string;
@@ -21,17 +22,23 @@ export default function AlertBanner({
   const [show, setShow] = useState(isVisible);
 
   useEffect(() => {
+    debugLog('AlertBanner', 'useEffect - isVisible changed', { isVisible });
     setShow(isVisible);
   }, [isVisible]);
 
   useEffect(() => {
     if (show && autoHide) {
+      debugLog('AlertBanner', 'useEffect - autoHide timer started', { autoHideDelay });
       const timer = setTimeout(() => {
         setShow(false);
+        debugLog('AlertBanner', 'useEffect - autoHide timer ended', { autoHideDelay });
         onClose?.();
       }, autoHideDelay);
 
-      return () => clearTimeout(timer);
+      return () => {
+        debugLog('AlertBanner', 'useEffect - autoHide timer cleared');
+        clearTimeout(timer);
+      };
     }
   }, [show, autoHide, autoHideDelay, onClose]);
 
@@ -69,6 +76,7 @@ export default function AlertBanner({
               {onClose && (
                 <button
                   onClick={() => {
+                    debugLog('AlertBanner', 'onClose button clicked');
                     setShow(false);
                     onClose();
                   }}

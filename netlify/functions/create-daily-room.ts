@@ -195,7 +195,7 @@ export const handler: Handler = async (event) => {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type',
         'Access-Control-Allow-Methods': 'POST',
-      },
+      } as Record<string, string>,
       body: JSON.stringify({
         roomName: room.name,
         url: finalUrl,
