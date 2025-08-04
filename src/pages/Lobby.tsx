@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAtomValue } from 'jotai';
 import { useGameState, useGameActions, useLobbyActions, useGameSync } from '@/hooks/useGameAtoms';
 import { gameSyncInstanceAtom, lobbyParticipantsAtom } from '@/state';
@@ -13,6 +13,7 @@ import type { LobbyParticipant } from '@/state';
 export default function Lobby() {
   const { gameId } = useParams<{ gameId: string }>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const state = useGameState();
   const { loadGameState, setHostConnected, startSession } = useGameActions();
   const { myParticipant, setParticipant } = useLobbyActions();
@@ -243,6 +244,63 @@ export default function Lobby() {
             showAlertMessage={showAlertMessage}
             className="w-full"
           />
+        </div>
+
+        {/* Navigation and Action Buttons */}
+        <div className="mb-6 flex flex-wrap gap-4 justify-center">
+          {/* Controller: Return to Control Room */}
+          {myParticipant.type === 'controller' && (
+            <button
+              onClick={() => {
+                // Navigate back to control room
+                navigate('/control-room', { 
+                  state: { 
+                    gameId: gameId, 
+                    hostCode: state.hostCode, 
+                    hostName: state.hostName || 'Controller' 
+                  } 
+                });
+              }}
+              className={`px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors ${language === 'ar' ? 'font-arabic' : ''}`}
+            >
+              {language === 'ar' ? 'العودة إلى غرفة التحكم' : 'Return to Control Room'}
+            </button>
+          )}
+
+          {/* Host: Go to Control Room */}
+          {myParticipant.type === 'host' && (
+            <button
+              onClick={() => {
+                // Navigate to control room
+                navigate('/control-room', { 
+                  state: { 
+                    gameId: gameId, 
+                    hostCode: state.hostCode, 
+                    hostName: state.hostName || 'Host' 
+                  } 
+                });
+              }}
+              className={`px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors ${language === 'ar' ? 'font-arabic' : ''}`}
+            >
+              {language === 'ar' ? 'الذهاب إلى غرفة التحكم' : 'Go to Control Room'}
+            </button>
+          )}
+
+          {/* Leave Session Button for all participants */}
+          <button
+            onClick={() => {
+              const confirmMessage = language === 'ar' 
+                ? 'هل أنت متأكد من مغادرة هذه الجلسة؟' 
+                : 'Are you sure you want to leave this session?';
+              if (window.confirm(confirmMessage)) {
+                // Navigate back to home
+                navigate('/');
+              }
+            }}
+            className={`px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors ${language === 'ar' ? 'font-arabic' : ''}`}
+          >
+            {language === 'ar' ? 'مغادرة الجلسة' : 'Leave Session'}
+          </button>
         </div>
 
       </div>
