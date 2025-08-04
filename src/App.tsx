@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom';
 import { Provider as JotaiProvider } from 'jotai';
 import { lazy, Suspense } from 'react';
 import ConnectionBanner from '@/components/ConnectionBanner';
+import LanguageToggle from '@/components/LanguageToggle';
 
 // Lazy load page components to reduce initial bundle size
 const Landing = lazy(() => import('@/pages/Landing'));
@@ -25,7 +26,7 @@ function PageLoader() {
     <div className="min-h-screen bg-gradient-to-tr from-black via-[#10102a] to-accent2 flex items-center justify-center">
       <div className="text-center">
         <div className="w-8 h-8 border-2 border-accent2 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-        <div className="text-white/70 font-arabic">جاري التحميل...</div>
+        <div className="text-white/70">Loading...</div>
       </div>
     </div>
   );
@@ -40,6 +41,7 @@ export default function App() {
     <JotaiProvider>
       <div className="dark min-h-screen bg-gradient-to-tr from-black via-[#10102a] to-accent2">
         <ConnectionBanner />
+        <LanguageToggle />
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Landing />} />
