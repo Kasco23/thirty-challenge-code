@@ -44,6 +44,21 @@ export interface Translations {
   gameNotFound: string;
   gameIsFull: string;
   invalidCode: string;
+  chooseJoinType: string;
+  enterCodeAndName: string;
+  enterSessionAndHostCode: string;
+  needSessionAndHostCode: string;
+  participatingPlayers: string;
+  hostCodeFound: string;
+  confirmJoinGame: string;
+  aboutToJoinGame: string;
+  firstPlayer: string;
+  secondPlayer: string;
+  moveToLobbyWait: string;
+  noVideoRoomYet: string;
+  contactHostCreateRoom: string;
+  failedJoinGame: string;
+  errorJoiningGame: string;
 
   // Create Session Page
   hostName: string;
@@ -130,6 +145,21 @@ export const translations: Record<Language, Translations> = {
     gameNotFound: 'Game not found',
     gameIsFull: 'Game is full',
     invalidCode: 'Invalid code',
+    chooseJoinType: 'Choose join type',
+    enterCodeAndName: 'Enter game code and name',
+    enterSessionAndHostCode: 'Enter session code and host code',
+    needSessionAndHostCode: 'You need session code and host code',
+    participatingPlayers: 'Participating players in the quiz',
+    hostCodeFound: 'You will find the host code on the session setup page',
+    confirmJoinGame: 'Confirm joining game',
+    aboutToJoinGame: 'You are about to join game',
+    firstPlayer: 'first player',
+    secondPlayer: 'second player',
+    moveToLobbyWait: 'You will be moved to the waiting lobby to start video and wait until the host starts the game.',
+    noVideoRoomYet: 'No video room yet. Contact the host to create the room first.',
+    contactHostCreateRoom: 'Contact the host to create the room first.',
+    failedJoinGame: 'Failed to join game. Try again',
+    errorJoiningGame: 'Error occurred while joining game',
 
     // Create Session Page  
     hostName: 'Host Name',
@@ -214,6 +244,21 @@ export const translations: Record<Language, Translations> = {
     gameNotFound: 'اللعبة غير موجودة',
     gameIsFull: 'اللعبة ممتلئة',
     invalidCode: 'كود غير صحيح',
+    chooseJoinType: 'اختر نوع الانضمام',
+    enterCodeAndName: 'أدخل رمز اللعبة والاسم',
+    enterSessionAndHostCode: 'أدخل رمز الجلسة ورمز المقدم',
+    needSessionAndHostCode: 'تحتاج رمز الجلسة ورمز المقدم',
+    participatingPlayers: 'للاعبين المشاركين في المسابقة',
+    hostCodeFound: 'ستجد رمز المقدم في صفحة إعداد الجلسة',
+    confirmJoinGame: 'تأكيد الانضمام للعبة',
+    aboutToJoinGame: 'أنت على وشك الانضمام للعبة',
+    firstPlayer: 'لاعب أول',
+    secondPlayer: 'لاعب ثاني',
+    moveToLobbyWait: 'سيتم نقلك إلى صالة الانتظار لبدء الفيديو والانتظار حتى يبدأ المقدم اللعبة.',
+    noVideoRoomYet: 'لا توجد غرفة فيديو بعد.',
+    contactHostCreateRoom: 'اتصل بالمقدم لإنشاء الغرفة أولاً.',
+    failedJoinGame: 'فشل في الانضمام للعبة. حاول مرة أخرى',
+    errorJoiningGame: 'حدث خطأ أثناء الانضمام للعبة',
 
     // Create Session Page
     hostName: 'اسم المقدم',
