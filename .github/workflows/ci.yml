@@ -7,17 +7,21 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest        # ← here’s your “runs-on”
+    runs-on: ubuntu-latest # ← here’s your “runs-on”
     defaults:
       run:
-        working-directory: thirty-challenge
+        working-directory: .
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Install dependencies
-        run: npm ci
+      - name: Install deps
+        run: npm install
+
+      # Run Jest unit tests. passWithNoTests lets CI succeed if no tests exist.
+      - name: Run tests
+        run: npm test
 
       # ← Add this step to auto‑format
       - name: Auto‑format code
@@ -27,7 +31,5 @@ jobs:
         run: npm run lint
       - name: Format Check
         run: npx prettier --check .
-      - name: Run Tests
-        run: npm test --silent
       - name: Build
         run: npm run build

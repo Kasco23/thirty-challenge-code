@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-dark: #19194d;
+  --brand-grad: #6e45e2;
+  --brand-light: #efefef;
+  --accent-blue: #50aaf2;
+  --font-header: 'DG Bebo', sans-serif;
+  --font-body: 'Almarai', sans-serif;
+}
+
+@font-face {
+  font-family: 'DG Bebo';
+  src: url('/tahadialthalatheen/fonts/DG-BeboT.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Almarai';
+  src: url('/tahadialthalatheen/fonts/Almarai-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+body {
+  @apply bg-brand-dark text-brand-light font-body;
+}
+.font-arabic {
+  font-family: 'Noto Naskh Arabic', Tajawal, Arial, sans-serif;
+}
+.glow {
+  filter: drop-shadow(0 0 18px #38bdf8) drop-shadow(0 0 8px #7c3aed);
+}
+.bg-glass {
+  background: rgba(30, 32, 60, 0.7);
+  backdrop-filter: blur(18px);
+}

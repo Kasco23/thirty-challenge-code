@@ -17,6 +17,10 @@ build/
 
 # IDE
 .vscode/
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/settings.json
+.vscode/firefox-profile/
 .idea/
 *.swp
 *.swo
@@ -36,4 +40,3 @@ yarn-error.log*
 netlify/functions-build/
 
 coverage/
-thirty-challenge/coverage/
