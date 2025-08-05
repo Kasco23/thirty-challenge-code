@@ -33,8 +33,11 @@ jobs:
       - name: Install Netlify CLI
         run: npm install -g netlify-cli
 
-      - name: Install Supabase CLI (if needed)
-        run: npm install -g supabase
+      - name: Install Supabase CLI as dev dependency
+        run: npm install supabase --save-dev
+
+      - name: Verify Supabase CLI
+        run: npx supabase --version || true
 
       - name: Validate build (allow errors)
         run: npm run build
