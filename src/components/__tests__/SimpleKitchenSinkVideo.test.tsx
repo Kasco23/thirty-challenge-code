@@ -13,6 +13,7 @@ jest.mock('@/hooks/useGameAtoms', () => ({
     generateDailyToken: jest.fn(),
     createVideoRoom: jest.fn(),
     checkVideoRoomExists: jest.fn(),
+    setHostConnected: jest.fn(() => Promise.resolve({ success: true })),
   }),
 }));
 
