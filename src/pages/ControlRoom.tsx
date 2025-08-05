@@ -14,7 +14,7 @@ export default function ControlRoom() {
   const location = useLocation();
   const navigate = useNavigate();
   const state = useGameState();
-  const { loadGameState, startGame, setHostConnected } = useGameActions();
+  const { loadGameState, startGame, setHostConnected, endVideoRoom } = useGameActions();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const { t, language } = useTranslation();
@@ -51,7 +51,7 @@ export default function ControlRoom() {
       // No game ID available, redirect to home
       navigate('/');
     }
-  }, [location.state, state.gameId, state.hostName, loadGameState, setHostConnected, navigate]);
+  }, [location.state, state.gameId, state.hostName, loadGameState, setHostConnected, navigate, language]);
 
   // Mark host as disconnected when leaving control room
   useEffect(() => {
@@ -65,6 +65,33 @@ export default function ControlRoom() {
   // Host control functions
   const handleStartGame = () => {
     startGame();
+  };
+
+  const handleCloseSession = async () => {
+    if (!state.gameId) return;
+    
+    const confirmed = window.confirm(
+      language === 'ar' 
+        ? 'هل أنت متأكد من إغلاق الجلسة؟ سيتم إنهاء جميع الاتصالات وحذف غرفة الفيديو.'
+        : 'Are you sure you want to close the session? This will end all connections and delete the video room.'
+    );
+    
+    if (confirmed) {
+      try {
+        // End the video room
+        await endVideoRoom(state.gameId);
+        
+        // Navigate back to home
+        navigate('/');
+      } catch (error) {
+        console.error('Failed to close session:', error);
+        alert(
+          language === 'ar' 
+            ? 'فشل في إغلاق الجلسة. يرجى المحاولة مرة أخرى.'
+            : 'Failed to close session. Please try again.'
+        );
+      }
+    }
   };
 
   if (isLoading) {
@@ -169,6 +196,14 @@ export default function ControlRoom() {
           className={`px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors ${language === 'ar' ? 'font-arabic' : ''}`}
         >
           {t('manageVideoLobby')}
+        </button>
+        
+        {/* Close Session Button */}
+        <button
+          onClick={handleCloseSession}
+          className={`px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors ${language === 'ar' ? 'font-arabic' : ''}`}
+        >
+          {language === 'ar' ? 'إغلاق الجلسة' : 'Close Session'}
         </button>
       </div>
 

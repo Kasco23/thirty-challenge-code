@@ -85,7 +85,7 @@ function VideoContent({
   const meetingState = useMeetingState();
   const localParticipant = useLocalParticipant();
   const gameState = useGameState();
-  const { generateDailyToken, createVideoRoom } = useGameActions();
+  const { generateDailyToken, createVideoRoom, checkVideoRoomExists } = useGameActions();
   const { t } = useTranslation();
   
   const [roomUrl, setRoomUrl] = useState('');
@@ -112,7 +112,7 @@ function VideoContent({
     console.log('[VideoRoom] GameId changed, resetting room creation flags for:', gameId);
   }, [gameId]);
 
-  // Auto-create room for host/controller if none exists - with safeguards
+  // Auto-check for existing room and create if needed for host/controller
   useEffect(() => {
     console.log('[VideoRoom] Checking room creation conditions:', {
       participantType: myParticipant.type,
@@ -128,28 +128,45 @@ function VideoContent({
     // 1. We're a host or controller
     // 2. Game state is loaded (gameId matches our gameId)
     // 3. No room URL exists in game state
-    // 4. Room creation was not marked as done in game state
-    // 5. We haven't attempted creation yet
-    // 6. We're not currently creating a room
+    // 4. We haven't attempted creation yet
+    // 5. We're not currently creating a room
     if (
       (myParticipant.type === 'host' || myParticipant.type === 'controller') &&
       gameState.gameId === gameId && // Ensure game state is loaded for this gameId
       !gameState.videoRoomUrl &&
-      !gameState.videoRoomCreated &&
       !roomCreationAttempted &&
       !isCreatingRoom
     ) {
-      console.log('[VideoRoom] All conditions met - creating new room for gameId:', gameId);
+      console.log('[VideoRoom] All conditions met - checking for existing room or creating new one for gameId:', gameId);
       
       // Add a small delay to ensure all state updates are processed
       const timeoutId = setTimeout(() => {
-        const createRoom = async () => {
+        const checkAndCreateRoom = async () => {
           setIsCreatingRoom(true);
           setRoomCreationAttempted(true);
           
           try {
+            // First, check if a room already exists with the gameId pattern
+            showAlertMessage('Checking for existing video room...', 'info');
+            console.log('[VideoRoom] Checking for existing room with name:', gameId);
+            
+            const checkResult = await checkVideoRoomExists(gameId);
+            
+            if (checkResult.success && checkResult.exists && checkResult.url) {
+              // Room exists, use it
+              setRoomUrl(checkResult.url);
+              showAlertMessage('Found existing video room!', 'success');
+              console.log('[VideoRoom] Found existing room:', checkResult.url);
+              
+              // Room found, no need to create a new one
+              return;
+            }
+            
+            // Room doesn't exist, create a new one
+            console.log('[VideoRoom] No existing room found, creating new room');
             showAlertMessage('Creating video room...', 'info');
             const result = await createVideoRoom(gameId);
+            
             if (result.success && result.roomUrl) {
               setRoomUrl(result.roomUrl);
               showAlertMessage('Video room created successfully!', 'success');
@@ -159,14 +176,14 @@ function VideoContent({
               console.error('[VideoRoom] Room creation failed:', result);
             }
           } catch (error) {
-            console.error('[VideoRoom] Failed to auto-create video room:', error);
-            showAlertMessage('Error creating video room automatically', 'error');
+            console.error('[VideoRoom] Failed to check/create video room:', error);
+            showAlertMessage('Error checking/creating video room', 'error');
           } finally {
             setIsCreatingRoom(false);
           }
         };
         
-        createRoom();
+        checkAndCreateRoom();
       }, 1000); // 1 second delay to ensure state is stable
       
       return () => clearTimeout(timeoutId);
@@ -174,12 +191,13 @@ function VideoContent({
   }, [
     gameState.gameId,
     gameState.videoRoomUrl, 
-    gameState.videoRoomCreated, 
+    gameState.videoRoomCreated,
     myParticipant.type, 
     gameId, 
     roomCreationAttempted, 
     isCreatingRoom, 
     createVideoRoom, 
+    checkVideoRoomExists,
     showAlertMessage
   ]);
 
