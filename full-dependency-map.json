@@ -43,6 +43,9 @@
   "src/components/VideoRoom.tsx": [
     "src/components/AlertBanner.tsx"
   ],
+  "src/components/__tests__/SimpleKitchenSinkVideo.test.tsx": [
+    "src/components/SimpleKitchenSinkVideo.tsx"
+  ],
   "src/context/GameContext.tsx": [
     "src/context/defaults.ts",
     "src/context/gameReducer.ts",
