@@ -24,7 +24,7 @@
     "flag-icons": "^7.5.0",
     "framer-motion": "^12.23.11",
     "immer": "^10.1.1",
-    "jotai": "^2.12.5",
+    "jotai": "^2.13.0",
     "moment": "^2.30.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
