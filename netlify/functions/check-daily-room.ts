@@ -31,17 +31,48 @@ export const handler: Handler = async (event) => {
     console.error('DAILY_API_KEY environment variable is missing');
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Daily API key not configured' }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({
+        error: 'Daily API key not configured',
+        code: 'MISSING_API_KEY',
+      }),
     };
   }
 
   try {
-    const { roomName } = JSON.parse(event.body || '{}');
+    let requestBody;
+    try {
+      requestBody = JSON.parse(event.body || '{}');
+    } catch {
+      return {
+        statusCode: 400,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({
+          error: 'Invalid JSON in request body',
+          code: 'INVALID_JSON',
+        }),
+      };
+    }
+
+    const { roomName } = requestBody;
 
     if (!roomName) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Room name is required' }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({
+          error: 'Room name is required',
+          code: 'MISSING_ROOM_NAME',
+        }),
       };
     }
 
@@ -69,11 +100,33 @@ export const handler: Handler = async (event) => {
     }
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('Daily.co API error:', error);
+      const errorText = await response.text();
+      let errorData;
+      
+      try {
+        errorData = JSON.parse(errorText);
+      } catch {
+        errorData = { error: errorText };
+      }
+
+      console.error('Daily.co API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData,
+        roomName,
+      });
+
       return {
-        statusCode: response.status,
-        body: JSON.stringify({ error: 'Failed to check room status' }),
+        statusCode: response.status >= 500 ? 502 : response.status,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({
+          error: 'Failed to check room status',
+          code: 'CHECK_FAILED',
+          details: errorData,
+        }),
       };
     }
 
@@ -95,10 +148,18 @@ export const handler: Handler = async (event) => {
       }),
     };
   } catch (error) {
-    console.error('Function error:', error);
+    console.error('Check room function error:', error);
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Internal server error' }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({
+        error: 'Internal server error',
+        code: 'INTERNAL_ERROR',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      }),
     };
   }
 };
