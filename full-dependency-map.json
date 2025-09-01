@@ -2,8 +2,11 @@
   "netlify/functions/check-daily-room.ts": [],
   "netlify/functions/create-daily-room.ts": [],
   "netlify/functions/create-daily-token.ts": [],
+  "netlify/functions/daily-rooms.ts": [],
   "netlify/functions/delete-daily-room.ts": [],
   "netlify/functions/game-event.ts": [],
+  "netlify/functions/health-check.ts": [],
+  "netlify/functions/session-event.ts": [],
   "src/App.tsx": [],
   "src/alphaquiz/components/AlphaBell.tsx": [
     "src/alphaquiz/state/alphaAtoms.ts"
